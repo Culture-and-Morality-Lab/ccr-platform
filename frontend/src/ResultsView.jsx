@@ -25,11 +25,11 @@ export default function ResultsView({ jobId, onBack }) {
 
   return (
     <>
-      <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
+      <div className="results-toolbar">
         <button className="ghost" onClick={onBack}>
           ← Back to workspace
         </button>
-        <div className="row">
+        <div className="row result-actions">
           <a href={api.exportUrl(jobId)}>
             <button className="primary">Export results CSV</button>
           </a>
@@ -148,22 +148,24 @@ function Stat({ k, v }) {
 
 function DocTable({ docs }) {
   return (
-    <table className="docs">
-      <thead>
-        <tr>
-          <th style={{ width: 60 }}>Score</th>
-          <th>Text</th>
-        </tr>
-      </thead>
-      <tbody>
-        {docs.map((d) => (
-          <tr key={d.row}>
-            <td className="score">{d.score.toFixed(3)}</td>
-            <td>{d.text}</td>
+    <div className="table-wrap">
+      <table className="docs">
+        <thead>
+          <tr>
+            <th style={{ width: 60 }}>Score</th>
+            <th>Text</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {docs.map((d) => (
+            <tr key={d.row}>
+              <td className="score">{d.score.toFixed(3)}</td>
+              <td>{d.text}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

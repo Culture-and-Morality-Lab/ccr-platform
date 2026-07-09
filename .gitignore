@@ -12,3 +12,7 @@ node_modules/
 
 # os
 .DS_Store
+
+# local AI-tool state (machine-specific)
+.codex/
+.agents/

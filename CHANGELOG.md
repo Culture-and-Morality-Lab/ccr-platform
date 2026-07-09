@@ -4,6 +4,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 
 ## [Unreleased]
 
+### Fixed
+- Improved dashboard responsive layout, focus states, and table overflow handling on
+  narrow screens.
+
 ### Added
 - Repository initialized from the public demo (v0.1 feature set: projects, tolerant CSV/XLSX
   ingestion, seeded constructs, MiniLM/mpnet/multilingual models, async runs with progress,

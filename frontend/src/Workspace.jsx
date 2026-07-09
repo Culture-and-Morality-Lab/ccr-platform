@@ -243,7 +243,7 @@ export default function Workspace({ project }) {
           model doesn&apos;t support it, you&apos;ll get a warning — never a silent result.
         </p>
         <div className="row">
-          <div style={{ minWidth: 170 }}>
+          <div className="language-control">
             <label className="field">
               Text language
               <select value={language} onChange={(e) => setLanguage(e.target.value)}>
@@ -282,50 +282,54 @@ export default function Workspace({ project }) {
       {jobs.length > 0 && (
         <div className="card">
           <h3>Runs</h3>
-          <table className="docs">
-            <thead>
-              <tr>
-                <th>Started</th>
-                <th>Corpus</th>
-                <th>Construct</th>
-                <th style={{ width: "24%" }}>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((j) => (
-                <tr key={j.id}>
-                  <td className="muted">{(j.started_at || j.created_at).replace("T", " ").slice(0, 16)}</td>
-                  <td>{j.corpus_filename}</td>
-                  <td>{j.construct_name}</td>
-                  <td>
-                    {j.status === "running" ? (
-                      <div className="progress-track" title={`${Math.round(j.progress * 100)}%`}>
-                        <div
-                          className="progress-fill"
-                          style={{ width: `${Math.max(3, j.progress * 100)}%` }}
-                        />
-                      </div>
-                    ) : (
-                      <span className={`pill ${j.status}`}>{j.status}</span>
-                    )}
-                    {j.status === "failed" && (
-                      <div className="small muted" title={j.error}>
-                        {j.error.split("\n").pop()}
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    {j.status === "completed" && (
-                      <button className="linkish" onClick={() => setViewJobId(j.id)}>
-                        View results
-                      </button>
-                    )}
-                  </td>
+          <div className="table-wrap">
+            <table className="docs">
+              <thead>
+                <tr>
+                  <th>Started</th>
+                  <th>Corpus</th>
+                  <th>Construct</th>
+                  <th style={{ width: "24%" }}>Status</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {jobs.map((j) => (
+                  <tr key={j.id}>
+                    <td className="muted">
+                      {(j.started_at || j.created_at).replace("T", " ").slice(0, 16)}
+                    </td>
+                    <td>{j.corpus_filename}</td>
+                    <td>{j.construct_name}</td>
+                    <td>
+                      {j.status === "running" ? (
+                        <div className="progress-track" title={`${Math.round(j.progress * 100)}%`}>
+                          <div
+                            className="progress-fill"
+                            style={{ width: `${Math.max(3, j.progress * 100)}%` }}
+                          />
+                        </div>
+                      ) : (
+                        <span className={`pill ${j.status}`}>{j.status}</span>
+                      )}
+                      {j.status === "failed" && (
+                        <div className="small muted" title={j.error}>
+                          {j.error.split("\n").pop()}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      {j.status === "completed" && (
+                        <button className="linkish" onClick={() => setViewJobId(j.id)}>
+                          View results
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </>
