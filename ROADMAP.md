@@ -2,10 +2,10 @@
 
 ## Phase 0 — Visible progress (now)
 - [x] Descriptive stats (mean/SD/min/max) — shipped in demo codebase
-- [ ] Spec 0001: short-text + language warnings (structured warning objects)
-- [ ] Spec 0002: offline-runnable Python script export + pinned requirements
-- [ ] Spec 0003: registry-driven models (E5 prefixes!) + language selection
-- [ ] Spec 0004: construct library from versioned YAML (assistant's questionnaires land here)
+- [x] Spec 0001: short-text + language warnings (structured warning objects)
+- [x] Spec 0002: offline-runnable Python script export + pinned requirements
+- [x] Spec 0003: registry-driven models (E5 prefixes!) + language selection
+- [x] Spec 0004: construct library from versioned YAML (assistant's questionnaires land here)
 
 ## Phase 1 — Engine hardening (weeks 3–5)
 - [ ] Spec 0005: extract packages/ccr_engine + golden evals + ccr_wrapper parity tests

@@ -28,21 +28,6 @@ ProgressCb = Callable[[float], None]
 
 FAKE_MODEL_NAME = "fake-deterministic"
 
-AVAILABLE_MODELS = [
-    {
-        "name": "sentence-transformers/all-MiniLM-L6-v2",
-        "label": "all-MiniLM-L6-v2 (default — fast, CCR reference model)",
-    },
-    {
-        "name": "sentence-transformers/all-mpnet-base-v2",
-        "label": "all-mpnet-base-v2 (higher quality, slower)",
-    },
-    {
-        "name": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-        "label": "paraphrase-multilingual-MiniLM-L12-v2 (50+ languages)",
-    },
-]
-
 
 class EmbeddingBackend(Protocol):
     name: str
@@ -57,14 +42,16 @@ class SentenceTransformerBackend:
 
     _cache: dict[str, object] = {}
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str, revision: str | None = None):
         self.name = model_name
+        self.revision = revision
 
     def _model(self):
         if self.name not in self._cache:
             from sentence_transformers import SentenceTransformer  # lazy: heavy import
 
-            self._cache[self.name] = SentenceTransformer(self.name)
+            kwargs = {"revision": self.revision} if self.revision else {}
+            self._cache[self.name] = SentenceTransformer(self.name, **kwargs)
         return self._cache[self.name]
 
     @property
@@ -121,10 +108,14 @@ class HashEmbeddingBackend:
         return out
 
 
-def get_backend(model_name: str) -> EmbeddingBackend:
-    if model_name == FAKE_MODEL_NAME or os.environ.get("CCR_FAKE_EMBEDDINGS") == "1":
+def get_backend(model_id: str) -> EmbeddingBackend:
+    """Resolve a REGISTRY model id (or the test fake) to an embedding backend."""
+    if model_id == FAKE_MODEL_NAME or os.environ.get("CCR_FAKE_EMBEDDINGS") == "1":
         return HashEmbeddingBackend()
-    return SentenceTransformerBackend(model_name)
+    from . import registry  # local import: engine stays importable without yaml deps
+
+    cfg = registry.get_model(model_id)
+    return SentenceTransformerBackend(cfg.provider_model_id, revision=cfg.pinned_revision)
 
 
 @dataclass
@@ -154,8 +145,15 @@ def run_ccr(
     items: list[str],
     backend: EmbeddingBackend,
     progress_cb: ProgressCb | None = None,
+    item_prefix: str = "",
+    text_prefix: str = "",
 ) -> CCRResult:
-    """Compute CCR loadings: cosine(text, item) for every text × item pair."""
+    """Compute CCR loadings: cosine(text, item) for every text × item pair.
+
+    Prefixes come from the model registry's usage_config — E5-family models require
+    "query: " on BOTH sides for symmetric similarity. Prefixed strings feed the
+    encoder only; raw wording is what gets hashed and exported.
+    """
     if not texts:
         raise ValueError("Corpus contains no non-empty texts.")
     if not items:
@@ -163,7 +161,8 @@ def run_ccr(
 
     started = datetime.now(timezone.utc)
 
-    item_emb, items_cached = encode_items_cached(backend, items)
+    items_for_encoding = [item_prefix + i for i in items] if item_prefix else items
+    item_emb, items_cached = encode_items_cached(backend, items_for_encoding)
     if progress_cb:
         progress_cb(0.02)
 
@@ -171,7 +170,8 @@ def run_ccr(
         if progress_cb:
             progress_cb(0.02 + 0.93 * frac)
 
-    doc_emb = backend.encode(texts, progress_cb=doc_progress)
+    texts_for_encoding = [text_prefix + t for t in texts] if text_prefix else texts
+    doc_emb = backend.encode(texts_for_encoding, progress_cb=doc_progress)
 
     # Both matrices are L2-normalized -> cosine similarity is a dot product.
     sims = doc_emb @ item_emb.T
@@ -189,6 +189,8 @@ def run_ccr(
         "n_texts": len(texts),
         "n_items": len(items),
         "items_sha256_16": items_hash,
+        "item_prefix": item_prefix,
+        "text_prefix": text_prefix,
         "similarity": "cosine",
         "score": "mean of per-item cosine similarities",
         "python": sys.version.split()[0],

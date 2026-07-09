@@ -12,6 +12,8 @@ export default function Workspace({ project }) {
   const [textColumn, setTextColumn] = useState("");
   const [constructId, setConstructId] = useState("");
   const [modelName, setModelName] = useState("");
+  const [languages, setLanguages] = useState(["en"]);
+  const [language, setLanguage] = useState("en");
   const [uploading, setUploading] = useState(false);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
@@ -31,9 +33,11 @@ export default function Workspace({ project }) {
       .models()
       .then((m) => {
         setModels(m);
-        if (m.length) setModelName(m[0].name);
+        const def = m.find((x) => x.default) || m[0];
+        if (def) setModelName(def.id);
       })
       .catch((e) => setError(e.message));
+    api.languages().then(setLanguages).catch(() => {});
     refreshJobs();
   }, [project.id, refreshJobs]);
 
@@ -77,6 +81,7 @@ export default function Workspace({ project }) {
         construct_id: constructId,
         text_column: textColumn,
         model_name: modelName,
+        language,
       });
       await refreshJobs();
     } catch (err) {
@@ -196,11 +201,20 @@ export default function Workspace({ project }) {
           <>
             <ul className="construct-items">
               {construct.items.map((item, i) => (
-                <li key={i}>{item}</li>
+                <li key={i}>
+                  {item}
+                  {construct.reverse_scored?.[i] ? " (reverse-scored)" : ""}
+                </li>
               ))}
             </ul>
             {construct.reference && (
               <p className="small muted mt">Reference: {construct.reference}</p>
+            )}
+            {construct.verification_status !== "verified" && (
+              <p className="small muted">
+                ⚠ Item wording not yet verified verbatim against the original publication
+                (status: {construct.verification_status.replace("_", " ")}).
+              </p>
             )}
           </>
         )}
@@ -218,29 +232,50 @@ export default function Workspace({ project }) {
         )}
       </div>
 
-      {/* Step 3 — model + run */}
+      {/* Step 3 — language, model + run */}
       <div className="card">
         <h3>
-          <span className="step-badge">3</span>Model &amp; run
+          <span className="step-badge">3</span>Language, model &amp; run
         </h3>
         <p className="hint">
-          Embeddings run locally via sentence-transformers; the model is pinned and recorded
-          in the run metadata for reproducibility.
+          Embeddings run locally via sentence-transformers; model and language are recorded
+          in the run metadata. If the corpus doesn&apos;t match the selected language or the
+          model doesn&apos;t support it, you&apos;ll get a warning — never a silent result.
         </p>
         <div className="row">
+          <div style={{ minWidth: 170 }}>
+            <label className="field">
+              Text language
+              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                {languages.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
           <div className="grow">
-            <select value={modelName} onChange={(e) => setModelName(e.target.value)}>
-              {models.map((m) => (
-                <option key={m.name} value={m.name}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
+            <label className="field">
+              Embedding model
+              <select value={modelName} onChange={(e) => setModelName(e.target.value)}>
+                {models.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           <button className="primary" disabled={!canRun} onClick={handleRun}>
             {running ? "Starting…" : "Run CCR analysis"}
           </button>
         </div>
+        {models.find((m) => m.id === modelName)?.warnings?.map((w, i) => (
+          <p key={i} className="small muted">
+            ⚠ {w}
+          </p>
+        ))}
       </div>
 
       {/* Jobs */}

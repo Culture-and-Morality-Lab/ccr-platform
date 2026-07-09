@@ -1,6 +1,6 @@
 # Spec 0001 — Data-quality warnings: very short texts + likely wrong language
 
-**Status:** approved
+**Status:** implemented (2026-07-09)
 **Phase:** 0    **Design doc ref:** §12 (language), §11 pipeline step 3 (Text QA)
 **Requested by:** Mohammad (Slack brief: "proper warnings — wrong language, super short texts, super long texts")
 
@@ -57,4 +57,6 @@ splitting (future spec).
 - UI: no new components — existing warnings panel renders the message strings.
 
 ## Deviations (filled after implementation)
--
+- Detector: `langdetect` (seeded, deterministic) instead of lingua — ~1 MB pure-Python vs ~100 MB wheels; detector + version recorded in metadata so an upgrade stays traceable.
+- LANGUAGE_MISMATCH threshold implemented as majority-share >= 0.70 across sampled rows.
+- MODEL_NOTE (info) added: registry user_warnings surface per run (not in original spec).

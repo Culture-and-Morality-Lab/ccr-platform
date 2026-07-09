@@ -32,6 +32,8 @@ class ConstructCreate(BaseModel):
     description: str = ""
     reference: str = ""
     items: list[str] = Field(min_length=1)
+    reverse_scored: list[bool] | None = None  # parallel to items; defaults to all False
+    language: str = "en"
 
 
 class ConstructOut(BaseModel):
@@ -40,7 +42,13 @@ class ConstructOut(BaseModel):
     description: str
     reference: str
     items: list[str]
+    reverse_scored: list[bool] = []
     is_seed: bool
+    version: int = 1
+    verification_status: str = "draft"
+    language: str = "en"
+    category: str = ""
+    item_hash: str = ""  # first 16 hex chars for display
 
 
 class JobCreate(BaseModel):
@@ -48,7 +56,8 @@ class JobCreate(BaseModel):
     corpus_id: str
     construct_id: str
     text_column: str
-    model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    model_name: str = "all-minilm-l6-v2"  # registry id (spec 0003)
+    language: str = "en"
 
 
 class JobOut(BaseModel):
@@ -60,6 +69,7 @@ class JobOut(BaseModel):
     corpus_filename: str = ""
     text_column: str
     model_name: str
+    language: str = "en"
     status: str
     progress: float
     error: str

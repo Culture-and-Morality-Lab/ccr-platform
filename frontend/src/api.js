@@ -25,6 +25,7 @@ const json = (method, body) => ({
 export const api = {
   health: () => request("/api/health"),
   models: () => request("/api/models"),
+  languages: () => request("/api/languages"),
 
   listProjects: () => request("/api/projects"),
   createProject: (body) => request("/api/projects", json("POST", body)),
@@ -46,4 +47,6 @@ export const api = {
 
   exportUrl: (jobId) => `/api/jobs/${jobId}/export`,
   metadataUrl: (jobId) => `/api/jobs/${jobId}/metadata`,
+  scriptUrl: (jobId) => `/api/jobs/${jobId}/script`,
+  scriptRequirementsUrl: (jobId) => `/api/jobs/${jobId}/script-requirements`,
 };

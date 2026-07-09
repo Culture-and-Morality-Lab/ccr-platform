@@ -1,6 +1,6 @@
 # Spec 0002 — Reproduction script export (offline-runnable)
 
-**Status:** approved
+**Status:** implemented (2026-07-09)
 **Phase:** 0    **Design doc ref:** §14
 **Requested by:** Mohammad (Slack brief: "provide users with the Python script used for their analysis so they can reproduce it independently")
 
@@ -37,4 +37,5 @@ Notebook export; R script; re-running inside the platform from a script.
 - Requirements pinning: importlib.metadata versions at run time, stored in metadata, echoed to file.
 
 ## Deviations
--
+- Requirements served at /script-requirements (separate endpoint) rather than bundled zip.
+- Real-model parity integration test deferred to spec 0005's parity suite (fake-backend tests + compile check in place).

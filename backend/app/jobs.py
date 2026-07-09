@@ -23,10 +23,16 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-from .ccr import get_backend, run_ccr
+from . import registry, warnings_engine
+from .ccr import FAKE_MODEL_NAME, get_backend, run_ccr
+from .construct_lib import construct_snapshot
 from .db import DATA_DIR, SessionLocal
 from .ingest import load_corpus
 from .models import Construct, Corpus, Job
+from .reproducibility import record_environment
+
+PLATFORM_VERSION = "0.2.0"
+OUTPUT_SCHEMA_VERSION = "1.0"  # bump on ANY export-column change (CLAUDE.md hard rule)
 
 logger = logging.getLogger("ccr.jobs")
 
@@ -112,30 +118,61 @@ def run_job(job_id: str) -> None:
         def progress(frac: float):
             _set(db, job, progress=round(float(frac), 3))
 
-        backend = get_backend(job.model_name)
-        result = run_ccr(texts, items, backend, progress_cb=progress)
+        # Model config from the registry (spec 0003); the test fake has none.
+        model_cfg = None if job.model_name == FAKE_MODEL_NAME else registry.get_model(job.model_name)
+        item_prefix = model_cfg.item_prefix if (model_cfg and model_cfg.requires_prefix) else ""
+        text_prefix = model_cfg.text_prefix if (model_cfg and model_cfg.requires_prefix) else ""
 
-        # Data-quality warnings surfaced to the researcher, not buried in logs.
-        warnings = []
+        backend = get_backend(job.model_name)
+        result = run_ccr(
+            texts, items, backend,
+            progress_cb=progress, item_prefix=item_prefix, text_prefix=text_prefix,
+        )
+
+        # Structured data-quality warnings (spec 0001) — objects, never bare strings.
+        W = warnings_engine.warning
+        warnings: list[dict] = []
         if dropped:
-            warnings.append(f"{dropped} empty text row(s) were dropped before analysis.")
+            warnings.append(W(
+                "EMPTY_ROWS_DROPPED", "info",
+                f"{dropped} empty text row(s) were dropped before analysis.", count=dropped,
+            ))
         n_dupes = len(texts) - len(set(texts))
         if n_dupes:
-            warnings.append(
-                f"{n_dupes} duplicate text(s) detected — each is scored "
-                "independently; deduplicate upstream if unintended."
-            )
-        max_seq = result.metadata.get("model_max_seq_length")
+            warnings.append(W(
+                "DUPLICATE_TEXTS", "warning",
+                f"{n_dupes} duplicate text(s) detected — each is scored independently; "
+                "deduplicate upstream if unintended.", count=n_dupes,
+            ))
+        short = warnings_engine.short_text_warning(texts)
+        if short:
+            warnings.append(short)
+        max_seq = model_cfg.max_seq_length if model_cfg else result.metadata.get("model_max_seq_length")
         if max_seq:
             char_budget = int(max_seq) * 4  # rough chars-per-token heuristic
             n_long = sum(1 for t in texts if len(t) > char_budget)
             if n_long:
-                warnings.append(
-                    f"{n_long} text(s) likely exceed the model's {max_seq}-token "
-                    "window and were truncated; consider splitting long documents."
-                )
+                warnings.append(W(
+                    "TEXTS_MAYBE_TRUNCATED", "warning",
+                    f"{n_long} text(s) likely exceed the model's {max_seq}-token window and "
+                    "were truncated; consider splitting long documents.", count=n_long,
+                ))
         if parse_info.get("note"):
-            warnings.append(parse_info["note"])
+            warnings.append(W("ENCODING_FALLBACK", "warning", parse_info["note"]))
+
+        # Language checks: corpus-level detection + model-coverage (spec 0001, design §12).
+        selected_language = (job.language or "en").lower()
+        lang_result, lang_warnings = warnings_engine.detect_corpus_language(texts, selected_language)
+        warnings.extend(lang_warnings)
+        if model_cfg:
+            mlw = warnings_engine.model_language_warning(
+                selected_language, model_cfg.id, model_cfg.supported_languages,
+                model_cfg.language_set_name,
+            )
+            if mlw:
+                warnings.append(mlw)
+        for user_warning in (model_cfg.user_warnings if model_cfg else ()):
+            warnings.append(W("MODEL_NOTE", "info", user_warning))
 
         # Export mirrors ccr_wrapper's shape: input columns + per-item
         # similarity columns + overall score, so it drops into existing
@@ -181,14 +218,29 @@ def run_job(job_id: str) -> None:
         metadata = {
             **result.metadata,
             "job_id": job.id,
+            "platform_version": PLATFORM_VERSION,
+            "output_schema_version": OUTPUT_SCHEMA_VERSION,
             "corpus_file": corpus.filename,
             "corpus_parse_info": parse_info,
             "text_column": job.text_column,
+            "language": lang_result.as_metadata(),
             "construct": construct.name,
             "construct_reference": construct.reference,
+            "construct_snapshot": construct_snapshot(construct),
+            "model_registry_id": model_cfg.id if model_cfg else job.model_name,
+            "provider_model_id": model_cfg.provider_model_id if model_cfg else job.model_name,
+            "model_revision": model_cfg.revision if model_cfg else None,
+            "scoring": {"adjustment_strategy": "none", "aggregate": "mean_all_items"},
+            "output_schema": (
+                list(work_df.columns)
+                + [f"sim_item_{j + 1}" for j in range(result.similarities.shape[1])]
+                + ["ccr_score"]
+            ),
+            "warnings": warnings,
             "n_rows_input": int(corpus.n_rows),
             "n_rows_dropped_empty": dropped,
         }
+        record_environment(metadata)  # pins exact package versions for the repro bundle
 
         _set(
             db,

@@ -1,6 +1,6 @@
 # Spec 0003 — Registry-driven models + language selection (brief)
 
-**Status:** approved (brief — expand contract during implementation)
+**Status:** implemented (2026-07-09)
 **Phase:** 0    **Design doc ref:** §12, §13
 
 Wire the backend and UI to `packages/model_registry/models.yaml` instead of the hardcoded

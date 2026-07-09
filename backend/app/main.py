@@ -15,15 +15,18 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from . import jobs as jobs_module
-from .ccr import AVAILABLE_MODELS, FAKE_MODEL_NAME
+from . import registry
+from .ccr import FAKE_MODEL_NAME
+from .construct_lib import sync_library
 from .db import DATA_DIR, Base, SessionLocal, engine, get_db
 from .ingest import IngestError, load_corpus, suggest_text_column
 from .models import Construct, Corpus, Job, Project
+from .reproducibility import requirements_text, script_text
 from .schemas import (
     ConstructCreate,
     ConstructOut,
@@ -33,29 +36,23 @@ from .schemas import (
     ProjectCreate,
     ProjectOut,
 )
-from .seed_constructs import SEED_CONSTRUCTS
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # sane lab-scale ceiling; raise deliberately
 ALLOWED_SUFFIXES = (".csv", ".xlsx", ".xls")
 
+# Languages offered in the UI selector; detection may report others (ISO 639-1).
+SELECTABLE_LANGUAGES = [
+    "en", "es", "fr", "de", "it", "pt", "nl", "ru", "zh", "ja", "ko", "ar", "hi", "tr", "fa",
+]
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    """Create tables and seed the construct library once at startup."""
+    """Create tables and sync the construct library (YAML source of truth) at startup."""
     Base.metadata.create_all(engine)
+    registry.list_models()  # fail fast on an invalid models.yaml
     db = SessionLocal()
     try:
-        if db.query(Construct).filter_by(is_seed=True).count() == 0:
-            for seed in SEED_CONSTRUCTS:
-                db.add(
-                    Construct(
-                        name=seed["name"],
-                        description=seed["description"],
-                        reference=seed["reference"],
-                        items_json=json.dumps(seed["items"]),
-                        is_seed=True,
-                    )
-                )
-            db.commit()
+        sync_library(db)
     finally:
         db.close()
     jobs_module.recover_orphaned_jobs()
@@ -75,13 +72,21 @@ app.add_middleware(
 
 # ---------------------------------------------------------------- helpers
 def _construct_out(c: Construct) -> ConstructOut:
+    items = json.loads(c.items_json)
+    flags = json.loads(c.reverse_flags_json or "[]") or [False] * len(items)
     return ConstructOut(
         id=c.id,
         name=c.name,
         description=c.description,
         reference=c.reference,
-        items=json.loads(c.items_json),
+        items=items,
+        reverse_scored=flags,
         is_seed=c.is_seed,
+        version=c.version or 1,
+        verification_status=c.verification_status or "draft",
+        language=c.language or "en",
+        category=c.category or "",
+        item_hash=(c.item_hash or "")[:16],
     )
 
 
@@ -97,6 +102,7 @@ def _job_out(db: Session, j: Job) -> JobOut:
         corpus_filename=corpus.filename if corpus else "",
         text_column=j.text_column,
         model_name=j.model_name,
+        language=j.language or "en",
         status=j.status,
         progress=j.progress,
         error=j.error,
@@ -127,7 +133,24 @@ def health():
 
 @app.get("/api/models")
 def list_models():
-    return AVAILABLE_MODELS
+    """Model options from the registry (spec 0003) — never hardcoded."""
+    return [
+        {
+            "id": m.id,
+            "label": m.display_name,
+            "default": m.default,
+            "languages": (m.language_set_name or ", ".join(sorted(m.supported_languages)) or "unspecified"),
+            "speed_tier": m.speed_tier,
+            "quality_tier": m.quality_tier,
+            "warnings": list(m.user_warnings),
+        }
+        for m in registry.list_models()
+    ]
+
+
+@app.get("/api/languages")
+def list_languages():
+    return SELECTABLE_LANGUAGES
 
 
 # --------------------------------------------------------------- projects
@@ -227,12 +250,18 @@ def create_construct(body: ConstructCreate, db: Session = Depends(get_db)):
     items = [i.strip() for i in body.items if i.strip()]
     if not items:
         raise HTTPException(400, "Construct needs at least one non-empty item.")
+    flags = body.reverse_scored or [False] * len(items)
+    if len(flags) != len(items):
+        raise HTTPException(400, "reverse_scored must have one flag per item.")
     construct = Construct(
         name=body.name.strip(),
         description=body.description.strip(),
         reference=body.reference.strip(),
         items_json=json.dumps(items),
+        reverse_flags_json=json.dumps([bool(f) for f in flags]),
         is_seed=False,
+        verification_status="draft",  # user-defined research tools, not validated scales
+        language=(body.language or "en").lower(),
     )
     db.add(construct)
     db.commit()
@@ -248,9 +277,12 @@ def create_job(body: JobCreate, db: Session = Depends(get_db)):
 
     if body.text_column not in json.loads(corpus.columns_json):
         raise HTTPException(400, f"Column '{body.text_column}' not in corpus columns.")
-    allowed = {m["name"] for m in AVAILABLE_MODELS} | {FAKE_MODEL_NAME}
+    allowed = registry.known_ids() | {FAKE_MODEL_NAME}
     if body.model_name not in allowed:
         raise HTTPException(400, f"Unknown model '{body.model_name}'.")
+    language = (body.language or "en").strip().lower()
+    if not (2 <= len(language) <= 8 and language.replace("-", "").isalpha()):
+        raise HTTPException(400, f"Invalid language code '{body.language}'.")
 
     job = Job(
         project_id=body.project_id,
@@ -258,6 +290,7 @@ def create_job(body: JobCreate, db: Session = Depends(get_db)):
         construct_id=body.construct_id,
         text_column=body.text_column,
         model_name=body.model_name,
+        language=language,
     )
     db.add(job)
     db.commit()
@@ -308,6 +341,35 @@ def export_metadata(job_id: str, db: Session = Depends(get_db)):
         json.loads(job.metadata_json),
         headers={
             "Content-Disposition": f'attachment; filename="ccr_run_{job_id[:8]}.json"'
+        },
+    )
+
+
+@app.get("/api/jobs/{job_id}/script")
+def export_script(job_id: str, db: Session = Depends(get_db)):
+    """Offline-runnable reproduction script generated from run metadata (spec 0002)."""
+    job = _get_or_404(db, Job, job_id)
+    if job.status != "completed":
+        raise HTTPException(409, "Script not available until the run completes.")
+    return PlainTextResponse(
+        script_text(json.loads(job.metadata_json)),
+        media_type="text/x-python",
+        headers={
+            "Content-Disposition": f'attachment; filename="reproduce_analysis_{job_id[:8]}.py"'
+        },
+    )
+
+
+@app.get("/api/jobs/{job_id}/script-requirements")
+def export_script_requirements(job_id: str, db: Session = Depends(get_db)):
+    job = _get_or_404(db, Job, job_id)
+    if job.status != "completed":
+        raise HTTPException(409, "Requirements not available until the run completes.")
+    return PlainTextResponse(
+        requirements_text(json.loads(job.metadata_json)),
+        media_type="text/plain",
+        headers={
+            "Content-Disposition": f'attachment; filename="requirements-repro_{job_id[:8]}.txt"'
         },
     )
 

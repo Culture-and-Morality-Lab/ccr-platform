@@ -33,6 +33,12 @@ export default function ResultsView({ jobId, onBack }) {
           <a href={api.exportUrl(jobId)}>
             <button className="primary">Export results CSV</button>
           </a>
+          <a href={api.scriptUrl(jobId)}>
+            <button className="ghost">Python script</button>
+          </a>
+          <a href={api.scriptRequirementsUrl(jobId)}>
+            <button className="ghost">requirements.txt</button>
+          </a>
           <a href={api.metadataUrl(jobId)}>
             <button className="ghost">Run metadata (JSON)</button>
           </a>
@@ -64,7 +70,13 @@ export default function ResultsView({ jobId, onBack }) {
             <strong className="small">Data-quality notes</strong>
             <ul className="small" style={{ margin: "4px 0 0", paddingLeft: 20 }}>
               {summary.warnings.map((w, i) => (
-                <li key={i}>{w}</li>
+                <li key={i}>
+                  {typeof w === "string" ? w : (
+                    <>
+                      <code style={{ fontSize: 11 }}>{w.code}</code> — {w.message}
+                    </>
+                  )}
+                </li>
               ))}
             </ul>
           </div>

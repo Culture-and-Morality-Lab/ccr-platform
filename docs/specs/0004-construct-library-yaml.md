@@ -1,6 +1,6 @@
 # Spec 0004 — Construct library from YAML (brief)
 
-**Status:** approved (brief — expand during implementation)
+**Status:** implemented (2026-07-09)
 **Phase:** 0/1    **Design doc ref:** §10.1, §11
 **Context:** Mohammad's assistant will send questionnaires to add.
 
