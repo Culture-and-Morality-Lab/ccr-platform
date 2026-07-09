@@ -16,6 +16,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 - Project-wide style rule: no em dashes in any project text (enforced by an edit hook).
 
 ### Fixed
+- Existing local databases no longer 500 after schema additions: additive
+  SQLite auto-migration adds missing columns at startup (Alembic replaces this in
+  Phase 2 with Postgres).
 - Job worker survives lifespan restarts (dev reload previously killed job submission
   permanently).
 

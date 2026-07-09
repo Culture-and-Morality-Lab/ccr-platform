@@ -24,7 +24,7 @@ from . import jobs as jobs_module
 from . import registry
 from .ccr import FAKE_MODEL_NAME
 from .construct_lib import sync_library
-from .db import DATA_DIR, Base, SessionLocal, engine, get_db
+from .db import DATA_DIR, Base, SessionLocal, auto_migrate_sqlite, engine, get_db
 from .ingest import IngestError, load_corpus, suggest_text_column
 from .models import Construct, Corpus, Job, Project
 from .reproducibility import requirements_text, script_text
@@ -52,6 +52,7 @@ SELECTABLE_LANGUAGES = [
 async def lifespan(_: FastAPI):
     """Create tables and sync the construct library (YAML source of truth) at startup."""
     Base.metadata.create_all(engine)
+    auto_migrate_sqlite(engine, Base.metadata)  # additive column adds for existing dev DBs
     registry.list_models()  # fail fast on an invalid models.yaml
     db = SessionLocal()
     try:
