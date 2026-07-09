@@ -156,7 +156,34 @@ def list_languages():
 # --------------------------------------------------------------- projects
 @app.get("/api/projects", response_model=list[ProjectOut])
 def list_projects(db: Session = Depends(get_db)):
-    return db.query(Project).order_by(Project.created_at.desc()).all()
+    """Projects ordered by last activity (latest run, else creation) — the
+    project a researcher wants is almost always the one they last worked on."""
+    from sqlalchemy import func
+
+    activity = {
+        pid: (last, count)
+        for pid, last, count in db.query(
+            Job.project_id, func.max(Job.created_at), func.count(Job.id)
+        )
+        .group_by(Job.project_id)
+        .all()
+    }
+    rows = db.query(Project).all()
+    out = []
+    for p in rows:
+        last, count = activity.get(p.id, (None, 0))
+        out.append(
+            ProjectOut(
+                id=p.id,
+                name=p.name,
+                description=p.description,
+                created_at=p.created_at,
+                last_activity_at=last or p.created_at,
+                n_runs=count,
+            )
+        )
+    out.sort(key=lambda x: x.last_activity_at, reverse=True)
+    return out
 
 
 @app.post("/api/projects", response_model=ProjectOut, status_code=201)
@@ -164,7 +191,14 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db)):
     project = Project(name=body.name.strip(), description=body.description.strip())
     db.add(project)
     db.commit()
-    return project
+    return ProjectOut(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        created_at=project.created_at,
+        last_activity_at=project.created_at,
+        n_runs=0,
+    )
 
 
 # ----------------------------------------------------------------- corpora

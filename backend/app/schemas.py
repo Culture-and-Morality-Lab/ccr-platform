@@ -13,6 +13,8 @@ class ProjectOut(BaseModel):
     name: str
     description: str
     created_at: str
+    last_activity_at: str = ""  # latest run creation, else project creation
+    n_runs: int = 0
 
 
 class CorpusOut(BaseModel):

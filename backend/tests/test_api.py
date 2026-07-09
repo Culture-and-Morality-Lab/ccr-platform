@@ -187,6 +187,16 @@ def test_validation_errors(client, flow):
     assert resp.status_code == 400
 
 
+def test_projects_carry_activity_and_sort_by_it(client, flow):
+    projects = client.get("/api/projects").json()
+    demo = next(p for p in projects if p["id"] == flow["project"]["id"])
+    assert demo["n_runs"] >= 1
+    assert demo["last_activity_at"] >= demo["created_at"]
+    # the project with runs sorts above a freshly created empty one from earlier tests
+    order = [p["last_activity_at"] for p in projects]
+    assert order == sorted(order, reverse=True)
+
+
 # --------------------------------------------------- spec 0003: models API
 def test_models_endpoint_from_registry(client):
     models = client.get("/api/models").json()

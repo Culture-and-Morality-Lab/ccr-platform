@@ -181,7 +181,7 @@ export default function Workspace({ project }) {
           Pick a validated scale from the library, or define custom items. CCR scores each
           text by its similarity to these items.
         </p>
-        <div className="row">
+        <div className="construct-row">
           <div className="grow">
             <select value={constructId} onChange={(e) => setConstructId(e.target.value)}>
               <option value="">— select construct —</option>
@@ -242,32 +242,28 @@ export default function Workspace({ project }) {
           in the run metadata. If the corpus doesn&apos;t match the selected language or the
           model doesn&apos;t support it, you&apos;ll get a warning — never a silent result.
         </p>
-        <div className="row">
-          <div className="language-control">
-            <label className="field">
-              Text language
-              <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                {languages.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <div className="grow">
-            <label className="field">
-              Embedding model
-              <select value={modelName} onChange={(e) => setModelName(e.target.value)}>
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <button className="primary" disabled={!canRun} onClick={handleRun}>
+        <div className="run-settings">
+          <label className="field language-control">
+            Text language
+            <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+              {languages.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field model-control">
+            Embedding model
+            <select value={modelName} onChange={(e) => setModelName(e.target.value)}>
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="primary run-button" disabled={!canRun} onClick={handleRun}>
             {running ? "Starting…" : "Run CCR analysis"}
           </button>
         </div>

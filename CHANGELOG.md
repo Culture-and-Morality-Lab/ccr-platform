@@ -5,8 +5,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Fixed
+- Project sidebar redesigned for growing lists: always-visible search, recency groups
+  (Today / This week / Earlier), per-project run count + relative last-activity time,
+  and ordering by last activity instead of creation date.
 - Improved dashboard responsive layout, focus states, and table overflow handling on
   narrow screens.
+- Aligned the run-analysis action with the model/language controls and made the project
+  sidebar scroll cleanly as project counts grow.
 
 ### Added
 - Repository initialized from the public demo (v0.1 feature set: projects, tolerant CSV/XLSX
