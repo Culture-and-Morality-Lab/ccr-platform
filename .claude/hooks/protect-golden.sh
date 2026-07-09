@@ -8,7 +8,7 @@ file_path="$(printf '%s' "$input" | python3 -c 'import sys,json; d=json.load(sys
 
 case "$file_path" in
   *"evals/expected_outputs/"*)
-    echo "BLOCKED: $file_path is a golden expected output. Golden files change only via explicit human approval — ask Deva to update it manually or approve a regeneration script." >&2
+    echo "BLOCKED: $file_path is a golden expected output. Golden files change only via explicit human approval - ask Deva to update it manually or approve a regeneration script." >&2
     exit 2
     ;;
   *"backend/data/"*)

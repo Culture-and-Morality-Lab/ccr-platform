@@ -15,6 +15,15 @@ class ProjectOut(BaseModel):
     created_at: str
     last_activity_at: str = ""  # latest run creation, else project creation
     n_runs: int = 0
+    archived: bool = False
+
+
+class ProjectPatch(BaseModel):
+    archived: bool | None = None
+
+
+class DemoLogin(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
 
 
 class CorpusOut(BaseModel):

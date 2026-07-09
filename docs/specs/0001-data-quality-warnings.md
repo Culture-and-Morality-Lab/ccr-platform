@@ -1,13 +1,13 @@
-# Spec 0001 — Data-quality warnings: very short texts + likely wrong language
+# Spec 0001 - Data-quality warnings: very short texts + likely wrong language
 
 **Status:** implemented (2026-07-09)
 **Phase:** 0    **Design doc ref:** §12 (language), §11 pipeline step 3 (Text QA)
-**Requested by:** Mohammad (Slack brief: "proper warnings — wrong language, super short texts, super long texts")
+**Requested by:** Mohammad (Slack brief: "proper warnings - wrong language, super short texts, super long texts")
 
 ## Problem
 Researchers upload corpora with rows that embed unreliably (very short texts) or that don't
 match the language they selected. Today the platform warns about empties, duplicates, and
-truncation-length texts, but not about short texts or language mismatch — so silent validity
+truncation-length texts, but not about short texts or language mismatch - so silent validity
 problems reach published results.
 
 ## Contract
@@ -25,7 +25,7 @@ problems reach published results.
 
 **Language detection design:**
 - Corpus-level only: sample up to 200 rows with ≥ 5 tokens; if < 20 such rows → LANGUAGE_UNCERTAIN.
-- Library: `lingua-language-detector` (pure-Python wheels, no torch) — add to requirements; record library+version in metadata.
+- Library: `lingua-language-detector` (pure-Python wheels, no torch) - add to requirements; record library+version in metadata.
 - Never block on language; user may proceed (design §12 user-override rule).
 
 **Warning object schema (all warnings migrate to this shape):**
@@ -51,12 +51,12 @@ splitting (future spec).
 - golden: sample_corpus.csv against SWLS produces byte-stable warning set
 
 ## Implementation notes
-- Warning construction centralizes in a new `warnings.py` module (engine-side, pure) — first
+- Warning construction centralizes in a new `warnings.py` module (engine-side, pure) - first
   extraction step toward packages/ccr_engine.
 - Detection runs once at job start on the parsed dataframe; result flows into metadata + warnings.
-- UI: no new components — existing warnings panel renders the message strings.
+- UI: no new components - existing warnings panel renders the message strings.
 
 ## Deviations (filled after implementation)
-- Detector: `langdetect` (seeded, deterministic) instead of lingua — ~1 MB pure-Python vs ~100 MB wheels; detector + version recorded in metadata so an upgrade stays traceable.
+- Detector: `langdetect` (seeded, deterministic) instead of lingua - ~1 MB pure-Python vs ~100 MB wheels; detector + version recorded in metadata so an upgrade stays traceable.
 - LANGUAGE_MISMATCH threshold implemented as majority-share >= 0.70 across sampled rows.
 - MODEL_NOTE (info) added: registry user_warnings surface per run (not in original spec).

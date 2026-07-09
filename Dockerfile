@@ -1,4 +1,4 @@
-# CCR Platform — Cloud Run / container deployment.
+# CCR Platform - Cloud Run / container deployment.
 # The embedding model is baked into the image so the first request
 # doesn't trigger a ~90 MB download (critical for demo cold starts).
 
@@ -15,7 +15,7 @@ WORKDIR /srv
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download ALL offered models into the image layer — a user picking a
+# Pre-download ALL offered models into the image layer - a user picking a
 # non-default model must not trigger a multi-hundred-MB download mid-job
 # (looks like a hang). Make the cache usable by any runtime UID.
 RUN python -c "from sentence_transformers import SentenceTransformer; \
@@ -28,7 +28,7 @@ RUN python -c "from sentence_transformers import SentenceTransformer; \
 COPY backend/app ./app
 COPY backend/static ./static
 
-# Demo note: SQLite + uploads live on the container's ephemeral disk —
+# Demo note: SQLite + uploads live on the container's ephemeral disk -
 # data resets on restart/redeploy. Acceptable for a demo; use
 # Postgres + S3/GCS object storage before any real use.
 EXPOSE 7860

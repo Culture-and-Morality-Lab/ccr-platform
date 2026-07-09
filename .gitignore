@@ -4,7 +4,7 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# runtime data (DB, uploaded corpora, results) — never commit research data
+# runtime data (DB, uploaded corpora, results) - never commit research data
 backend/data/
 
 # node

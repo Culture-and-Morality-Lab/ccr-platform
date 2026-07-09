@@ -3,7 +3,7 @@
 
 Run: python packages/construct_library/validate_constructs.py
 The item hash (sha256 of normalized item text + order + flags + language + version)
-is the construct's identity in run metadata — this validator is the reference
+is the construct's identity in run metadata - this validator is the reference
 implementation of that hash (design doc §10.1).
 """
 
@@ -55,11 +55,11 @@ def main() -> int:
             errors.append(f"{name}: duplicate item texts")
         key = (c["construct_id"], c["version"])
         if key in seen:
-            errors.append(f"{name}: duplicate (construct_id, version) with {seen[key].name} — versions are append-only")
+            errors.append(f"{name}: duplicate (construct_id, version) with {seen[key].name} - versions are append-only")
         seen[key] = f
 
         if all(i.get("reverse_scored") for i in c["items"]):
-            print(f"  WARN {name}: ALL items reverse-scored — aggregate will be blocked under exclude_reversed.")
+            print(f"  WARN {name}: ALL items reverse-scored - aggregate will be blocked under exclude_reversed.")
 
         if not errors or all(name not in e for e in errors):
             print(f"  OK   {name}  v{c['version']}  items={len(c['items'])}  hash={item_hash(c)[:16]}  [{c['verification_status']}]")
@@ -69,7 +69,7 @@ def main() -> int:
         for e in errors:
             print(f"  ERROR: {e}")
         return 1
-    print(f"construct library OK — {len(files)} construct(s)")
+    print(f"construct library OK - {len(files)} construct(s)")
     return 0
 
 

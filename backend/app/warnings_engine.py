@@ -1,12 +1,12 @@
 """Structured data-quality warnings (spec 0001, design doc §12).
 
-Every warning is an object — {code, severity, message, count?, affected_rows_sample?} —
+Every warning is an object - {code, severity, message, count?, affected_rows_sample?} -
 never a bare string. Codes are UPPER_SNAKE and stable: downstream notebooks and the UI
 key off them. Severity: "info" (status, not a problem) | "warning" (proceed with care).
 Language detection is corpus-level only; short texts are exactly where detection is
 unreliable, so uncertainty is reported instead of guessed away.
 
-Deviation from spec 0001 (recorded there): langdetect instead of lingua — pure-Python,
+Deviation from spec 0001 (recorded there): langdetect instead of lingua - pure-Python,
 ~1 MB vs ~100 MB wheels; seeded for determinism. Upgrade path preserved by recording
 detector + version in metadata.
 """
@@ -75,7 +75,7 @@ def detect_corpus_language(texts: list[str], selected: str) -> tuple[LanguageRes
     except Exception:
         detector_version = "unknown"
 
-    DetectorFactory.seed = 0  # determinism — same corpus, same result, every run
+    DetectorFactory.seed = 0  # determinism - same corpus, same result, every run
 
     detectable = [t for t in texts if len(t.split()) >= DETECT_MIN_TOKENS][:DETECT_SAMPLE_MAX]
     warnings: list[dict] = []

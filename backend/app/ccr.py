@@ -1,4 +1,4 @@
-"""CCR engine — Contextualized Construct Representations.
+"""CCR engine - Contextualized Construct Representations.
 
 Method (Atari, Omrani et al.): embed validated questionnaire items and the
 texts to be analyzed with a contextual sentence-embedding model, then take
@@ -7,7 +7,7 @@ similarities are the text's "loadings" on the construct; their mean is the
 overall CCR score.
 
 The embedding model is injected behind a small interface so that:
-  * production uses sentence-transformers (local, pinned, reproducible —
+  * production uses sentence-transformers (local, pinned, reproducible -
     corpora never leave the machine), and
   * tests/CI use a deterministic hash-based embedder with no ML dependency.
 """
@@ -126,7 +126,7 @@ class CCRResult:
 
 
 # Item-set embeddings are tiny and constantly reused (same construct run
-# against many corpora) — cache them per (model, exact item wording).
+# against many corpora) - cache them per (model, exact item wording).
 _item_embedding_cache: dict[tuple[str, str], np.ndarray] = {}
 
 
@@ -150,7 +150,7 @@ def run_ccr(
 ) -> CCRResult:
     """Compute CCR loadings: cosine(text, item) for every text × item pair.
 
-    Prefixes come from the model registry's usage_config — E5-family models require
+    Prefixes come from the model registry's usage_config - E5-family models require
     "query: " on BOTH sides for symmetric similarity. Prefixed strings feed the
     encoder only; raw wording is what gets hashed and exported.
     """

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.js";
 import ResultsView from "./ResultsView.jsx";
 
-export default function Workspace({ project }) {
+export default function Workspace({ project, auth, onProjectChanged, onProjectDeleted }) {
   const [corpora, setCorpora] = useState([]);
   const [constructs, setConstructs] = useState([]);
   const [models, setModels] = useState([]);
@@ -19,7 +19,28 @@ export default function Workspace({ project }) {
   const [error, setError] = useState("");
   const [showNewConstruct, setShowNewConstruct] = useState(false);
   const [viewJobId, setViewJobId] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
   const fileRef = useRef(null);
+
+  async function toggleArchive() {
+    try {
+      await api.patchProject(project.id, { archived: !project.archived });
+      onProjectChanged?.();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      await api.deleteProject(project.id);
+      setConfirmDelete(false);
+      onProjectDeleted?.();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
   const refreshJobs = useCallback(
     () => api.listJobs(project.id).then(setJobs).catch(() => {}),
@@ -113,13 +134,78 @@ export default function Workspace({ project }) {
         </div>
       )}
 
-      {/* Step 1 — corpus */}
+      {/* Project header + actions */}
+      <div className="project-header">
+        <div>
+          <span className="project-title">{project.name}</span>
+          {project.archived && <span className="pill queued">archived</span>}
+        </div>
+        <div className="row">
+          <button className="ghost" onClick={toggleArchive}>
+            {project.archived ? "Unarchive" : "Archive"}
+          </button>
+          <button className="ghost danger" onClick={() => setConfirmDelete(true)}>
+            Delete
+          </button>
+        </div>
+      </div>
+
+      {confirmDelete && (
+        <div className="modal-backdrop" onClick={() => setConfirmDelete(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete "{project.name}"?</h3>
+            <p className="hint">
+              This permanently deletes {corpora.length} dataset{corpora.length === 1 ? "" : "s"},{" "}
+              {jobs.length} run{jobs.length === 1 ? "" : "s"}, and all uploaded and result files.
+              This cannot be undone. If you might need it later, use Archive instead.
+            </p>
+            <label className="field">
+              Type the project name to confirm
+              <input
+                type="text"
+                autoFocus
+                value={deleteText}
+                onChange={(e) => setDeleteText(e.target.value)}
+                placeholder={project.name}
+              />
+            </label>
+            <div className="row">
+              <button
+                className="primary danger-solid"
+                disabled={deleteText !== project.name}
+                onClick={handleDelete}
+              >
+                Delete permanently
+              </button>
+              <button
+                className="ghost"
+                onClick={() => {
+                  setConfirmDelete(false);
+                  setDeleteText("");
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 1 - corpus */}
       <div className="card">
         <h3>
           <span className="step-badge">1</span>Corpus
         </h3>
         <p className="hint">
           Upload a CSV or XLSX file, then choose the column containing the text to analyze.
+          {auth && !auth.signed_in && auth.limits?.max_rows && (
+            <>
+              {" "}
+              Anonymous limit: {Math.round(auth.limits.max_bytes / 1048576)} MB /{" "}
+              {auth.limits.max_rows.toLocaleString()} rows per file; sign in (top right) for
+              larger uploads.
+            </>
+          )}
         </p>
         <div className="row">
           <div className="grow">
@@ -139,7 +225,7 @@ export default function Workspace({ project }) {
             <label className="field">
               Corpus
               <select value={corpusId} onChange={(e) => setCorpusId(e.target.value)}>
-                <option value="">— select —</option>
+                <option value="">- select -</option>
                 {corpora.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.filename} ({c.n_rows.toLocaleString()} rows)
@@ -156,7 +242,7 @@ export default function Workspace({ project }) {
                 onChange={(e) => setTextColumn(e.target.value)}
                 disabled={!corpus}
               >
-                <option value="">— select —</option>
+                <option value="">- select -</option>
                 {corpus?.columns.map((col) => (
                   <option key={col} value={col}>
                     {col}
@@ -172,7 +258,7 @@ export default function Workspace({ project }) {
         )}
       </div>
 
-      {/* Step 2 — construct */}
+      {/* Step 2 - construct */}
       <div className="card">
         <h3>
           <span className="step-badge">2</span>Construct
@@ -184,7 +270,7 @@ export default function Workspace({ project }) {
         <div className="construct-row">
           <div className="grow">
             <select value={constructId} onChange={(e) => setConstructId(e.target.value)}>
-              <option value="">— select construct —</option>
+              <option value="">- select construct -</option>
               {constructs.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name} ({c.items.length} items{c.is_seed ? ", library" : ", custom"})
@@ -232,7 +318,7 @@ export default function Workspace({ project }) {
         )}
       </div>
 
-      {/* Step 3 — language, model + run */}
+      {/* Step 3 - language, model + run */}
       <div className="card">
         <h3>
           <span className="step-badge">3</span>Language, model &amp; run
@@ -240,7 +326,7 @@ export default function Workspace({ project }) {
         <p className="hint">
           Embeddings run locally via sentence-transformers; model and language are recorded
           in the run metadata. If the corpus doesn&apos;t match the selected language or the
-          model doesn&apos;t support it, you&apos;ll get a warning — never a silent result.
+          model doesn&apos;t support it, you&apos;ll get a warning - never a silent result.
         </p>
         <div className="run-settings">
           <label className="field language-control">
@@ -380,7 +466,7 @@ function NewConstructForm({ onCreated, onError }) {
         </div>
       </div>
       <label className="field">
-        Scale items — one per line, verbatim from the validated instrument
+        Scale items - one per line, verbatim from the validated instrument
         <textarea rows={5} value={itemsText} onChange={(e) => setItemsText(e.target.value)} />
       </label>
       <button className="primary" type="submit" disabled={saving}>

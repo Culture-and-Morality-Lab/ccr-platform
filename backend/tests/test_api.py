@@ -1,8 +1,8 @@
 """End-to-end API tests: project -> upload -> job -> results -> export.
 
 Run against the fake embedding backend (model_name = 'fake-deterministic'),
-exercising the full pipeline — tolerant upload parsing, the real job queue
-(worker thread + polling), results summary, warnings, and export shape —
+exercising the full pipeline - tolerant upload parsing, the real job queue
+(worker thread + polling), results summary, warnings, and export shape -
 without ML dependencies.
 """
 
@@ -81,7 +81,7 @@ def test_health(client):
 def test_seed_constructs_present(client):
     names = {c["name"] for c in client.get("/api/constructs").json()}
     assert "Satisfaction with Life" in names
-    assert "Moral Foundations — Care" in names
+    assert "Moral Foundations - Care" in names
 
 
 def test_corpus_upload_parses_columns(flow):

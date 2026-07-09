@@ -35,7 +35,7 @@ def main() -> int:
         print(f"  {score:6.3f}  {text}")
 
     ok = min(result.scores[0], result.scores[1]) > max(result.scores[2], result.scores[3])
-    print("\nPASS — satisfaction texts outrank neutral texts." if ok else "\nCHECK — unexpected ordering; inspect installation.")
+    print("\nPASS - satisfaction texts outrank neutral texts." if ok else "\nCHECK - unexpected ordering; inspect installation.")
     return 0 if ok else 1
 
 if __name__ == "__main__":

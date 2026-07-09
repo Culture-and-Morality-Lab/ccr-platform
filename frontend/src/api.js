@@ -29,6 +29,12 @@ export const api = {
 
   listProjects: () => request("/api/projects"),
   createProject: (body) => request("/api/projects", json("POST", body)),
+  patchProject: (projectId, body) => request(`/api/projects/${projectId}`, json("PATCH", body)),
+  deleteProject: (projectId) => fetch(`/api/projects/${projectId}`, { method: "DELETE" }),
+
+  authMe: () => request("/api/auth/me"),
+  demoLogin: (name) => request("/api/auth/demo/login", json("POST", { name })),
+  logout: () => request("/api/auth/logout", { method: "POST" }),
 
   listCorpora: (projectId) => request(`/api/projects/${projectId}/corpora`),
   uploadCorpus: (projectId, file) => {

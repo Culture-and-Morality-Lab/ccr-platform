@@ -1,11 +1,11 @@
-"""Construct library loader — seeds the DB from packages/construct_library/constructs/.
+"""Construct library loader - seeds the DB from packages/construct_library/constructs/.
 
 Source of truth is the versioned YAML files (spec 0004, design doc §10.1). Rules:
-  * append-only: (construct_id, version) is immutable — same version with changed
+  * append-only: (construct_id, version) is immutable - same version with changed
     items is a hard error, never a silent update;
   * item_hash uses the REFERENCE implementation from validate_constructs.py (loaded
     by file path) so validator, seeder, and metadata always agree;
-  * verification_status flows to the UI — unverified wording is visibly flagged.
+  * verification_status flows to the UI - unverified wording is visibly flagged.
 
 New questionnaires from the lab land as new YAML files; `python packages/construct_library/
 validate_constructs.py` first, then restart the app (or call sync) to pick them up.

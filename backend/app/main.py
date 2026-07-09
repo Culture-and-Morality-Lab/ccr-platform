@@ -1,4 +1,4 @@
-"""CCR Platform — FastAPI application.
+"""CCR Platform - FastAPI application.
 
 Single deployable: serves the JSON API under /api and the prebuilt React
 dashboard as static files at /. Local-first by design: corpora, embeddings,
@@ -13,12 +13,13 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
+from . import auth_demo
 from . import jobs as jobs_module
 from . import registry
 from .ccr import FAKE_MODEL_NAME
@@ -31,10 +32,12 @@ from .schemas import (
     ConstructCreate,
     ConstructOut,
     CorpusOut,
+    DemoLogin,
     JobCreate,
     JobOut,
     ProjectCreate,
     ProjectOut,
+    ProjectPatch,
 )
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # sane lab-scale ceiling; raise deliberately
@@ -133,7 +136,7 @@ def health():
 
 @app.get("/api/models")
 def list_models():
-    """Model options from the registry (spec 0003) — never hardcoded."""
+    """Model options from the registry (spec 0003) - never hardcoded."""
     return [
         {
             "id": m.id,
@@ -153,10 +156,47 @@ def list_languages():
     return SELECTABLE_LANGUAGES
 
 
+# ---------------------------------------------------- demo auth (placeholder)
+@app.get("/api/auth/me")
+def auth_me(user: dict | None = Depends(auth_demo.get_current_user)):
+    return {
+        "signed_in": user is not None,
+        "name": user["name"] if user else None,
+        "demo": True,
+        "limits": (
+            {"max_bytes": MAX_UPLOAD_BYTES, "max_rows": None}
+            if user
+            else {"max_bytes": auth_demo.anon_max_bytes(), "max_rows": auth_demo.anon_max_rows()}
+        ),
+    }
+
+
+@app.post("/api/auth/demo/login")
+def demo_login(body: DemoLogin, response: Response):
+    """Placeholder session for tier testing. Replaced by managed auth in Phase 2."""
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(400, "Name cannot be empty.")
+    response.set_cookie(
+        auth_demo.COOKIE_NAME,
+        auth_demo.create_token(name),
+        httponly=True,
+        samesite="lax",
+        max_age=7 * 24 * 3600,
+    )
+    return {"signed_in": True, "name": name, "demo": True}
+
+
+@app.post("/api/auth/logout")
+def logout(response: Response):
+    response.delete_cookie(auth_demo.COOKIE_NAME)
+    return {"signed_in": False}
+
+
 # --------------------------------------------------------------- projects
 @app.get("/api/projects", response_model=list[ProjectOut])
 def list_projects(db: Session = Depends(get_db)):
-    """Projects ordered by last activity (latest run, else creation) — the
+    """Projects ordered by last activity (latest run, else creation) - the
     project a researcher wants is almost always the one they last worked on."""
     from sqlalchemy import func
 
@@ -180,6 +220,7 @@ def list_projects(db: Session = Depends(get_db)):
                 created_at=p.created_at,
                 last_activity_at=last or p.created_at,
                 n_runs=count,
+                archived=bool(p.archived),
             )
         )
     out.sort(key=lambda x: x.last_activity_at, reverse=True)
@@ -198,7 +239,63 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db)):
         created_at=project.created_at,
         last_activity_at=project.created_at,
         n_runs=0,
+        archived=False,
     )
+
+
+@app.patch("/api/projects/{project_id}", response_model=ProjectOut)
+def patch_project(project_id: str, body: ProjectPatch, db: Session = Depends(get_db)):
+    """Archive/unarchive - reversible, no data loss. Archived projects collapse
+    into the sidebar's Archived section and keep all datasets and runs."""
+    project = _get_or_404(db, Project, project_id)
+    if body.archived is not None:
+        project.archived = bool(body.archived)
+    db.commit()
+    return ProjectOut(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        created_at=project.created_at,
+        last_activity_at=project.created_at,
+        n_runs=0,
+        archived=bool(project.archived),
+    )
+
+
+@app.delete("/api/projects/{project_id}", status_code=204)
+def delete_project(project_id: str, db: Session = Depends(get_db)):
+    """Permanent delete: removes the project, its datasets, runs, uploaded
+    files, and result files. Logged without retaining any uploaded text
+    (design doc §9). Ownership checks arrive with real accounts in Phase 2;
+    until then the shared instance is deliberately open."""
+    import logging
+
+    project = _get_or_404(db, Project, project_id)
+    corpora = db.query(Corpus).filter_by(project_id=project_id).all()
+    jobs = db.query(Job).filter_by(project_id=project_id).all()
+
+    n_files = 0
+    for corpus in corpora:
+        if corpus.path and Path(corpus.path).exists():
+            Path(corpus.path).unlink(missing_ok=True)
+            n_files += 1
+    for job in jobs:
+        if job.result_path and Path(job.result_path).exists():
+            Path(job.result_path).unlink(missing_ok=True)
+            n_files += 1
+
+    for job in jobs:
+        db.delete(job)
+    for corpus in corpora:
+        db.delete(corpus)
+    db.delete(project)
+    db.commit()
+
+    logging.getLogger("ccr.projects").info(
+        "project deleted: id=%s name=%r corpora=%d runs=%d files_removed=%d",
+        project_id, project.name, len(corpora), len(jobs), n_files,
+    )
+    return Response(status_code=204)
 
 
 # ----------------------------------------------------------------- corpora
@@ -227,7 +324,12 @@ def list_corpora(project_id: str, db: Session = Depends(get_db)):
 
 
 @app.post("/api/projects/{project_id}/corpora", response_model=CorpusOut, status_code=201)
-async def upload_corpus(project_id: str, file: UploadFile, db: Session = Depends(get_db)):
+async def upload_corpus(
+    project_id: str,
+    file: UploadFile,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth_demo.get_current_user),
+):
     _get_or_404(db, Project, project_id)
 
     suffix = Path(file.filename or "upload.csv").suffix.lower()
@@ -237,6 +339,15 @@ async def upload_corpus(project_id: str, file: UploadFile, db: Session = Depends
     payload = await file.read()
     if len(payload) > MAX_UPLOAD_BYTES:
         raise HTTPException(413, "File exceeds the 25 MB upload limit.")
+
+    # Tier gate (design §5.1): anonymous users get strict caps; signing in
+    # lifts them. Demo sign-in for now; managed auth replaces it in Phase 2.
+    if user is None and len(payload) > auth_demo.anon_max_bytes():
+        mb = auth_demo.anon_max_bytes() // (1024 * 1024)
+        raise HTTPException(
+            413,
+            f"Anonymous uploads are limited to {mb} MB. Sign in (top right) to upload larger files.",
+        )
 
     corpus = Corpus(
         project_id=project_id, filename=file.filename, path="", n_rows=0, columns_json="[]"
@@ -250,6 +361,14 @@ async def upload_corpus(project_id: str, file: UploadFile, db: Session = Depends
     except IngestError as exc:
         dest.unlink(missing_ok=True)
         raise HTTPException(400, str(exc)) from exc
+
+    if user is None and len(df) > auth_demo.anon_max_rows():
+        dest.unlink(missing_ok=True)
+        raise HTTPException(
+            400,
+            f"Anonymous uploads are limited to {auth_demo.anon_max_rows():,} rows "
+            f"(this file has {len(df):,}). Sign in (top right) to upload larger corpora.",
+        )
 
     corpus.n_rows = int(len(df))
     corpus.columns_json = json.dumps(list(df.columns))

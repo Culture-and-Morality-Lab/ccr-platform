@@ -1,4 +1,4 @@
-"""Model registry loader — the app-side reader of packages/model_registry/models.yaml.
+"""Model registry loader - the app-side reader of packages/model_registry/models.yaml.
 
 Single source of model truth (design doc §13): the UI dropdown, backend validation,
 prefix handling, language-support warnings, run metadata, and generated reproduction
@@ -57,7 +57,7 @@ class ModelConfig:
         return None if self.revision in ("PIN_ME", "", None) else self.revision
 
     def supports_language(self, iso_code: str) -> bool:
-        if not self.supported_languages:  # unknown coverage — never block/warn on it
+        if not self.supported_languages:  # unknown coverage - never block/warn on it
             return True
         return iso_code.lower() in self.supported_languages
 

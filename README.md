@@ -1,4 +1,4 @@
-# CCR Platform — Culture and Morality Lab
+# CCR Platform - Culture and Morality Lab
 
 Web platform for **Contextualized Construct Representation (CCR)** psychological text analysis
 ([method](https://github.com/Ali-Omrani/CCR) · [EMNLP 2024](https://aclanthology.org/2024.emnlp-main.151/)).
@@ -20,7 +20,7 @@ reproducibility record.
 ```
 
 ```bash
-# fast test suite (deterministic fake embedder — no torch needed)
+# fast test suite (deterministic fake embedder - no torch needed)
 cd backend && pip install -r requirements-dev.txt && python -m pytest tests/ -q
 
 # validate the registries
@@ -37,7 +37,7 @@ python scripts/verify_install.py
 backend/            FastAPI app + tests (current working application)
 frontend/           React/Vite SPA source (prebuilt copy served from backend/static/)
 packages/
-  model_registry/   models.yaml — single source of model truth + validator
+  model_registry/   models.yaml - single source of model truth + validator
   construct_library/ versioned construct YAMLs + validator (append-only)
   ccr_engine/       Phase 1 target: pure analysis package (see spec 0005)
 docs/
@@ -49,7 +49,7 @@ evals/              golden datasets + expected outputs (human-approved only)
 
 ## Working on this repo
 
-Read `CLAUDE.md` first — it carries the architecture rules and hard rules (enforced partly by
+Read `CLAUDE.md` first - it carries the architecture rules and hard rules (enforced partly by
 hooks). Features start from `docs/specs/`; decisions land in `DECISIONS.md`; user-visible
 changes land in `CHANGELOG.md`. The published `ccr_wrapper` implementation is the correctness
 spec for the engine.

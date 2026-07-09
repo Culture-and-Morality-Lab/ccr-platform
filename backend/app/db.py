@@ -1,4 +1,4 @@
-"""Database setup — SQLite via SQLAlchemy.
+"""Database setup - SQLite via SQLAlchemy.
 
 SQLite is a deliberate choice for this deployment size (single-node, few
 concurrent writers). The models use no SQLite-specific features, so moving

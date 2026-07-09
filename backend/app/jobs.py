@@ -1,6 +1,6 @@
 """Background job runner.
 
-Jobs run on a dedicated single-worker executor — a deliberate right-sizing:
+Jobs run on a dedicated single-worker executor - a deliberate right-sizing:
 embedding is CPU-bound, so running jobs sequentially protects the instance's
 memory and keeps per-job throughput predictable, while job state lives in
 the DB (queued → running → completed/failed) so the API and UI never depend
@@ -42,15 +42,32 @@ TOP_N = 10
 SNIPPET_LEN = 220
 
 # Single worker: sequential jobs, bounded memory. See module docstring.
-_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ccr-job")
+# Created lazily and re-creatable: a lifespan shutdown (dev reload, test
+# client closing) must not permanently kill job submission for the process.
+import threading
+
+_executor: ThreadPoolExecutor | None = None
+_executor_lock = threading.Lock()
+
+
+def _get_executor() -> ThreadPoolExecutor:
+    global _executor
+    with _executor_lock:
+        if _executor is None:
+            _executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ccr-job")
+        return _executor
 
 
 def submit_job(job_id: str) -> None:
-    _executor.submit(_run_job_logged, job_id)
+    _get_executor().submit(_run_job_logged, job_id)
 
 
 def shutdown_executor() -> None:
-    _executor.shutdown(wait=False, cancel_futures=True)
+    global _executor
+    with _executor_lock:
+        if _executor is not None:
+            _executor.shutdown(wait=False, cancel_futures=True)
+            _executor = None
 
 
 def recover_orphaned_jobs() -> int:
@@ -129,7 +146,7 @@ def run_job(job_id: str) -> None:
             progress_cb=progress, item_prefix=item_prefix, text_prefix=text_prefix,
         )
 
-        # Structured data-quality warnings (spec 0001) — objects, never bare strings.
+        # Structured data-quality warnings (spec 0001) - objects, never bare strings.
         W = warnings_engine.warning
         warnings: list[dict] = []
         if dropped:
@@ -141,7 +158,7 @@ def run_job(job_id: str) -> None:
         if n_dupes:
             warnings.append(W(
                 "DUPLICATE_TEXTS", "warning",
-                f"{n_dupes} duplicate text(s) detected — each is scored independently; "
+                f"{n_dupes} duplicate text(s) detected - each is scored independently; "
                 "deduplicate upstream if unintended.", count=n_dupes,
             ))
         short = warnings_engine.short_text_warning(texts)

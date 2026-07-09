@@ -1,4 +1,4 @@
-# Spec 0004 — Construct library from YAML (brief)
+# Spec 0004 - Construct library from YAML (brief)
 
 **Status:** implemented (2026-07-09)
 **Phase:** 0/1    **Design doc ref:** §10.1, §11
@@ -7,7 +7,7 @@
 Replace `backend/app/seed_constructs.py` seeding with `packages/construct_library/constructs/*.yaml`
 as the source of truth: loader validates via the same rules as `validate_constructs.py`,
 computes item_hash with the reference algorithm, seeds/updates DB rows keyed
-(construct_id, version) — append-only, never mutate an existing version. Run metadata embeds
+(construct_id, version) - append-only, never mutate an existing version. Run metadata embeds
 the full construct snapshot. UI shows verification_status (verified prominently; others with
 a "wording not yet verified" chip). New questionnaires from the lab = new YAML files + validator
 run; item wordings marked needs_verification until checked verbatim against the publication.

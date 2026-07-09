@@ -16,12 +16,17 @@ function relativeTime(iso) {
 }
 
 function groupProjects(projects) {
-  // Buckets by last activity: Today / This week / Earlier. Projects arrive
+  // Buckets by last activity: Today / This week / Earlier, with archived
+  // projects collapsed into their own group at the bottom. Projects arrive
   // sorted by last activity (backend), so group order falls out naturally.
   const now = Date.now();
   const DAY = 86400000;
-  const groups = { Today: [], "This week": [], Earlier: [] };
+  const groups = { Today: [], "This week": [], Earlier: [], Archived: [] };
   for (const p of projects) {
+    if (p.archived) {
+      groups.Archived.push(p);
+      continue;
+    }
     const iso = p.last_activity_at || p.created_at;
     const t = new Date(iso.endsWith("Z") || iso.includes("+") ? iso : iso + "Z").getTime();
     const age = now - t;
@@ -39,13 +44,40 @@ export default function App() {
   const [newName, setNewName] = useState("");
   const [filter, setFilter] = useState("");
   const [error, setError] = useState("");
+  const [auth, setAuth] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginName, setLoginName] = useState("");
 
   const loadProjects = () =>
     api.listProjects().then(setProjects).catch((e) => setError(e.message));
+  const loadAuth = () => api.authMe().then(setAuth).catch(() => {});
 
   useEffect(() => {
     loadProjects();
+    loadAuth();
   }, []);
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    if (!loginName.trim()) return;
+    try {
+      await api.demoLogin(loginName.trim());
+      setShowLogin(false);
+      setLoginName("");
+      await loadAuth();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await api.logout();
+      await loadAuth();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
   useEffect(() => {
     if (projects.length === 0) {
@@ -84,7 +116,63 @@ export default function App() {
         <span className="sub">
           Contextualized Construct Representations · theory-driven psychological text analysis
         </span>
+        <span className="header-auth">
+          {auth?.signed_in ? (
+            <>
+              <span className="small">Hi, {auth.name}</span>
+              <button className="header-btn" onClick={handleLogout}>
+                Sign out
+              </button>
+            </>
+          ) : (
+            <button className="header-btn" onClick={() => setShowLogin(true)}>
+              Sign in
+            </button>
+          )}
+        </span>
       </header>
+
+      {showLogin && (
+        <div className="modal-backdrop" onClick={() => setShowLogin(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Sign in</h3>
+            <p className="hint">
+              Signing in lifts the anonymous upload limits
+              {auth?.limits?.max_rows
+                ? ` (currently ${Math.round(auth.limits.max_bytes / 1048576)} MB / ${auth.limits.max_rows.toLocaleString()} rows per file)`
+                : ""}
+              .
+            </p>
+            <button className="ghost" disabled title="Arrives with lab accounts">
+              Sign in with Google (coming soon)
+            </button>
+            <form onSubmit={handleLogin} className="mt">
+              <label className="field">
+                Your name (placeholder sign-in for now)
+                <input
+                  type="text"
+                  autoFocus
+                  value={loginName}
+                  onChange={(e) => setLoginName(e.target.value)}
+                  placeholder="e.g. Mohammad"
+                />
+              </label>
+              <div className="row">
+                <button className="primary" type="submit" disabled={!loginName.trim()}>
+                  Continue
+                </button>
+                <button className="ghost" type="button" onClick={() => setShowLogin(false)}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+            <p className="small muted mt">
+              This is a temporary placeholder so larger uploads can be tested. Real
+              sign-in (Google + university account) arrives with lab accounts.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="layout">
         <aside className="sidebar">
@@ -158,7 +246,16 @@ export default function App() {
             </div>
           )}
           {selected ? (
-            <Workspace key={selected.id} project={selected} />
+            <Workspace
+              key={selected.id}
+              project={selected}
+              auth={auth}
+              onProjectChanged={loadProjects}
+              onProjectDeleted={() => {
+                setSelectedId(null);
+                loadProjects();
+              }}
+            />
           ) : (
             <div className="card">
               <h3>Welcome</h3>
@@ -168,7 +265,7 @@ export default function App() {
                 score distributions, and a reproducibility record for every run.
               </p>
               <p className="small muted">
-                Self-contained by design: embeddings run on this server itself — no
+                Self-contained by design: embeddings run on this server itself - no
                 third-party AI APIs. Demo instance: storage is ephemeral and may reset;
                 please don&apos;t upload sensitive or identifiable data.
               </p>

@@ -1,7 +1,7 @@
-# ccr_engine (Phase 1 target — spec 0005)
+# ccr_engine (Phase 1 target - spec 0005)
 
 This package will hold the pure CCR analysis engine: preprocessing, embeddings (via the model
-registry), similarity, scoring/aggregation, warnings, stats, reproducibility artifacts —
+registry), similarity, scoring/aggregation, warnings, stats, reproducibility artifacts -
 callable from the web app, worker, tests, CLI, and generated scripts.
 
 Today the engine logic lives in `backend/app/ccr.py` + `backend/app/jobs.py`. Do NOT start the

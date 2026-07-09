@@ -1,4 +1,4 @@
-# Spec 0003 — Registry-driven models + language selection (brief)
+# Spec 0003 - Registry-driven models + language selection (brief)
 
 **Status:** implemented (2026-07-09)
 **Phase:** 0    **Design doc ref:** §12, §13
@@ -12,5 +12,5 @@ into spec-0001 warnings. Add e5-large-v2 and multilingual-e5-base to the UI via 
 Validator (`validate_models.py`) runs in tests. Pin revisions before Phase 1 exit.
 
 **Key tests:** loader validation errors, prefix application for E5 (assert embedded strings
-receive "query: " — testable via fake backend capturing inputs), /api/models shape, metadata
+receive "query: " - testable via fake backend capturing inputs), /api/models shape, metadata
 records registry snapshot, MiniLM stays default.

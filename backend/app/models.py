@@ -2,7 +2,7 @@
 
 IDs are UUID strings (portable across SQLite/Postgres). JSON-ish payloads
 (column lists, construct items, job metadata/summaries) are stored as JSON
-text — they are read-mostly blobs, not queried relationally.
+text - they are read-mostly blobs, not queried relationally.
 """
 
 import uuid
@@ -28,6 +28,7 @@ class Project(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(Text, default="")
+    archived: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[str] = mapped_column(String(32), default=_now)
 
 

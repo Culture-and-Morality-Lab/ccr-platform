@@ -1,12 +1,12 @@
-# Model registry — single source of model truth (design doc §13).
+# Model registry - single source of model truth (design doc §13).
 # Drives: UI dropdown, backend validation, warnings, run metadata, generated scripts.
 # NOTE: revisions marked "PIN_ME" must be resolved to a commit hash before Phase 1 exit
-# (huggingface_hub: model_info(id).sha) — parity tests depend on pinned revisions.
+# (huggingface_hub: model_info(id).sha) - parity tests depend on pinned revisions.
 
 models:
   - id: all-minilm-l6-v2
     provider_model_id: sentence-transformers/all-MiniLM-L6-v2
-    display_name: "MiniLM L6 v2 (default — CCR reference model)"
+    display_name: "MiniLM L6 v2 (default - CCR reference model)"
     revision: PIN_ME
     default: true
     supported_languages: ["en"]
@@ -17,7 +17,7 @@ models:
     usage_config:
       requires_prefix: false
       symmetric_similarity_prefix: null
-      pooling: sentence_transformers_default   # descriptive only — never reimplement
+      pooling: sentence_transformers_default   # descriptive only - never reimplement
       normalize_embeddings: true
     operational_config:
       expected_time_per_1k_texts_cpu: benchmark_required
@@ -27,7 +27,7 @@ models:
 
   - id: e5-large-v2
     provider_model_id: intfloat/e5-large-v2
-    display_name: "E5 Large v2 (strong English — slower)"
+    display_name: "E5 Large v2 (strong English - slower)"
     revision: PIN_ME
     default: false
     supported_languages: ["en"]
@@ -40,7 +40,7 @@ models:
       symmetric_similarity_prefix: "query: "
       construct_prefix: "query: "
       text_prefix: "query: "
-      pooling: average_pool                    # descriptive only — never reimplement
+      pooling: average_pool                    # descriptive only - never reimplement
       normalize_embeddings: true
     operational_config:
       expected_time_per_1k_texts_cpu: benchmark_required
@@ -67,7 +67,7 @@ models:
       symmetric_similarity_prefix: "query: "
       construct_prefix: "query: "
       text_prefix: "query: "
-      pooling: average_pool                    # descriptive only — never reimplement
+      pooling: average_pool                    # descriptive only - never reimplement
       normalize_embeddings: true
     operational_config:
       expected_time_per_1k_texts_cpu: benchmark_required

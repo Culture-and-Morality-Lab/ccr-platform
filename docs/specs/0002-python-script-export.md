@@ -1,4 +1,4 @@
-# Spec 0002 — Reproduction script export (offline-runnable)
+# Spec 0002 - Reproduction script export (offline-runnable)
 
 **Status:** implemented (2026-07-09)
 **Phase:** 0    **Design doc ref:** §14

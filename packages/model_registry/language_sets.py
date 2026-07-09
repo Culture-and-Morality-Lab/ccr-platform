@@ -2,7 +2,7 @@
 
 A registry entry may declare `supported_language_set: xlm_roberta_100` instead of an
 explicit list. This module resolves such names so the warning engine can check a
-user-selected language against a real set (design doc §12 — a bare "multilingual"
+user-selected language against a real set (design doc §12 - a bare "multilingual"
 label is banned because it is not machine-checkable).
 
 xlm_roberta_100: languages covered by XLM-RoBERTa pretraining (Conneau et al., 2020),

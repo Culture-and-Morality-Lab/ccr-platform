@@ -1,4 +1,4 @@
-# Spec NNNN — <feature name>
+# Spec NNNN - <feature name>
 
 **Status:** draft | approved | implemented (+ deviations noted below)
 **Phase:** 0 | 1 | 2 | 3    **Design doc ref:** §<n>

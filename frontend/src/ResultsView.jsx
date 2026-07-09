@@ -73,7 +73,7 @@ export default function ResultsView({ jobId, onBack }) {
                 <li key={i}>
                   {typeof w === "string" ? w : (
                     <>
-                      <code style={{ fontSize: 11 }}>{w.code}</code> — {w.message}
+                      <code style={{ fontSize: 11 }}>{w.code}</code> - {w.message}
                     </>
                   )}
                 </li>
@@ -91,7 +91,7 @@ export default function ResultsView({ jobId, onBack }) {
       <div className="card">
         <h3>Per-item mean loadings</h3>
         <p className="hint">
-          Mean similarity of the corpus to each scale item — a face-validity check on which
+          Mean similarity of the corpus to each scale item - a face-validity check on which
           items drive the construct signal.
         </p>
         {summary.item_means.map((m, i) => (
@@ -122,7 +122,7 @@ export default function ResultsView({ jobId, onBack }) {
       </div>
 
       <div className="meta-footer">
-        <strong>Reproducibility record</strong> — model: <code>{metadata.model}</code> (dim{" "}
+        <strong>Reproducibility record</strong> - model: <code>{metadata.model}</code> (dim{" "}
         {metadata.embedding_dim}) · items hash: <code>{metadata.items_sha256_16}</code> ·
         text column: <code>{metadata.text_column}</code> · run:{" "}
         {metadata.started_at} → {metadata.finished_at} ({metadata.duration_seconds}s) ·
@@ -130,7 +130,7 @@ export default function ResultsView({ jobId, onBack }) {
         {metadata.sentence_transformers &&
           ` · sentence-transformers ${metadata.sentence_transformers}`}
         <div className="mt small">
-          Construct reference: {metadata.construct_reference || "—"}
+          Construct reference: {metadata.construct_reference || "-"}
         </div>
       </div>
     </>

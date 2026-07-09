@@ -12,4 +12,14 @@ if [[ "$file_path" == *.py && -f "$file_path" ]]; then
     exit 2
   fi
 fi
+
+# Project style rule: no em dashes in any source/text file (CLAUDE.md hard rules).
+case "$file_path" in
+  *.py|*.js|*.jsx|*.css|*.md|*.yaml|*.yml|*.sh|*.html)
+    if [[ -f "$file_path" ]] && grep -q $'\xe2\x80\x94' "$file_path"; then
+      echo "EM DASH found in $file_path. Project rule: no em dashes - use a hyphen or restructure the sentence." >&2
+      exit 2
+    fi
+    ;;
+esac
 exit 0

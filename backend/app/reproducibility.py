@@ -1,7 +1,7 @@
 """Reproduction-script generation (spec 0002, design doc §14).
 
-The generated script is built ONLY from the run's stored metadata — never from live
-state — so it reproduces what actually ran. It must be runnable outside the platform:
+The generated script is built ONLY from the run's stored metadata - never from live
+state - so it reproduces what actually ran. It must be runnable outside the platform:
 input CSV + Python + internet for the (pinned) model download. No platform credentials.
 """
 
@@ -108,7 +108,7 @@ def main(csv_path: str) -> None:
 
     work.to_csv("reproduced_results.csv", index=False)
     print(f"Wrote reproduced_results.csv ({{len(work)}} rows, {{sims.shape[1]}} items).")
-    print("Compare against the platform export — values should match to ~1e-5.")
+    print("Compare against the platform export - values should match to ~1e-5.")
 
 
 if __name__ == "__main__":

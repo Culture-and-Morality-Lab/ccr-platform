@@ -286,6 +286,40 @@ table.docs td.score { font-variant-numeric: tabular-nums; font-weight: 600; whit
 .small { font-size: 12.5px; }
 .mt { margin-top: 12px; }
 
+/* ---------- header auth ---------- */
+.header-auth {
+  margin-left: auto; display: flex; align-items: center; gap: 10px; color: #fff;
+}
+.header-btn {
+  background: rgba(255, 255, 255, 0.12); color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  padding: 5px 14px; border-radius: 7px; font: inherit; font-size: 13px; cursor: pointer;
+}
+.header-btn:hover { background: rgba(255, 255, 255, 0.22); }
+
+/* ---------- project header + actions ---------- */
+.project-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.project-title { font-size: 17px; font-weight: 650; margin-right: 10px; }
+button.danger { color: var(--err); border-color: #f0c4be; }
+button.danger:hover { color: var(--err); border-color: var(--err); }
+button.danger-solid { background: var(--err); }
+button.danger-solid:hover { background: #93261b; }
+button.danger-solid:disabled { background: #c9ccd1; }
+
+/* ---------- modal ---------- */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(20, 22, 26, 0.45);
+  display: flex; align-items: center; justify-content: center; z-index: 40; padding: 16px;
+}
+.modal {
+  background: var(--card); border-radius: 10px; padding: 22px 24px;
+  width: 100%; max-width: 430px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+.modal h3 { margin: 0 0 6px; }
+
 @media (max-width: 820px) {
   body { font-size: 14px; }
 

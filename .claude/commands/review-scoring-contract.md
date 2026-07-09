@@ -1,5 +1,5 @@
 ---
-description: Audit scoring/output contract — columns, adjustment_strategy, all-reversed block, metadata completeness
+description: Audit scoring/output contract - columns, adjustment_strategy, all-reversed block, metadata completeness
 ---
 
 Audit the current scoring and output contract end to end:

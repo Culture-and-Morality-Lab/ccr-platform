@@ -51,7 +51,7 @@ def main() -> int:
         if not has_list and not set_name:
             errors.append(f"{mid}: needs supported_languages list OR supported_language_set.")
         if has_list and "multilingual" in [str(x).lower() for x in m["supported_languages"]]:
-            errors.append(f"{mid}: bare 'multilingual' label is banned — use supported_language_set.")
+            errors.append(f"{mid}: bare 'multilingual' label is banned - use supported_language_set.")
         if set_name and set_name not in LANGUAGE_SETS:
             errors.append(f"{mid}: unknown language set '{set_name}' (add to language_sets.py).")
 
@@ -71,7 +71,7 @@ def main() -> int:
         for e in errors:
             print(f"  ERROR: {e}")
         return 1
-    print(f"models.yaml OK — {len(models)} model(s), default: {defaults[0]}")
+    print(f"models.yaml OK - {len(models)} model(s), default: {defaults[0]}")
     return 0
 
 
