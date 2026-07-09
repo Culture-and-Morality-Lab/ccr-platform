@@ -43,6 +43,15 @@ Current state: Phase 0 (visible features on the demo codebase). Roadmap: @ROADMA
 3. After completing a feature: update CHANGELOG.md; add a DECISIONS.md entry if any architecture choice was made.
 4. Commit style: `feat(scope): ...` / `fix(scope): ...` / `docs: ...` / `test: ...`; small commits, one concern each.
 
+## PI working norms
+
+- Mohammad (2026-07-09): "you can always suggest better options that I might not know about —
+  take initiative (newer NLP models, lighter options, less expensive options)." Consequence:
+  when a decision involves a model, service, or cost, ALWAYS check for newer/lighter/cheaper
+  candidates and present the better option with evidence — recommending beats asking.
+  New models enter via the registry + benchmark-before-adopt (golden/parity harness), never
+  by swapping defaults silently. Cost options favor free tiers and annual-friendly services.
+
 ## Context notes
 
 - Python 3.10+ backend (FastAPI, SQLAlchemy, pandas, numpy, sentence-transformers). Tests use a deterministic hash embedder (`CCR_FAKE_EMBEDDINGS=1` / model `fake-deterministic`).

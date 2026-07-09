@@ -49,6 +49,20 @@ body {
 .sidebar h2 {
   font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.7px;
   color: var(--muted); margin: 0 0 10px 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sidebar h2 .count {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+  padding: 0 8px; font-size: 10.5px; letter-spacing: 0; color: var(--muted);
+}
+.sidebar-filter {
+  width: 100%; padding: 7px 10px; margin-bottom: 8px;
+  border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 13px;
+  background: #fff; color: var(--ink);
+}
+.sidebar-filter:focus { outline: none; border-color: var(--maroon); }
+.project-list {
+  max-height: calc(100vh - 210px); overflow-y: auto; margin: 0 -4px; padding: 0 4px;
 }
 .project-item {
   display: block; width: 100%; text-align: left;
@@ -98,6 +112,24 @@ input[type="text"], textarea, select {
   width: 100%; padding: 8px 10px; border: 1px solid var(--line);
   border-radius: 8px; font: inherit; background: #fff; color: var(--ink);
 }
+
+/* File input: block-level with breathing room under its label, and a styled
+   picker button so it matches the rest of the controls. */
+input[type="file"] {
+  display: block; margin-top: 6px; font-size: 13px; color: var(--muted);
+}
+input[type="file"]::file-selector-button {
+  background: #fff; border: 1px solid var(--line); color: var(--ink);
+  padding: 7px 14px; border-radius: 8px; font: inherit; font-size: 13px;
+  cursor: pointer; margin-right: 10px;
+}
+input[type="file"]::file-selector-button:hover {
+  border-color: var(--maroon); color: var(--maroon);
+}
+
+/* Buttons inside a row of labeled fields align to the controls' baseline
+   instead of stretching to the row's full height. */
+.row > button { align-self: flex-end; margin-bottom: 1px; }
 textarea { resize: vertical; }
 label.field { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 600; }
 label.field > * { margin-top: 4px; font-weight: 400; }

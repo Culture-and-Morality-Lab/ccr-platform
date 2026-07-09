@@ -21,4 +21,9 @@
 - [ ] Repo → Culture-and-Morality-Lab org · staging + production hosting (Option B)
 - [ ] Backups, monitoring, privacy wording (lab-provided), verified-constructs workflow
 
+## Recurring (PI mandate 2026-07-09: proactively suggest newer/lighter/cheaper options)
+- [ ] Model landscape review each phase: check MTEB leaderboard + HF for newer/lighter embedding
+      models; benchmark candidates through the golden/parity harness before proposing.
+- [ ] Cost review at each infra decision: free tiers first, annual-friendly, no idle spend.
+
 Blocked on PI (design §22): auth provider, hosting path, storage backend, retention windows, anonymous caps.

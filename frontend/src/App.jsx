@@ -7,6 +7,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const [filter, setFilter] = useState("");
   const [error, setError] = useState("");
 
   const loadProjects = () =>
@@ -43,17 +44,37 @@ export default function App() {
 
       <div className="layout">
         <aside className="sidebar">
-          <h2>Projects</h2>
-          {projects.map((p) => (
-            <button
-              key={p.id}
-              className={"project-item" + (p.id === selectedId ? " active" : "")}
-              onClick={() => setSelectedId(p.id)}
-            >
-              {p.name}
-              <span className="date">{p.created_at.slice(0, 10)}</span>
-            </button>
-          ))}
+          <h2>
+            Projects
+            {projects.length > 0 && <span className="count">{projects.length}</span>}
+          </h2>
+          {projects.length > 5 && (
+            <input
+              type="text"
+              className="sidebar-filter"
+              placeholder="Filter projects…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          )}
+          <div className="project-list">
+            {projects
+              .filter((p) => p.name.toLowerCase().includes(filter.trim().toLowerCase()))
+              .map((p) => (
+                <button
+                  key={p.id}
+                  className={"project-item" + (p.id === selectedId ? " active" : "")}
+                  onClick={() => setSelectedId(p.id)}
+                >
+                  {p.name}
+                  <span className="date">{p.created_at.slice(0, 10)}</span>
+                </button>
+              ))}
+            {filter &&
+              projects.every(
+                (p) => !p.name.toLowerCase().includes(filter.trim().toLowerCase())
+              ) && <p className="small muted">No projects match “{filter}”.</p>}
+          </div>
 
           {creating ? (
             <form onSubmit={createProject} className="mt">
