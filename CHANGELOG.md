@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Added
+- Construct library expanded from 5 to 99 entries from the lab's questionnaire collection
+  (38 questionnaires; multi-dimensional scales split per dimension, incl. MFQ-2's six
+  foundations). Reverse-scored flags imported where the source marked them; filler items
+  excluded; everything flagged needs-verification pending verbatim wording checks.
+- Reusable importer for the lab's questionnaire spreadsheet format
+  (packages/construct_library/import_from_xlsx.py).
 - Anonymous vs signed-in upload tiers: anonymous uploads capped at 2 MB / 500 rows with a
   clear sign-in hint; signing in lifts limits. Sign-in is a labeled placeholder (name only)
   until managed auth arrives with lab accounts; tampered sessions are treated as anonymous.

@@ -1,0 +1,24 @@
+construct_id: centrality_of_religiosity_scale_private_practice
+version: 1
+name: Private practice (Centrality of Religiosity Scale)
+language: en
+category: Religiosity
+description: Religiosity - Private practice dimension of the Centrality of Religiosity Scale.
+citation: Huber, S., & Huber, O. W. (2012). The Centrality of Religiosity Scale (CRS). Religions, 3(3),
+  710–724. https://doi.org/10.3390/rel3030710
+verification_status: needs_verification
+source_url: https://www.mdpi.com/2077-1444/3/3/710
+rights_note: nan
+questionnaire: Centrality of Religiosity Scale
+reverse_flags_source: not_provided_pending_verification
+imported_from: lib.xlsx
+items:
+- item_id: centrality_of_religiosity_scale_private_practice_4
+  text: How often do you pray?
+  reverse_scored: false
+- item_id: centrality_of_religiosity_scale_private_practice_9
+  text: How important is personal prayer for you?
+  reverse_scored: false
+- item_id: centrality_of_religiosity_scale_private_practice_14
+  text: How often do you pray spontaneously when inspired by daily situations?
+  reverse_scored: false

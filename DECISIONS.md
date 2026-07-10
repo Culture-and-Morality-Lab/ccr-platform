@@ -46,3 +46,12 @@ adds ownership checks to the same endpoints.
 ## 2026-07-09 - No em dashes in project text (Deva)
 Style rule across UI, docs, comments, commits. Enforced by a PostToolUse hook; swept 50
 existing files.
+
+## 2026-07-10 - Questionnaire import policy (Mohammad's 40-scale collection)
+Multi-dimensional questionnaires split into one construct per dimension (a CCR run scores
+one construct; a blended Big Five score would be meaningless): 38 questionnaires -> 94
+entries. "(R)" markers in subconstruct labels imported as reverse-scored flags (35 items);
+scales without markers default to false with reverse_flags_source recorded as pending.
+Filler items excluded (8, LOT-R and Hope Scale). SWLS skipped as duplicate of the existing
+seed. All imported entries are needs_verification until wording is checked verbatim.
+Importer kept as a permanent tool: packages/construct_library/import_from_xlsx.py.
