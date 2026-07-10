@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api.js";
+import ConstructPicker from "./ConstructPicker.jsx";
 import ResultsView from "./ResultsView.jsx";
 
 export default function Workspace({ project, auth, onProjectChanged, onProjectDeleted }) {
@@ -269,14 +270,11 @@ export default function Workspace({ project, auth, onProjectChanged, onProjectDe
         </p>
         <div className="construct-row">
           <div className="grow">
-            <select value={constructId} onChange={(e) => setConstructId(e.target.value)}>
-              <option value="">- select construct -</option>
-              {constructs.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.items.length} items{c.is_seed ? ", library" : ", custom"})
-                </option>
-              ))}
-            </select>
+            <ConstructPicker
+              constructs={constructs}
+              value={constructId}
+              onChange={setConstructId}
+            />
           </div>
           <button className="ghost" onClick={() => setShowNewConstruct((s) => !s)}>
             {showNewConstruct ? "Close" : "+ Custom construct"}

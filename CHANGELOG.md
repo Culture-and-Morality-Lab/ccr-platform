@@ -5,6 +5,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Added
+- Searchable construct picker replacing the flat dropdown: search by scale, construct, or
+  category; results grouped by category; recently-used constructs pinned on top; full
+  keyboard navigation. Scales to hundreds of library entries.
 - Construct library expanded from 5 to 99 entries from the lab's questionnaire collection
   (38 questionnaires; multi-dimensional scales split per dimension, incl. MFQ-2's six
   foundations). Reverse-scored flags imported where the source marked them; filler items

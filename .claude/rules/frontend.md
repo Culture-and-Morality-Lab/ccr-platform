@@ -7,6 +7,10 @@ paths:
 
 # Frontend rules
 
+- Scale rule (Deva, 2026-07-10): any list or dropdown that can exceed ~15 options must be
+  searchable and grouped (see ConstructPicker.jsx for the house pattern: search + category
+  groups + recently-used + full keyboard navigation). Flat selects are for short, fixed lists.
+
 - Current stack: React 18 + Vite, JavaScript (TypeScript arrives in Phase 2 cleanup - do not introduce it piecemeal now).
 - All server communication through frontend/src/api.js - no fetch calls inside components.
 - The UI never computes analysis values; it renders what the API returns. If a number needs computing, it belongs in the backend.
