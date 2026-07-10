@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Added
+- Demo/test corpus kit in sample_data/ (one file per behavior): all text-QA warnings,
+  French and mixed-language corpora for every language check, token-window truncation,
+  multi-column text suggestion, semicolon and latin-1 ingestion, XLSX upload, and an
+  MFQ-2-themed corpus showing per-foundation score spread. sample_data/README.md maps
+  each file to what it triggers.
 - Searchable construct picker replacing the flat dropdown: search by scale, construct, or
   category; results grouped by category; recently-used constructs pinned on top; full
   keyboard navigation. Scales to hundreds of library entries.
