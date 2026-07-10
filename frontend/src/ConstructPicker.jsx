@@ -146,7 +146,7 @@ export default function ConstructPicker({ constructs, value, onChange }) {
           <span className="picker-caret" aria-hidden="true">▾</span>
         </button>
       ) : (
-        <div className="picker-open">
+        <>
           <input
             ref={inputRef}
             type="text"
@@ -159,7 +159,7 @@ export default function ConstructPicker({ constructs, value, onChange }) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
           />
-          <div className="picker-list" role="listbox" ref={listRef}>
+          <div className="picker-panel" role="listbox" ref={listRef}>
             {flat.length === 0 && (
               <p className="small muted picker-empty">
                 No constructs match "{query}". Try a scale abbreviation or use + Custom construct.
@@ -199,7 +199,7 @@ export default function ConstructPicker({ constructs, value, onChange }) {
               </div>
             ))}
           </div>
-        </div>
+        </>
       )}
     </div>
   );
