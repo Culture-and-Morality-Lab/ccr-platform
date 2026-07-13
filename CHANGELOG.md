@@ -5,6 +5,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Added
+- Real accounts: register/sign in with email + password (free, no external service).
+  Signing in lifts anonymous limits and keeps your data. No self-service password
+  reset yet (contact the admin); Google sign-in arrives with the managed-auth swap.
+- Anonymous usage tiers (PI decisions): 3 runs/day (counter shown under the Run
+  button, resets daily), uploads deleted immediately after analysis (results stay
+  downloadable), whole anonymous projects purged after 24h on hosted instances.
+- Saved-run cap for signed-in users (15): new runs are refused at the cap; nothing
+  is ever auto-deleted from an account.
+- Project ownership: signed-in projects are private to their owner; anonymous
+  projects remain shared.
+- Custom constructs can be uploaded from CSV/XLSX (item column or one per row;
+  reverse-scored via a "reverse" column or trailing "(R)"), with a review-before-
+  save preview. Typed items also support the "(R)" reverse marker.
+- Runs table now shows the model and language of every run.
+- Corpus-embedding cache: re-running new constructs against the same corpus skips
+  document embedding entirely (seconds instead of minutes). Duplicate texts are
+  embedded once. Gzip compression on API responses. Optional model pre-warm at
+  startup (CCR_WARM_MODEL=1).
+- MANUAL_TESTING.md: click-through scenarios for everything built so far.
+- Deployment-ready container: updated Dockerfile (bakes MiniLM, retention on,
+  persistent-volume instructions), production env vars documented in .env.example
+  (CCR_SESSION_SECRET, CCR_COOKIE_SECURE, CCR_ANON_TTL_HOURS).
 - Demo/test corpus kit in sample_data/ (one file per behavior): all text-QA warnings,
   French and mixed-language corpora for every language check, token-window truncation,
   multi-column text suggestion, semicolon and latin-1 ingestion, XLSX upload, and an

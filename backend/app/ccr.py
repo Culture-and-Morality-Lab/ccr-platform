@@ -123,6 +123,27 @@ class CCRResult:
     similarities: np.ndarray  # (n_docs, n_items)
     scores: np.ndarray  # (n_docs,) mean over items
     metadata: dict
+    doc_embeddings: np.ndarray | None = None  # exposed so jobs.py can cache them
+
+
+def encode_unique(backend: EmbeddingBackend, texts: list[str],
+                  progress_cb: ProgressCb | None = None) -> np.ndarray:
+    """Encode only unique texts, then scatter back to full row order.
+
+    Duplicate rows are common in social-media corpora; embeddings are
+    deterministic per text, so encoding each unique text once is a pure
+    speedup with bit-identical output.
+    """
+    unique: dict[str, int] = {}
+    for t in texts:
+        if t not in unique:
+            unique[t] = len(unique)
+    if len(unique) == len(texts):
+        return backend.encode(texts, progress_cb=progress_cb)
+    unique_texts = list(unique.keys())
+    unique_emb = backend.encode(unique_texts, progress_cb=progress_cb)
+    idx = np.fromiter((unique[t] for t in texts), dtype=np.int64, count=len(texts))
+    return unique_emb[idx]
 
 
 # Item-set embeddings are tiny and constantly reused (same construct run
@@ -147,6 +168,7 @@ def run_ccr(
     progress_cb: ProgressCb | None = None,
     item_prefix: str = "",
     text_prefix: str = "",
+    doc_embeddings: np.ndarray | None = None,
 ) -> CCRResult:
     """Compute CCR loadings: cosine(text, item) for every text × item pair.
 
@@ -170,8 +192,13 @@ def run_ccr(
         if progress_cb:
             progress_cb(0.02 + 0.93 * frac)
 
-    texts_for_encoding = [text_prefix + t for t in texts] if text_prefix else texts
-    doc_emb = backend.encode(texts_for_encoding, progress_cb=doc_progress)
+    embeddings_from_cache = doc_embeddings is not None and len(doc_embeddings) == len(texts)
+    if embeddings_from_cache:
+        doc_emb = doc_embeddings  # precomputed for this exact corpus+model+prefix (jobs.py cache)
+        doc_progress(1.0)
+    else:
+        texts_for_encoding = [text_prefix + t for t in texts] if text_prefix else texts
+        doc_emb = encode_unique(backend, texts_for_encoding, progress_cb=doc_progress)
 
     # Both matrices are L2-normalized -> cosine similarity is a dot product.
     sims = doc_emb @ item_emb.T
@@ -186,6 +213,7 @@ def run_ccr(
         "embedding_dim": int(doc_emb.shape[1]),
         "model_max_seq_length": getattr(backend, "max_seq_length", None),
         "item_embeddings_from_cache": items_cached,
+        "doc_embeddings_from_cache": embeddings_from_cache,
         "n_texts": len(texts),
         "n_items": len(items),
         "items_sha256_16": items_hash,
@@ -208,4 +236,4 @@ def run_ccr(
 
     if progress_cb:
         progress_cb(0.97)
-    return CCRResult(similarities=sims, scores=scores, metadata=metadata)
+    return CCRResult(similarities=sims, scores=scores, metadata=metadata, doc_embeddings=doc_emb)

@@ -10,34 +10,38 @@ against pinned model weights.
 from __future__ import annotations
 
 import json
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Response, UploadFile
+from fastapi import Depends, FastAPI, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from . import auth_demo
+from . import auth, retention
 from . import jobs as jobs_module
 from . import registry
 from .ccr import FAKE_MODEL_NAME
+from .construct_files import parse_construct_file
 from .construct_lib import sync_library
 from .db import DATA_DIR, Base, SessionLocal, auto_migrate_sqlite, engine, get_db
 from .ingest import IngestError, load_corpus, suggest_text_column
-from .models import Construct, Corpus, Job, Project
+from .models import Construct, Corpus, Job, Project, User
 from .reproducibility import requirements_text, script_text
 from .schemas import (
     ConstructCreate,
     ConstructOut,
     CorpusOut,
-    DemoLogin,
     JobCreate,
     JobOut,
+    LoginIn,
     ProjectCreate,
     ProjectOut,
     ProjectPatch,
+    RegisterIn,
 )
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # sane lab-scale ceiling; raise deliberately
@@ -60,12 +64,27 @@ async def lifespan(_: FastAPI):
     finally:
         db.close()
     jobs_module.recover_orphaned_jobs()
+    retention.start_cleanup()  # anonymous-data TTL purge (no-op if CCR_ANON_TTL_HOURS=0)
+    if os.environ.get("CCR_WARM_MODEL") == "1" and os.environ.get("CCR_FAKE_EMBEDDINGS") != "1":
+        import threading
+
+        def _warm():
+            try:
+                from .ccr import get_backend
+
+                get_backend(registry.default_model().id).encode(["warm up"])
+            except Exception:
+                pass  # first real run will load the model instead
+
+        threading.Thread(target=_warm, daemon=True, name="ccr-warmup").start()
     yield
+    retention.stop_cleanup()
     jobs_module.shutdown_executor()
 
 
 app = FastAPI(title="CCR Platform", version="0.1.0", lifespan=lifespan)
 
+app.add_middleware(GZipMiddleware, minimum_size=1024)  # constructs payload + SPA compress ~4-5x
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite dev server
@@ -157,46 +176,105 @@ def list_languages():
     return SELECTABLE_LANGUAGES
 
 
-# ---------------------------------------------------- demo auth (placeholder)
+# ------------------------------------------------------------------ accounts
+# Local email+password accounts (auth.py) - the free interim provider. The
+# managed swap (Supabase: Google + email/password) replaces token issuance
+# only; every other endpoint just depends on auth.get_current_user.
+def _saved_runs_used(db: Session, user_id: str) -> int:
+    return (
+        db.query(Job)
+        .join(Project, Job.project_id == Project.id)
+        .filter(Project.owner_user_id == user_id, Job.status.in_(("queued", "running", "completed")))
+        .count()
+    )
+
+
+def _set_session_cookie(response: Response, user: User) -> None:
+    response.set_cookie(
+        auth.COOKIE_NAME,
+        auth.create_session_token(user.id, user.email, user.name),
+        httponly=True,
+        samesite="lax",
+        secure=auth.cookies_secure(),
+        max_age=30 * 24 * 3600,
+    )
+
+
 @app.get("/api/auth/me")
-def auth_me(user: dict | None = Depends(auth_demo.get_current_user)):
+def auth_me(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
+    if user:
+        return {
+            "signed_in": True,
+            "name": user["name"],
+            "email": user["email"],
+            "limits": {"max_bytes": MAX_UPLOAD_BYTES, "max_rows": None},
+            "usage": {
+                "saved_runs": _saved_runs_used(db, user["id"]),
+                "max_saved_runs": auth.user_max_saved_runs(),
+            },
+        }
     return {
-        "signed_in": user is not None,
-        "name": user["name"] if user else None,
-        "demo": True,
-        "limits": (
-            {"max_bytes": MAX_UPLOAD_BYTES, "max_rows": None}
-            if user
-            else {"max_bytes": auth_demo.anon_max_bytes(), "max_rows": auth_demo.anon_max_rows()}
-        ),
+        "signed_in": False,
+        "name": None,
+        "email": None,
+        "limits": {"max_bytes": auth.anon_max_bytes(), "max_rows": auth.anon_max_rows()},
+        "usage": {
+            "runs_used_today": auth.runs_used_today(request),
+            "max_runs_per_day": auth.anon_max_runs_per_day(),
+        },
     }
 
 
-@app.post("/api/auth/demo/login")
-def demo_login(body: DemoLogin, response: Response):
-    """Placeholder session for tier testing. Replaced by managed auth in Phase 2."""
-    name = body.name.strip()
-    if not name:
-        raise HTTPException(400, "Name cannot be empty.")
-    response.set_cookie(
-        auth_demo.COOKIE_NAME,
-        auth_demo.create_token(name),
-        httponly=True,
-        samesite="lax",
-        max_age=7 * 24 * 3600,
-    )
-    return {"signed_in": True, "name": name, "demo": True}
+@app.post("/api/auth/register", status_code=201)
+def register(body: RegisterIn, response: Response, db: Session = Depends(get_db)):
+    email = body.email.strip().lower()
+    if not auth.valid_email(email):
+        raise HTTPException(400, "Please enter a valid email address.")
+    if len(body.password) < auth.MIN_PASSWORD_LEN:
+        raise HTTPException(400, f"Password must be at least {auth.MIN_PASSWORD_LEN} characters.")
+    if db.query(User).filter_by(email=email).first():
+        raise HTTPException(409, "An account with this email already exists. Sign in instead.")
+    user = User(email=email, name=body.name.strip(), password_hash=auth.hash_password(body.password))
+    db.add(user)
+    db.commit()
+    _set_session_cookie(response, user)
+    return {"signed_in": True, "name": user.name, "email": user.email}
+
+
+@app.post("/api/auth/login")
+def login(body: LoginIn, response: Response, db: Session = Depends(get_db)):
+    email = body.email.strip().lower()
+    user = db.query(User).filter_by(email=email).first()
+    if user is None or not auth.verify_password(body.password, user.password_hash):
+        raise HTTPException(401, "Incorrect email or password.")
+    _set_session_cookie(response, user)
+    return {"signed_in": True, "name": user.name, "email": user.email}
 
 
 @app.post("/api/auth/logout")
 def logout(response: Response):
-    response.delete_cookie(auth_demo.COOKIE_NAME)
+    response.delete_cookie(auth.COOKIE_NAME)
     return {"signed_in": False}
 
 
 # --------------------------------------------------------------- projects
+def _visible_owners(user: dict | None) -> tuple[str, ...]:
+    """Anonymous viewers see anonymous projects; signed-in users additionally
+    see their own. Other users' projects are invisible (and untouchable)."""
+    return ("",) if user is None else ("", user["id"])
+
+
+def _require_project_access(project: Project, user: dict | None) -> None:
+    if project.owner_user_id and (user is None or project.owner_user_id != user["id"]):
+        raise HTTPException(403, "This project belongs to another account.")
+
+
 @app.get("/api/projects", response_model=list[ProjectOut])
-def list_projects(db: Session = Depends(get_db)):
+def list_projects(db: Session = Depends(get_db), user: dict | None = Depends(auth.get_current_user)):
     """Projects ordered by last activity (latest run, else creation) - the
     project a researcher wants is almost always the one they last worked on."""
     from sqlalchemy import func
@@ -209,7 +287,7 @@ def list_projects(db: Session = Depends(get_db)):
         .group_by(Job.project_id)
         .all()
     }
-    rows = db.query(Project).all()
+    rows = db.query(Project).filter(Project.owner_user_id.in_(_visible_owners(user))).all()
     out = []
     for p in rows:
         last, count = activity.get(p.id, (None, 0))
@@ -229,8 +307,16 @@ def list_projects(db: Session = Depends(get_db)):
 
 
 @app.post("/api/projects", response_model=ProjectOut, status_code=201)
-def create_project(body: ProjectCreate, db: Session = Depends(get_db)):
-    project = Project(name=body.name.strip(), description=body.description.strip())
+def create_project(
+    body: ProjectCreate,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
+    project = Project(
+        name=body.name.strip(),
+        description=body.description.strip(),
+        owner_user_id=user["id"] if user else "",  # "" = anonymous (TTL purge applies)
+    )
     db.add(project)
     db.commit()
     return ProjectOut(
@@ -245,10 +331,16 @@ def create_project(body: ProjectCreate, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/projects/{project_id}", response_model=ProjectOut)
-def patch_project(project_id: str, body: ProjectPatch, db: Session = Depends(get_db)):
+def patch_project(
+    project_id: str,
+    body: ProjectPatch,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
     """Archive/unarchive - reversible, no data loss. Archived projects collapse
     into the sidebar's Archived section and keep all datasets and runs."""
     project = _get_or_404(db, Project, project_id)
+    _require_project_access(project, user)
     if body.archived is not None:
         project.archived = bool(body.archived)
     db.commit()
@@ -264,37 +356,22 @@ def patch_project(project_id: str, body: ProjectPatch, db: Session = Depends(get
 
 
 @app.delete("/api/projects/{project_id}", status_code=204)
-def delete_project(project_id: str, db: Session = Depends(get_db)):
+def delete_project(
+    project_id: str,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
     """Permanent delete: removes the project, its datasets, runs, uploaded
-    files, and result files. Logged without retaining any uploaded text
-    (design doc §9). Ownership checks arrive with real accounts in Phase 2;
-    until then the shared instance is deliberately open."""
+    files, result files, and cached embeddings. Logged without retaining any
+    uploaded text (design doc §9)."""
     import logging
 
     project = _get_or_404(db, Project, project_id)
-    corpora = db.query(Corpus).filter_by(project_id=project_id).all()
-    jobs = db.query(Job).filter_by(project_id=project_id).all()
-
-    n_files = 0
-    for corpus in corpora:
-        if corpus.path and Path(corpus.path).exists():
-            Path(corpus.path).unlink(missing_ok=True)
-            n_files += 1
-    for job in jobs:
-        if job.result_path and Path(job.result_path).exists():
-            Path(job.result_path).unlink(missing_ok=True)
-            n_files += 1
-
-    for job in jobs:
-        db.delete(job)
-    for corpus in corpora:
-        db.delete(corpus)
-    db.delete(project)
-    db.commit()
-
+    _require_project_access(project, user)
+    counts = retention.delete_project_cascade(db, project)
     logging.getLogger("ccr.projects").info(
-        "project deleted: id=%s name=%r corpora=%d runs=%d files_removed=%d",
-        project_id, project.name, len(corpora), len(jobs), n_files,
+        "project deleted: id=%s name=%r corpora=%d runs=%d",
+        project_id, project.name, counts["corpora"], counts["runs"],
     )
     return Response(status_code=204)
 
@@ -329,9 +406,10 @@ async def upload_corpus(
     project_id: str,
     file: UploadFile,
     db: Session = Depends(get_db),
-    user: dict | None = Depends(auth_demo.get_current_user),
+    user: dict | None = Depends(auth.get_current_user),
 ):
-    _get_or_404(db, Project, project_id)
+    project = _get_or_404(db, Project, project_id)
+    _require_project_access(project, user)
 
     suffix = Path(file.filename or "upload.csv").suffix.lower()
     if suffix not in ALLOWED_SUFFIXES:
@@ -342,9 +420,9 @@ async def upload_corpus(
         raise HTTPException(413, "File exceeds the 25 MB upload limit.")
 
     # Tier gate (design §5.1): anonymous users get strict caps; signing in
-    # lifts them. Demo sign-in for now; managed auth replaces it in Phase 2.
-    if user is None and len(payload) > auth_demo.anon_max_bytes():
-        mb = auth_demo.anon_max_bytes() // (1024 * 1024)
+    # lifts them.
+    if user is None and len(payload) > auth.anon_max_bytes():
+        mb = auth.anon_max_bytes() // (1024 * 1024)
         raise HTTPException(
             413,
             f"Anonymous uploads are limited to {mb} MB. Sign in (top right) to upload larger files.",
@@ -363,11 +441,11 @@ async def upload_corpus(
         dest.unlink(missing_ok=True)
         raise HTTPException(400, str(exc)) from exc
 
-    if user is None and len(df) > auth_demo.anon_max_rows():
+    if user is None and len(df) > auth.anon_max_rows():
         dest.unlink(missing_ok=True)
         raise HTTPException(
             400,
-            f"Anonymous uploads are limited to {auth_demo.anon_max_rows():,} rows "
+            f"Anonymous uploads are limited to {auth.anon_max_rows():,} rows "
             f"(this file has {len(df):,}). Sign in (top right) to upload larger corpora.",
         )
 
@@ -422,12 +500,65 @@ def create_construct(body: ConstructCreate, db: Session = Depends(get_db)):
     return _construct_out(construct)
 
 
+@app.post("/api/constructs/parse-file")
+async def parse_construct_upload(file: UploadFile):
+    """Parse a CSV/XLSX of scale items into a PREVIEW (nothing is saved).
+    The researcher reviews/edits, then saves via POST /api/constructs."""
+    suffix = Path(file.filename or "items.csv").suffix.lower()
+    if suffix not in ALLOWED_SUFFIXES:
+        raise HTTPException(400, f"Unsupported file type '{suffix}'. Use CSV or XLSX.")
+    payload = await file.read()
+    if len(payload) > 1024 * 1024:
+        raise HTTPException(413, "Item files are capped at 1 MB (a scale is a short list).")
+
+    tmp_dir = DATA_DIR / "tmp"
+    tmp_dir.mkdir(exist_ok=True)
+    tmp = tmp_dir / f"construct_upload_{os.urandom(6).hex()}{suffix}"
+    tmp.write_bytes(payload)
+    try:
+        parsed = parse_construct_file(str(tmp))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    finally:
+        tmp.unlink(missing_ok=True)  # item files are never retained
+
+    stem = Path(file.filename or "").stem.replace("_", " ").replace("-", " ").strip()
+    parsed["suggested_name"] = stem.title() if stem else ""
+    return parsed
+
+
 # -------------------------------------------------------------------- jobs
 @app.post("/api/jobs", response_model=JobOut, status_code=201)
-def create_job(body: JobCreate, db: Session = Depends(get_db)):
-    _get_or_404(db, Project, body.project_id)
+def create_job(
+    body: JobCreate,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
+    project = _get_or_404(db, Project, body.project_id)
+    _require_project_access(project, user)
     corpus = _get_or_404(db, Corpus, body.corpus_id)
     _get_or_404(db, Construct, body.construct_id)
+
+    # Anonymous tier: N runs per day, then sign-in (PI decision 2026-07-10).
+    # Cookie counter = a nudge, not a security boundary (recorded in DECISIONS.md).
+    if user is None:
+        used = auth.runs_used_today(request)
+        if used >= auth.anon_max_runs_per_day():
+            raise HTTPException(
+                429,
+                f"Anonymous limit reached ({auth.anon_max_runs_per_day()} runs/day). "
+                "Sign in (top right) to keep running - accounts are free.",
+            )
+    else:
+        # Signed-in tier: saved-run cap instead of deletion (their data, their call).
+        if _saved_runs_used(db, user["id"]) >= auth.user_max_saved_runs():
+            raise HTTPException(
+                409,
+                f"You have {auth.user_max_saved_runs()} saved runs (the maximum). "
+                "Delete a project or old runs to start a new analysis.",
+            )
 
     if body.text_column not in json.loads(corpus.columns_json):
         raise HTTPException(400, f"Column '{body.text_column}' not in corpus columns.")
@@ -437,6 +568,15 @@ def create_job(body: JobCreate, db: Session = Depends(get_db)):
     language = (body.language or "en").strip().lower()
     if not (2 <= len(language) <= 8 and language.replace("-", "").isalpha()):
         raise HTTPException(400, f"Invalid language code '{body.language}'.")
+
+    # Retention: anonymous uploads are deleted after their analysis, so a
+    # re-run needs a fresh upload (or an account, where data persists).
+    if not corpus.path or not Path(corpus.path).exists():
+        raise HTTPException(
+            410,
+            "This dataset's file was removed after analysis (anonymous uploads are "
+            "not kept). Upload the file again, or sign in to keep datasets.",
+        )
 
     job = Job(
         project_id=body.project_id,
@@ -449,6 +589,16 @@ def create_job(body: JobCreate, db: Session = Depends(get_db)):
     db.add(job)
     db.commit()
     jobs_module.submit_job(job.id)
+
+    if user is None:  # advance the daily counter only after the job is accepted
+        response.set_cookie(
+            auth.RUNS_COOKIE_NAME,
+            auth.run_counter_token(auth.runs_used_today(request) + 1),
+            httponly=True,
+            samesite="lax",
+            secure=auth.cookies_secure(),
+            max_age=24 * 3600,
+        )
     return _job_out(db, job)
 
 

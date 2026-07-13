@@ -1,4 +1,4 @@
-"""Demo sign-in tiers (anonymous caps lift on sign-in) and project lifecycle
+"""Sign-in tiers (anonymous caps lift on sign-in) and project lifecycle
 (archive is reversible; delete cascades to files and rows)."""
 
 import io
@@ -50,7 +50,11 @@ def test_anonymous_row_cap_and_signin_lifts_it(client, monkeypatch):
     assert resp.status_code == 400
     assert "Sign in" in resp.json()["detail"]
 
-    assert client.post("/api/auth/demo/login", json={"name": "Deva"}).status_code == 200
+    resp = client.post(
+        "/api/auth/register",
+        json={"email": "deva@test.edu", "password": "password123", "name": "Deva"},
+    )
+    assert resp.status_code == 201
     me = client.get("/api/auth/me").json()
     assert me["signed_in"] is True and me["name"] == "Deva"
 
@@ -70,7 +74,7 @@ def test_anonymous_size_cap(client, monkeypatch):
 
 
 def test_tampered_session_cookie_is_anonymous(client):
-    client.cookies.set("ccr_demo_session", "aGFja2Vy.badsignature")
+    client.cookies.set("ccr_session", "aGFja2Vy.badsignature")
     assert client.get("/api/auth/me").json()["signed_in"] is False
 
 

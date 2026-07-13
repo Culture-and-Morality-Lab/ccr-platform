@@ -15,8 +15,10 @@ rather than hanging forever in the UI.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import os
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -28,8 +30,9 @@ from .ccr import FAKE_MODEL_NAME, get_backend, run_ccr
 from .construct_lib import construct_snapshot
 from .db import DATA_DIR, SessionLocal
 from .ingest import load_corpus
-from .models import Construct, Corpus, Job
+from .models import Construct, Corpus, Job, Project
 from .reproducibility import record_environment
+from .retention import EMB_CACHE_DIR, remove_corpus_files
 
 PLATFORM_VERSION = "0.2.0"
 OUTPUT_SCHEMA_VERSION = "1.0"  # bump on ANY export-column change (CLAUDE.md hard rule)
@@ -132,19 +135,64 @@ def run_job(job_id: str) -> None:
         work_df = df.loc[mask].reset_index(drop=True)
         texts = work_df[job.text_column].astype(str).tolist()
 
+        last_progress = -1.0
+
         def progress(frac: float):
-            _set(db, job, progress=round(float(frac), 3))
+            # Throttled: commit only on >=1% movement (or completion) so large
+            # corpora don't turn the progress bar into a DB write hotspot.
+            nonlocal last_progress
+            frac = round(float(frac), 3)
+            if frac - last_progress >= 0.01 or frac >= 1.0:
+                last_progress = frac
+                _set(db, job, progress=frac)
 
         # Model config from the registry (spec 0003); the test fake has none.
         model_cfg = None if job.model_name == FAKE_MODEL_NAME else registry.get_model(job.model_name)
         item_prefix = model_cfg.item_prefix if (model_cfg and model_cfg.requires_prefix) else ""
         text_prefix = model_cfg.text_prefix if (model_cfg and model_cfg.requires_prefix) else ""
 
+        project = db.get(Project, job.project_id)
+        is_anonymous = not (project and project.owner_user_id)
+
+        # Corpus-embedding cache: the CCR workflow is many constructs against
+        # the SAME corpus, and ~97% of a run is embedding the documents. Corpora
+        # are immutable after upload, so (corpus, column, model, revision,
+        # prefix) fully determines the embeddings - reusing them is bit-identical.
+        # Disabled for the test fake (unless forced) and skipped for anonymous
+        # runs (their files are removed right after the run anyway).
+        cache_enabled = os.environ.get("CCR_EMB_CACHE", "1") == "1" and (
+            model_cfg is not None or os.environ.get("CCR_EMB_CACHE_FORCE") == "1"
+        )
+        cache_path = None
+        cached_embeddings = None
+        if cache_enabled:
+            key = hashlib.sha256(
+                f"{job.text_column}|{job.model_name}|"
+                f"{model_cfg.revision if model_cfg else 'fake'}|{text_prefix}".encode()
+            ).hexdigest()[:20]
+            cache_path = EMB_CACHE_DIR / f"{corpus.id}_{key}.npy"
+            if cache_path.exists():
+                try:
+                    candidate = np.load(cache_path)
+                    if candidate.shape[0] == len(texts):
+                        cached_embeddings = candidate
+                except Exception:
+                    cache_path.unlink(missing_ok=True)  # unreadable cache: recompute
+
         backend = get_backend(job.model_name)
         result = run_ccr(
             texts, items, backend,
             progress_cb=progress, item_prefix=item_prefix, text_prefix=text_prefix,
+            doc_embeddings=cached_embeddings,
         )
+        if (
+            cache_enabled and cache_path is not None and cached_embeddings is None
+            and not is_anonymous and result.doc_embeddings is not None
+        ):
+            try:
+                np.save(cache_path, result.doc_embeddings)
+            except Exception:
+                logger.warning("could not write embedding cache %s", cache_path)
 
         # Structured data-quality warnings (spec 0001) - objects, never bare strings.
         W = warnings_engine.warning
@@ -258,6 +306,22 @@ def run_job(job_id: str) -> None:
             "n_rows_dropped_empty": dropped,
         }
         record_environment(metadata)  # pins exact package versions for the repro bundle
+
+        # Retention (PI decision 2026-07-10): anonymous uploads are removed the
+        # moment analysis finishes. The results summary/CSV stay downloadable
+        # until the anonymous project's TTL purge; the raw upload does not.
+        if is_anonymous:
+            remove_corpus_files(corpus)
+            corpus.path = ""
+            metadata["anonymous_corpus_removed"] = True
+            warnings.append(W(
+                "ANONYMOUS_DATA_REMOVED", "info",
+                "The uploaded file was deleted after this analysis (anonymous runs "
+                "keep no raw data). Re-running requires uploading again, or sign in "
+                "to keep datasets.",
+            ))
+            summary["warnings"] = warnings
+            metadata["warnings"] = warnings
 
         _set(
             db,

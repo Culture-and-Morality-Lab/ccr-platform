@@ -22,6 +22,16 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(120), default="")
+    password_hash: Mapped[str] = mapped_column(Text)  # scrypt$salt$digest (auth.py)
+    created_at: Mapped[str] = mapped_column(String(32), default=_now)
+
+
 class Project(Base):
     __tablename__ = "projects"
 
@@ -29,6 +39,7 @@ class Project(Base):
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(Text, default="")
     archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    owner_user_id: Mapped[str] = mapped_column(String(32), default="")  # "" = anonymous
     created_at: Mapped[str] = mapped_column(String(32), default=_now)
 
 

@@ -46,7 +46,12 @@ export default function App() {
   const [error, setError] = useState("");
   const [auth, setAuth] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
-  const [loginName, setLoginName] = useState("");
+  const [authMode, setAuthMode] = useState("signin"); // signin | register
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
 
   const loadProjects = () =>
     api.listProjects().then(setProjects).catch((e) => setError(e.message));
@@ -57,23 +62,32 @@ export default function App() {
     loadAuth();
   }, []);
 
-  async function handleLogin(e) {
+  async function handleAuthSubmit(e) {
     e.preventDefault();
-    if (!loginName.trim()) return;
+    setAuthError("");
+    setAuthBusy(true);
     try {
-      await api.demoLogin(loginName.trim());
+      if (authMode === "register") {
+        await api.register({ email: authEmail.trim(), password: authPassword, name: authName.trim() });
+      } else {
+        await api.login({ email: authEmail.trim(), password: authPassword });
+      }
       setShowLogin(false);
-      setLoginName("");
-      await loadAuth();
+      setAuthEmail("");
+      setAuthPassword("");
+      setAuthName("");
+      await Promise.all([loadAuth(), loadProjects()]); // owned projects appear on sign-in
     } catch (err) {
-      setError(err.message);
+      setAuthError(err.message);
+    } finally {
+      setAuthBusy(false);
     }
   }
 
   async function handleLogout() {
     try {
       await api.logout();
-      await loadAuth();
+      await Promise.all([loadAuth(), loadProjects()]);
     } catch (err) {
       setError(err.message);
     }
@@ -135,31 +149,58 @@ export default function App() {
       {showLogin && (
         <div className="modal-backdrop" onClick={() => setShowLogin(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Sign in</h3>
+            <h3>{authMode === "register" ? "Create an account" : "Sign in"}</h3>
             <p className="hint">
-              Signing in lifts the anonymous upload limits
+              Accounts are free. Signing in lifts the anonymous limits
               {auth?.limits?.max_rows
-                ? ` (currently ${Math.round(auth.limits.max_bytes / 1048576)} MB / ${auth.limits.max_rows.toLocaleString()} rows per file)`
-                : ""}
-              .
+                ? ` (${Math.round(auth.limits.max_bytes / 1048576)} MB / ${auth.limits.max_rows.toLocaleString()} rows per file, ${auth?.usage?.max_runs_per_day ?? 3} runs/day)`
+                : ""}{" "}
+              and keeps your datasets and runs instead of deleting them after analysis.
             </p>
-            <button className="ghost" disabled title="Arrives with lab accounts">
-              Sign in with Google (coming soon)
-            </button>
-            <form onSubmit={handleLogin} className="mt">
+            {authError && <p className="small" style={{ color: "var(--danger, #b3261e)" }}>{authError}</p>}
+            <form onSubmit={handleAuthSubmit} className="mt">
+              {authMode === "register" && (
+                <label className="field">
+                  Name
+                  <input
+                    type="text"
+                    autoFocus
+                    value={authName}
+                    onChange={(e) => setAuthName(e.target.value)}
+                    placeholder="e.g. Mohammad"
+                  />
+                </label>
+              )}
               <label className="field">
-                Your name (placeholder sign-in for now)
+                Email
                 <input
-                  type="text"
-                  autoFocus
-                  value={loginName}
-                  onChange={(e) => setLoginName(e.target.value)}
-                  placeholder="e.g. Mohammad"
+                  type="email"
+                  autoFocus={authMode === "signin"}
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  placeholder="you@university.edu"
+                />
+              </label>
+              <label className="field">
+                Password {authMode === "register" ? "(at least 8 characters)" : ""}
+                <input
+                  type="password"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
                 />
               </label>
               <div className="row">
-                <button className="primary" type="submit" disabled={!loginName.trim()}>
-                  Continue
+                <button
+                  className="primary"
+                  type="submit"
+                  disabled={
+                    authBusy ||
+                    !authEmail.trim() ||
+                    !authPassword ||
+                    (authMode === "register" && !authName.trim())
+                  }
+                >
+                  {authBusy ? "…" : authMode === "register" ? "Create account" : "Sign in"}
                 </button>
                 <button className="ghost" type="button" onClick={() => setShowLogin(false)}>
                   Cancel
@@ -167,8 +208,22 @@ export default function App() {
               </div>
             </form>
             <p className="small muted mt">
-              This is a temporary placeholder so larger uploads can be tested. Real
-              sign-in (Google + university account) arrives with lab accounts.
+              {authMode === "register" ? (
+                <>
+                  Already have an account?{" "}
+                  <button className="linkish" onClick={() => { setAuthMode("signin"); setAuthError(""); }}>
+                    Sign in
+                  </button>
+                </>
+              ) : (
+                <>
+                  New here?{" "}
+                  <button className="linkish" onClick={() => { setAuthMode("register"); setAuthError(""); }}>
+                    Create a free account
+                  </button>
+                </>
+              )}
+              {" "}· Google sign-in arrives with lab accounts. Forgot your password? Contact the lab admin.
             </p>
           </div>
         </div>
@@ -250,6 +305,7 @@ export default function App() {
               key={selected.id}
               project={selected}
               auth={auth}
+              onAuthRefresh={loadAuth}
               onProjectChanged={loadProjects}
               onProjectDeleted={() => {
                 setSelectedId(null);

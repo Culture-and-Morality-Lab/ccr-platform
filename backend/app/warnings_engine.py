@@ -95,9 +95,10 @@ def detect_corpus_language(texts: list[str], selected: str) -> tuple[LanguageRes
     votes: dict[str, int] = {}
     for t in detectable:
         try:
-            votes[detect(t)] = votes.get(detect(t), 0) + 1
+            lang = detect(t)  # one detection per row (detect() is the expensive call)
         except LangDetectException:
             continue
+        votes[lang] = votes.get(lang, 0) + 1
 
     if not votes:
         result = LanguageResult(selected, None, None, len(detectable), "langdetect", detector_version)

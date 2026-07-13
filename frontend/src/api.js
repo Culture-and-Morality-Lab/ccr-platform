@@ -33,7 +33,8 @@ export const api = {
   deleteProject: (projectId) => fetch(`/api/projects/${projectId}`, { method: "DELETE" }),
 
   authMe: () => request("/api/auth/me"),
-  demoLogin: (name) => request("/api/auth/demo/login", json("POST", { name })),
+  register: (body) => request("/api/auth/register", json("POST", body)),
+  login: (body) => request("/api/auth/login", json("POST", body)),
   logout: () => request("/api/auth/logout", { method: "POST" }),
 
   listCorpora: (projectId) => request(`/api/projects/${projectId}/corpora`),
@@ -45,6 +46,11 @@ export const api = {
 
   listConstructs: () => request("/api/constructs"),
   createConstruct: (body) => request("/api/constructs", json("POST", body)),
+  parseConstructFile: (file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request("/api/constructs/parse-file", { method: "POST", body: form });
+  },
 
   createJob: (body) => request("/api/jobs", json("POST", body)),
   listJobs: (projectId) => request(`/api/jobs?project_id=${projectId}`),

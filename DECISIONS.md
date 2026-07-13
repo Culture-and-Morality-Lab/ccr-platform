@@ -55,3 +55,42 @@ scales without markers default to false with reverse_flags_source recorded as pe
 Filler items excluded (8, LOT-R and Hope Scale). SWLS skipped as duplicate of the existing
 seed. All imported entries are needs_verification until wording is checked verbatim.
 Importer kept as a permanent tool: packages/construct_library/import_from_xlsx.py.
+
+## 2026-07-11 - Local email+password accounts as the interim auth provider (Deva)
+Mohammad delegated technical decisions and asked for the best free option available now.
+Supabase remains the Phase 2 target but needs dashboard/OAuth setup on lab accounts;
+interim: local accounts with stdlib scrypt password hashing, HMAC-signed session cookie,
+register/login/logout endpoints. No email verification and no self-service password reset
+(admin action at lab scale) - documented in the UI. get_current_user() stays the single
+swap point, so the Supabase move replaces token issuance only. Rejected: waiting on
+Supabase (blocks run limits, retention tiers, and real-user testing), shipping the
+name-only placeholder to real users (no actual account boundary).
+
+## 2026-07-11 - Anonymous tier: 3 runs/day + delete-after-analysis; signed-in: 15 saved runs (PI 2026-07-10)
+Run limit as a signed cookie counter, reset daily (UTC): a nudge toward accounts, not a
+security boundary - clearing cookies evades it, acceptable at academic scale (recorded
+trade-off). Anonymous corpus files (and embedding caches) are deleted the moment a run
+completes; results stay downloadable until the project's TTL purge (CCR_ANON_TTL_HOURS,
+24 on deployments, 0 = off in local dev). Signed-in users are never auto-deleted; a
+15-saved-run cap (middle of Mohammad's 10-20) refuses new runs until they delete old ones.
+All numbers env-tunable. This retention shape is also what fits the infra into free tiers
+($0-60/yr vs the earlier ~$600 estimate).
+
+## 2026-07-11 - Ownership model: private owned projects, shared anonymous space
+Projects created signed-in are visible/editable only by their owner (403 otherwise);
+anonymous projects remain a shared open space subject to TTL purge. Replaces the 07-09
+"open archive/delete" decision now that accounts exist.
+
+## 2026-07-11 - Corpus-embedding cache keyed by (corpus, column, model, revision, prefix)
+~97% of a run is document embedding and the core CCR workflow is many constructs against
+one corpus. Corpora are immutable after upload, so cached .npy embeddings are bit-identical
+on reuse; cache skipped for anonymous runs (files deleted anyway) and invalidated by
+corpus/project deletion. Rejected: quantization/fp16/GPU speedups - they change embedding
+values and would break reproduction-script parity and cross-run comparability. Any faster
+model variant must be a separate registry entry, never a silent swap.
+
+## 2026-07-11 - Construct upload from CSV/XLSX: parse -> preview -> confirm
+Items are parsed server-side (tolerant ingest, "item"/single/longest-string column,
+reverse via column or trailing "(R)" marker - same convention as the lab spreadsheet
+importer) but NEVER saved directly: the researcher reviews and edits in the form first,
+because item wording IS the instrument. Item files are deleted immediately after parsing.

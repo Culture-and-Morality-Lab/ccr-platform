@@ -3,7 +3,7 @@ import { api } from "./api.js";
 import ConstructPicker from "./ConstructPicker.jsx";
 import ResultsView from "./ResultsView.jsx";
 
-export default function Workspace({ project, auth, onProjectChanged, onProjectDeleted }) {
+export default function Workspace({ project, auth, onAuthRefresh, onProjectChanged, onProjectDeleted }) {
   const [corpora, setCorpora] = useState([]);
   const [constructs, setConstructs] = useState([]);
   const [models, setModels] = useState([]);
@@ -106,6 +106,7 @@ export default function Workspace({ project, auth, onProjectChanged, onProjectDe
         language,
       });
       await refreshJobs();
+      onAuthRefresh?.(); // anonymous run counter changed
     } catch (err) {
       setError(err.message);
     } finally {
@@ -203,8 +204,8 @@ export default function Workspace({ project, auth, onProjectChanged, onProjectDe
             <>
               {" "}
               Anonymous limit: {Math.round(auth.limits.max_bytes / 1048576)} MB /{" "}
-              {auth.limits.max_rows.toLocaleString()} rows per file; sign in (top right) for
-              larger uploads.
+              {auth.limits.max_rows.toLocaleString()} rows per file; uploads are deleted
+              after analysis. Sign in (top right) for larger uploads and to keep your data.
             </>
           )}
         </p>
@@ -351,6 +352,20 @@ export default function Workspace({ project, auth, onProjectChanged, onProjectDe
             {running ? "Starting…" : "Run CCR analysis"}
           </button>
         </div>
+        {auth && !auth.signed_in && auth.usage?.max_runs_per_day != null && (
+          <p className="small muted">
+            {Math.min(auth.usage.runs_used_today, auth.usage.max_runs_per_day)} of{" "}
+            {auth.usage.max_runs_per_day} free runs used today
+            {auth.usage.runs_used_today >= auth.usage.max_runs_per_day
+              ? " - sign in (top right) to keep running."
+              : "."}
+          </p>
+        )}
+        {auth?.signed_in && auth.usage?.max_saved_runs != null && (
+          <p className="small muted">
+            {auth.usage.saved_runs} of {auth.usage.max_saved_runs} saved runs used.
+          </p>
+        )}
         {models.find((m) => m.id === modelName)?.warnings?.map((w, i) => (
           <p key={i} className="small muted">
             ⚠ {w}
@@ -369,7 +384,9 @@ export default function Workspace({ project, auth, onProjectChanged, onProjectDe
                   <th>Started</th>
                   <th>Corpus</th>
                   <th>Construct</th>
-                  <th style={{ width: "24%" }}>Status</th>
+                  <th>Model</th>
+                  <th>Lang</th>
+                  <th style={{ width: "20%" }}>Status</th>
                   <th />
                 </tr>
               </thead>
@@ -381,6 +398,8 @@ export default function Workspace({ project, auth, onProjectChanged, onProjectDe
                     </td>
                     <td>{j.corpus_filename}</td>
                     <td>{j.construct_name}</td>
+                    <td className="muted small">{j.model_name}</td>
+                    <td className="muted small">{j.language}</td>
                     <td>
                       {j.status === "running" ? (
                         <div className="progress-track" title={`${Math.round(j.progress * 100)}%`}>
@@ -416,25 +435,67 @@ export default function Workspace({ project, auth, onProjectChanged, onProjectDe
   );
 }
 
+const REVERSE_SUFFIX = /\s*\((r|rev|reversed)\)\s*$/i;
+
 function NewConstructForm({ onCreated, onError }) {
   const [name, setName] = useState("");
   const [reference, setReference] = useState("");
   const [itemsText, setItemsText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [parsing, setParsing] = useState(false);
+  const [parseNotes, setParseNotes] = useState([]);
+  const itemFileRef = useRef(null);
+
+  // Convention shared with the file parser and the lab's own spreadsheets:
+  // a trailing (R) marks a reverse-scored item.
+  function parseLines() {
+    return itemsText
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((line) => ({
+        text: line.replace(REVERSE_SUFFIX, "").trim(),
+        reverse: REVERSE_SUFFIX.test(line),
+      }));
+  }
+
+  async function handleItemFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParsing(true);
+    setParseNotes([]);
+    try {
+      const parsed = await api.parseConstructFile(file);
+      setItemsText(
+        parsed.items
+          .map((i) => (i.reverse_scored ? `${i.text} (R)` : i.text))
+          .join("\n")
+      );
+      if (!name.trim() && parsed.suggested_name) setName(parsed.suggested_name);
+      setParseNotes(parsed.warnings || []);
+    } catch (err) {
+      onError(err.message);
+    } finally {
+      setParsing(false);
+      if (itemFileRef.current) itemFileRef.current.value = "";
+    }
+  }
 
   async function save(e) {
     e.preventDefault();
-    const items = itemsText
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (!name.trim() || items.length === 0) {
+    const parsed = parseLines();
+    if (!name.trim() || parsed.length === 0) {
       onError("A custom construct needs a name and at least one item (one per line).");
       return;
     }
     setSaving(true);
     try {
-      const created = await api.createConstruct({ name: name.trim(), reference, items });
+      const created = await api.createConstruct({
+        name: name.trim(),
+        reference,
+        items: parsed.map((i) => i.text),
+        reverse_scored: parsed.map((i) => i.reverse),
+      });
       onCreated(created);
     } catch (err) {
       onError(err.message);
@@ -442,6 +503,8 @@ function NewConstructForm({ onCreated, onError }) {
       setSaving(false);
     }
   }
+
+  const nReverse = parseLines().filter((i) => i.reverse).length;
 
   return (
     <form onSubmit={save} className="mt">
@@ -464,10 +527,29 @@ function NewConstructForm({ onCreated, onError }) {
         </div>
       </div>
       <label className="field">
-        Scale items - one per line, verbatim from the validated instrument
-        <textarea rows={5} value={itemsText} onChange={(e) => setItemsText(e.target.value)} />
+        Upload items from CSV/XLSX (optional) - an "item" column, or one item per row;
+        reverse-scored via a "reverse" column or a trailing (R)
+        <input
+          ref={itemFileRef}
+          type="file"
+          accept=".csv,.xlsx,.xls"
+          onChange={handleItemFile}
+          disabled={parsing}
+        />
       </label>
-      <button className="primary" type="submit" disabled={saving}>
+      {parsing && <p className="small muted">Parsing…</p>}
+      {parseNotes.map((w, i) => (
+        <p key={i} className="small muted">⚠ {w}</p>
+      ))}
+      <label className="field">
+        Scale items - one per line, verbatim from the validated instrument; append (R) to
+        mark a reverse-scored item
+        <textarea rows={6} value={itemsText} onChange={(e) => setItemsText(e.target.value)} />
+      </label>
+      {nReverse > 0 && (
+        <p className="small muted">{nReverse} item(s) marked reverse-scored.</p>
+      )}
+      <button className="primary" type="submit" disabled={saving || parsing}>
         {saving ? "Saving…" : "Save construct"}
       </button>
     </form>
