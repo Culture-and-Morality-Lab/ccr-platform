@@ -33,6 +33,7 @@ from .ingest import load_corpus
 from .models import Construct, Corpus, Job, Project
 from .reproducibility import record_environment
 from .retention import EMB_CACHE_DIR, remove_corpus_files
+from . import storage
 
 PLATFORM_VERSION = "0.2.0"
 OUTPUT_SCHEMA_VERSION = "1.0"  # bump on ANY export-column change (CLAUDE.md hard rule)
@@ -125,7 +126,14 @@ def run_job(job_id: str) -> None:
         items = json.loads(construct.items_json)
         parse_info = json.loads(corpus.parse_info_json or "{}")
 
-        df, _ = load_corpus(corpus.path)
+        # Materialize the corpus locally (a no-op on the local backend; a
+        # temp download when files live in object storage).
+        local_corpus, corpus_is_temp = storage.fetch_to_local(corpus.path)
+        try:
+            df, _ = load_corpus(str(local_corpus))
+        finally:
+            if corpus_is_temp:
+                local_corpus.unlink(missing_ok=True)
         if job.text_column not in df.columns:
             raise ValueError(f"Column '{job.text_column}' not found in corpus.")
 
@@ -246,8 +254,9 @@ def run_job(job_id: str) -> None:
         for j in range(result.similarities.shape[1]):
             out[f"sim_item_{j + 1}"] = np.round(result.similarities[:, j], 6)
         out["ccr_score"] = np.round(result.scores, 6)
-        result_path = RESULTS_DIR / f"{job.id}.csv"
-        out.to_csv(result_path, index=False)
+        local_result = RESULTS_DIR / f"{job.id}.csv"
+        out.to_csv(local_result, index=False)
+        result_path = storage.move_local_into_storage("results", f"{job.id}.csv", local_result)
 
         scores = result.scores
         order = np.argsort(scores)

@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from . import auth, retention
+from . import auth, retention, storage
 from . import jobs as jobs_module
 from . import registry
 from .ccr import FAKE_MODEL_NAME
@@ -431,23 +431,28 @@ async def upload_corpus(
     corpus = Corpus(
         project_id=project_id, filename=file.filename, path="", n_rows=0, columns_json="[]"
     )
-    dest = DATA_DIR / "corpora" / f"{corpus.id}{suffix}"
-    dest.write_bytes(payload)
-    corpus.path = str(dest)
+    # Parse from a local temp file, then hand the bytes to the storage backend
+    # (local disk by default; S3/R2 when CCR_STORAGE=s3 in production).
+    tmp_dir = DATA_DIR / "tmp"
+    tmp_dir.mkdir(exist_ok=True)
+    tmp = tmp_dir / f"{corpus.id}{suffix}"
+    tmp.write_bytes(payload)
 
     try:
-        df, parse_info = load_corpus(str(dest))
+        df, parse_info = load_corpus(str(tmp))
     except IngestError as exc:
-        dest.unlink(missing_ok=True)
+        tmp.unlink(missing_ok=True)
         raise HTTPException(400, str(exc)) from exc
 
     if user is None and len(df) > auth.anon_max_rows():
-        dest.unlink(missing_ok=True)
+        tmp.unlink(missing_ok=True)
         raise HTTPException(
             400,
             f"Anonymous uploads are limited to {auth.anon_max_rows():,} rows "
             f"(this file has {len(df):,}). Sign in (top right) to upload larger corpora.",
         )
+
+    corpus.path = storage.move_local_into_storage("corpora", f"{corpus.id}{suffix}", tmp)
 
     corpus.n_rows = int(len(df))
     corpus.columns_json = json.dumps(list(df.columns))
@@ -571,7 +576,7 @@ def create_job(
 
     # Retention: anonymous uploads are deleted after their analysis, so a
     # re-run needs a fresh upload (or an account, where data persists).
-    if not corpus.path or not Path(corpus.path).exists():
+    if not corpus.path or not storage.exists(corpus.path):
         raise HTTPException(
             410,
             "This dataset's file was removed after analysis (anonymous uploads are "
@@ -631,9 +636,16 @@ def export_results(job_id: str, db: Session = Depends(get_db)):
     job = _get_or_404(db, Job, job_id)
     if job.status != "completed" or not job.result_path:
         raise HTTPException(409, "Results not available.")
-    return FileResponse(
-        job.result_path, media_type="text/csv", filename=f"ccr_results_{job_id[:8]}.csv"
-    )
+    filename = f"ccr_results_{job_id[:8]}.csv"
+    if storage.is_s3(job.result_path):
+        from fastapi.responses import StreamingResponse
+
+        return StreamingResponse(
+            storage.open_stream(job.result_path),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    return FileResponse(job.result_path, media_type="text/csv", filename=filename)
 
 
 @app.get("/api/jobs/{job_id}/metadata")

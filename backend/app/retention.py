@@ -22,7 +22,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from . import auth
+from . import auth, storage
 from .db import DATA_DIR, SessionLocal
 from .models import Corpus, Job, Project
 
@@ -36,9 +36,9 @@ _thread: threading.Thread | None = None
 
 
 def remove_corpus_files(corpus: Corpus) -> None:
-    """Delete the uploaded file and any cached embeddings for a corpus."""
-    if corpus.path:
-        Path(corpus.path).unlink(missing_ok=True)
+    """Delete the uploaded file (whatever backend holds it) and any cached
+    embeddings (always local - caches are derived data)."""
+    storage.delete(corpus.path)
     for cached in EMB_CACHE_DIR.glob(f"{corpus.id}_*.npy"):
         cached.unlink(missing_ok=True)
 
@@ -53,8 +53,7 @@ def delete_project_cascade(db: Session, project: Project) -> dict:
     for corpus in corpora:
         remove_corpus_files(corpus)
     for job in jobs:
-        if job.result_path:
-            Path(job.result_path).unlink(missing_ok=True)
+        storage.delete(job.result_path)
 
     for job in jobs:
         db.delete(job)

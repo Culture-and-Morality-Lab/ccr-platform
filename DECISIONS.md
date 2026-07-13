@@ -94,3 +94,13 @@ Items are parsed server-side (tolerant ingest, "item"/single/longest-string colu
 reverse via column or trailing "(R)" marker - same convention as the lab spreadsheet
 importer) but NEVER saved directly: the researcher reviews and edits in the form first,
 because item wording IS the instrument. Item files are deleted immediately after parsing.
+
+## 2026-07-13 - Storage interface ships now; R2 enabled at deploy by config (Deva)
+Local disk stays the dev default, but the S3-compatible path (Cloudflare R2) is
+implemented and tested behind one storage module: uploads, results, exports (streamed
+through the API - bucket stays private), and retention deletes all go through locators
+stored in the existing path columns (no migration; old local paths keep working).
+Flipping production to R2 = CCR_STORAGE=s3 + four env values. Rejected: deferring the
+implementation to Phase 2 (turns a deploy-day config flip into deploy-day development),
+and presigned public URLs (private bucket + API streaming is simpler and safer at lab
+scale). Embedding caches deliberately stay on local disk: derived data, no durability need.

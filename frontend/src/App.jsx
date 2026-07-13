@@ -178,11 +178,14 @@ export default function App() {
                   autoFocus={authMode === "signin"}
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
-                  placeholder="you@university.edu"
+                  placeholder="you@example.com"
                 />
               </label>
               <label className="field">
-                Password {authMode === "register" ? "(at least 8 characters)" : ""}
+                Password
+                {authMode === "register" && (
+                  <span className="field-hint"> at least 8 characters</span>
+                )}
                 <input
                   type="password"
                   value={authPassword}
