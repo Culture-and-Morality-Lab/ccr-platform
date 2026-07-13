@@ -18,6 +18,9 @@ select language English and model MiniLM.
 | `latin1_encoding_demo.csv` | Encoding fallback | Not valid UTF-8; ENCODING_FALLBACK warning, accented words (fiancée, café) must render correctly |
 | `xlsx_upload_demo.xlsx` | Excel ingestion path | Uploads and parses like a CSV |
 | `large_demo.csv` | Anonymous upload caps (800 rows) | Signed out: blocked with the sign-in hint. Signed in: runs |
+| `construct_items_demo.csv` | Construct upload: item + reverse columns | + Custom construct > upload: 6 items parse, last one flagged reverse-scored |
+| `construct_items_marker_demo.csv` | Construct upload: (R) markers, blank + duplicate rows | 4 items parse (blank and duplicate skipped, notes say so); "(R)" line flagged |
+| `construct_items_demo.xlsx` | Construct upload from Excel | 4 items, two flagged reverse via (R) markers |
 
 Notes:
 
