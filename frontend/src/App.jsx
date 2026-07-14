@@ -60,6 +60,13 @@ export default function App() {
   useEffect(() => {
     loadProjects();
     loadAuth();
+    // Surface Google sign-in failures passed back via redirect.
+    const params = new URLSearchParams(window.location.search);
+    const authFail = params.get("auth_error");
+    if (authFail) {
+      setError(`Sign-in problem: ${authFail.replaceAll("-", " ")}.`);
+      window.history.replaceState({}, "", "/");
+    }
   }, []);
 
   async function handleAuthSubmit(e) {
@@ -158,6 +165,16 @@ export default function App() {
               and keeps your datasets and runs instead of deleting them after analysis.
             </p>
             {authError && <p className="small" style={{ color: "var(--danger, #b3261e)" }}>{authError}</p>}
+            {auth?.google_available && (
+              <>
+                <a className="primary google-btn" href="/api/auth/google/login">
+                  Continue with Google
+                </a>
+                <p className="small muted" style={{ textAlign: "center", margin: "8px 0" }}>
+                  or use email and password
+                </p>
+              </>
+            )}
             <form onSubmit={handleAuthSubmit} className="mt">
               {authMode === "register" && (
                 <label className="field">
@@ -226,7 +243,9 @@ export default function App() {
                   </button>
                 </>
               )}
-              {" "}· Google sign-in arrives with lab accounts. Forgot your password? Contact the lab admin.
+              {auth?.google_available
+                ? " · Forgot your password? Contact the lab admin, or use Google."
+                : " · Google sign-in arrives with lab accounts. Forgot your password? Contact the lab admin."}
             </p>
           </div>
         </div>

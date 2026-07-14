@@ -138,6 +138,15 @@ button.primary {
 }
 button.primary:hover { background: var(--maroon-dark); }
 button.primary:disabled { background: #c9ccd1; cursor: not-allowed; }
+a.google-btn {
+  background: var(--maroon); color: #fff; border: none;
+  min-height: var(--control-height);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 18px; border-radius: 8px; font: inherit; font-weight: 600;
+  cursor: pointer; line-height: 1.2; text-decoration: none; width: 100%;
+  box-sizing: border-box;
+}
+a.google-btn:hover { background: var(--maroon-dark); }
 button.ghost {
   background: none; border: 1px solid var(--line); color: var(--ink);
   min-height: var(--control-height);

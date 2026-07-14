@@ -104,3 +104,14 @@ Flipping production to R2 = CCR_STORAGE=s3 + four env values. Rejected: deferrin
 implementation to Phase 2 (turns a deploy-day config flip into deploy-day development),
 and presigned public URLs (private bucket + API streaming is simpler and safer at lab
 scale). Embedding caches deliberately stay on local disk: derived data, no durability need.
+
+## 2026-07-13 - Google sign-in via Supabase PKCE, server-side, feature-flagged (Deva)
+Implemented as a plain redirect flow: /api/auth/google/login sends the browser to
+Supabase's Google authorize URL with a PKCE challenge (verifier in a short-lived signed
+cookie); the callback exchanges the code server-side (stdlib urllib, no new deps), then
+finds-or-creates a local user by email and issues the SAME session cookie as password
+accounts. Inert until SUPABASE_URL + SUPABASE_ANON_KEY are set, so dev/tests need no
+Supabase project. Google-only accounts have no password hash and password login points
+them to the Google button. Rejected: supabase-js in the frontend (breaks the
+react+react-dom-only dependency rule for one button) and provider-JWT sessions (would
+fork the tier/ownership logic into two session formats for no benefit).

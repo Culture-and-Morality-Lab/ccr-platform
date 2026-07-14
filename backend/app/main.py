@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from . import auth, retention, storage
+from . import auth, auth_google, retention, storage
 from . import jobs as jobs_module
 from . import registry
 from .ccr import FAKE_MODEL_NAME
@@ -221,6 +221,7 @@ def auth_me(
         "signed_in": False,
         "name": None,
         "email": None,
+        "google_available": auth_google.configured(),
         "limits": {"max_bytes": auth.anon_max_bytes(), "max_rows": auth.anon_max_rows()},
         "usage": {
             "runs_used_today": auth.runs_used_today(request),
@@ -249,10 +250,64 @@ def register(body: RegisterIn, response: Response, db: Session = Depends(get_db)
 def login(body: LoginIn, response: Response, db: Session = Depends(get_db)):
     email = body.email.strip().lower()
     user = db.query(User).filter_by(email=email).first()
+    if user is not None and not user.password_hash:
+        raise HTTPException(401, "This account uses Google sign-in - use the Google button.")
     if user is None or not auth.verify_password(body.password, user.password_hash):
         raise HTTPException(401, "Incorrect email or password.")
     _set_session_cookie(response, user)
     return {"signed_in": True, "name": user.name, "email": user.email}
+
+
+@app.get("/api/auth/google/login")
+def google_login():
+    """Start the Google sign-in flow (Supabase PKCE). Plain redirect - the
+    frontend links here directly, no SDK involved."""
+    if not auth_google.configured():
+        raise HTTPException(503, "Google sign-in is not configured on this instance.")
+    from fastapi.responses import RedirectResponse
+
+    url, verifier = auth_google.begin()
+    resp = RedirectResponse(url, status_code=307)
+    resp.set_cookie(
+        auth_google.VERIFIER_COOKIE,
+        auth.sign_payload({"v": verifier}),
+        httponly=True,
+        samesite="lax",
+        secure=auth.cookies_secure(),
+        max_age=auth_google.VERIFIER_TTL_SECONDS,
+    )
+    return resp
+
+
+@app.get("/api/auth/google/callback")
+def google_callback(request: Request, code: str = "", db: Session = Depends(get_db)):
+    from fastapi.responses import RedirectResponse
+
+    def fail(msg: str):
+        return RedirectResponse(f"/?auth_error={msg}", status_code=307)
+
+    if not auth_google.configured():
+        return fail("google-not-configured")
+    payload = auth.verify_payload(request.cookies.get(auth_google.VERIFIER_COOKIE))
+    if not code or not payload or "v" not in payload:
+        return fail("sign-in-expired-try-again")
+    try:
+        info = auth_google.exchange(code, payload["v"])
+    except ValueError:
+        return fail("google-exchange-failed")
+
+    user = db.query(User).filter_by(email=info["email"]).first()
+    if user is None:
+        # Google-verified account: no local password (password login is refused
+        # with a pointer to the Google button).
+        user = User(email=info["email"], name=info["name"], password_hash="")
+        db.add(user)
+        db.commit()
+
+    resp = RedirectResponse("/", status_code=307)
+    resp.delete_cookie(auth_google.VERIFIER_COOKIE)
+    _set_session_cookie(resp, user)
+    return resp
 
 
 @app.post("/api/auth/logout")

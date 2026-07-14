@@ -16,3 +16,4 @@ node_modules/
 # local AI-tool state (machine-specific)
 .codex/
 .agents/
+.env
