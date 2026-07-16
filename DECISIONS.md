@@ -115,3 +115,20 @@ Supabase project. Google-only accounts have no password hash and password login 
 them to the Google button. Rejected: supabase-js in the frontend (breaks the
 react+react-dom-only dependency rule for one button) and provider-JWT sessions (would
 fork the tier/ownership logic into two session formats for no benefit).
+
+## 2026-07-14 - PI answers applied (library rights, caps, library pruning)
+1. Questionnaire items INCLUDED in the public repos: PI's call ("I think all of them
+   are public. and we can remove some in the future."). Per-construct removal stays a
+   one-file delete; runs keep immutable snapshots regardless. This unblocks pushing to
+   the lab org and shipping the full library on the dev instance.
+2. Anonymous row cap tightened 500 -> 200 per PI. Applied to the ANONYMOUS tier only
+   (Deva's scoping decision): signed-in research use routinely needs thousands of rows,
+   and the PI's confirmed numbers were all anonymous-tier values. Env-tunable either way.
+3. CRS (Centrality of Religiosity Scale, 5 dimension files) removed from the library
+   per PI ("Dropp CRS too"; it was missing its citation). MFQ-30 and CRT were never
+   imported, so "drop" for those is a no-op. MFQ-2 retained. Existing dev DBs keep
+   already-synced CRS rows until their DB resets (append-only sync never deletes);
+   fresh deploys never see it.
+4. Wording verification assigned to the PI's RA: docs/verification_checklist.csv
+   (525 items across 94 constructs, one row per item with correction columns) generated
+   for that workflow; constructs stay needs_verification until she checks them.
