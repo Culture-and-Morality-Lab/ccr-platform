@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -483,7 +484,11 @@ async def upload_corpus(
             f"Anonymous uploads are limited to {mb} MB. Sign in (top right) to upload larger files.",
         )
 
+    # Assign the id NOW: the model's default fires at INSERT flush, so reading
+    # corpus.id before commit yields None - every upload would then share one
+    # "None.csv" on disk, each new upload silently clobbering the previous one.
     corpus = Corpus(
+        id=uuid.uuid4().hex,
         project_id=project_id, filename=file.filename, path="", n_rows=0, columns_json="[]"
     )
     # Parse from a local temp file, then hand the bytes to the storage backend
@@ -744,6 +749,25 @@ def export_script_requirements(job_id: str, db: Session = Depends(get_db)):
         },
     )
 
+
+# ------------------------------------------------------------ tester guide + samples
+# /guide and /samples exist for the dev instance: a click-through testing guide
+# for the PI/students and the synthetic demo corpora it references. guide.html
+# lives in app/ (not static/, which `npm run build` wipes); sample_data/ sits at
+# the repo root, same resolution as packages/ (= / in the container).
+GUIDE_HTML = Path(__file__).resolve().parent / "guide.html"
+SAMPLES_DIR = Path(__file__).resolve().parents[2] / "sample_data"
+
+
+@app.get("/guide", include_in_schema=False)
+def testing_guide():
+    if not GUIDE_HTML.exists():
+        raise HTTPException(404, "Guide not available on this instance.")
+    return FileResponse(GUIDE_HTML, media_type="text/html")
+
+
+if SAMPLES_DIR.exists():
+    app.mount("/samples", StaticFiles(directory=SAMPLES_DIR), name="samples")
 
 # ------------------------------------------------------------ static (SPA)
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
