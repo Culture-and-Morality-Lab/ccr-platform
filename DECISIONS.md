@@ -142,3 +142,12 @@ production); usage counters + failed-run requeue answer "how is testing going" w
 SQL. Access = signed-in AND email in ADMIN_EMAILS (env allowlist, not a DB role, so a
 compromised DB cannot mint admins). Rejected: a fuller dashboard product (charts, audit
 UIs) - no current pain demands it.
+
+## 2026-07-17 - DATABASE_URL: Postgres (Supabase) for persistent storage (Deva)
+Ephemeral-disk hosts (HF Spaces free) wipe SQLite on every restart, so accounts and all
+data disappeared. Fix: db.py uses Postgres when DATABASE_URL is set (SQLite otherwise, so
+local dev is unchanged). Supabase Postgres free tier chosen - already the auth provider,
+so it is the design doc's "one vendor for auth + DB + backups" with zero new cost. Schema
+was Postgres-portable by design; auto-migrate is now dialect-aware; psycopg v3 driver.
+Note: uploaded FILES still live on the local (ephemeral) disk - full file durability is
+the separate CCR_STORAGE=s3 (R2) switch, already implemented.
