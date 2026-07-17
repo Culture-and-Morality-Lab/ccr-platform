@@ -132,3 +132,13 @@ fork the tier/ownership logic into two session formats for no benefit).
 4. Wording verification assigned to the PI's RA: docs/verification_checklist.csv
    (525 items across 94 constructs, one row per item with correction columns) generated
    for that workflow; constructs stay needs_verification until she checks them.
+
+## 2026-07-17 - Minimal admin surface (/admin), driven by four concrete pains (Deva)
+Password resets finally have an admin action; the lab tier becomes a per-user role
+(replaces the global saved-run env hack - lab accounts uncapped, public accounts keep 15);
+the RA gets a construct-verification queue (DB status is the operational overlay, the YAML
+library remains the durable source of truth and statuses are written back before
+production); usage counters + failed-run requeue answer "how is testing going" without
+SQL. Access = signed-in AND email in ADMIN_EMAILS (env allowlist, not a DB role, so a
+compromised DB cannot mint admins). Rejected: a fuller dashboard product (charts, audit
+UIs) - no current pain demands it.
