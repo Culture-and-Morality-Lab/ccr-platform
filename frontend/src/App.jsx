@@ -214,10 +214,14 @@ export default function App() {
             </button>
           )}
           <a className="header-link" href="/guide">Guide</a>
-          {/* /product is lab-internal; the server enforces the gate, the
-              header just doesn't advertise it to everyone else. */}
+          {/* /testing (the click-through testing guide) and /product are both
+              lab-internal; the server enforces the gate, the header just
+              doesn't advertise them to everyone else. */}
           {["lab", "maintainer", "pi"].includes(auth?.role) && (
-            <a className="header-link" href="/product">How it works</a>
+            <>
+              <a className="header-link" href="/testing">Testing</a>
+              <a className="header-link" href="/product">How it works</a>
+            </>
           )}
           {auth?.signed_in ? (
             <>

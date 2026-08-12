@@ -662,7 +662,53 @@ details[open] > summary::before { transform: rotate(90deg); }
 .field-row .field { margin-bottom: 0; }
 .field-row > .small { align-self: center; margin: 0 0 8px; }
 
+/* "Drafted by <model>" line + hover/focus info bubble in the AI construct
+   path. The model name is read live from the API (auth.generation), so the UI
+   never hardcodes it. */
+.ai-modeline {
+  display: flex; align-items: center; gap: 8px;
+  margin: 2px 0 10px;
+}
+.infotip {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; border: none; background: none; cursor: help;
+  font: inherit; line-height: 1;
+}
+.infotip-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--brand);
+  border: 1px solid var(--brand); font-size: 11px; font-weight: 700;
+  font-style: normal;
+}
+.infotip:hover .infotip-icon,
+.infotip:focus-visible .infotip-icon { background: var(--brand); color: #fff; }
+.infotip:focus-visible { outline: none; }
+.infotip:focus-visible .infotip-icon { box-shadow: var(--ring); }
+.infotip-pop {
+  position: absolute; left: 0; top: calc(100% + 8px); z-index: 40;
+  width: 300px; max-width: 78vw;
+  padding: 10px 12px;
+  background: var(--card); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  font-size: 12px; line-height: 1.45; text-align: left;
+  opacity: 0; visibility: hidden; transform: translateY(-3px);
+  transition: opacity .12s, transform .12s, visibility .12s;
+  pointer-events: none;
+}
+.infotip:hover .infotip-pop,
+.infotip:focus-within .infotip-pop {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.infotip-pop b { display: block; margin-bottom: 4px; color: var(--brand-ink); }
+.infotip-pop ul { margin: 0; padding-left: 16px; }
+.infotip-pop li { margin: 2px 0; color: var(--ink); }
+.infotip-pop a { display: inline-block; margin-top: 6px; color: var(--brand); font-weight: 600; }
+
 @media (prefers-reduced-motion: reduce) {
+  .infotip-pop { transition: none; }
   .picker-panel, .modal { animation: none; }
   .pill.running::before { animation: none; }
   .construct-selected summary::before,

@@ -42,10 +42,9 @@ export default function WelcomePage({ onEnter }) {
           <button className="primary" onClick={onEnter}>
             Open the dashboard →
           </button>
-          {/* /product (architecture docs) is lab-internal now; the public
-              landing only advertises the guide. Lab members reach it from
-              the header. */}
-          <a className="ghost-link" href="/guide">How to use &amp; test it</a>
+          {/* /guide is the public how-to guide; /testing and /product are
+              lab-internal and reached from the header. */}
+          <a className="ghost-link" href="/guide">How to use it</a>
         </div>
       </section>
 
@@ -76,7 +75,11 @@ export default function WelcomePage({ onEnter }) {
           <a href="https://websites.umass.edu/matari/" target="_blank" rel="noopener noreferrer">
             Culture &amp; Morality Lab
           </a>{" "}
-          (PI: Mohammad Atari) at the University of Massachusetts Amherst. The CCR pipeline is built based on Atari et al. (2023),
+          (PI:{" "}
+          <a href="https://mohammadatari.com/" target="_blank" rel="noopener noreferrer">
+            Mohammad Atari
+          </a>
+          ) at the University of Massachusetts Amherst. The CCR pipeline is built based on Atari et al. (2023),
           extended and validated by Chen et al. (2024), and features
           PsyEmbedding language models, which are fine-tuned open-source models
           for psychological text analysis (Atari et al., 2026). For

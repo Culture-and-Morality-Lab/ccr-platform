@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/ccr-logo.svg">
+<title>CCR Platform - Guide</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #666; --border: #ddd;
+    --accent: #26736f; --card: #f7f7f8; --amber-bg: #fff7e0; --amber-border: #e0b84d;
+    --code-bg: #f0f0f2; --brand: #151515;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16181c; --fg: #e6e6e6; --muted: #9a9a9a; --border: #3a3d44;
+      --accent: #6cc9c6; --card: #1f2228; --amber-bg: #2e2810; --amber-border: #8a6d1f;
+      --code-bg: #24272e;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  /* Topbar mirrors the app header EXACTLY (gradient, height, logo size,
+     tagline, link styles) so navigating app <-> docs doesn't jump. Kept
+     identical to guide.html and styles.css .header. */
+  .topbar {
+    background: linear-gradient(180deg, #1b1b1c, var(--brand)); color: #fff;
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 30;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .topbar .brand { display: inline-flex; align-items: center; text-decoration: none; }
+  .brand-logo { height: 28px; width: auto; display: block; }
+  .topbar .brand:hover { opacity: .88; }
+  .topbar .lab {
+    flex: 1 1 280px; min-width: 0; font-size: 12.5px; line-height: 1.5;
+    color: #fff; opacity: .85;
+  }
+  .topbar nav { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .topbar nav a { color: rgba(255,255,255,.82); text-decoration: none; font-size: 13px; }
+  .topbar nav a:hover { color: #fff; text-decoration: underline; }
+  .topbar nav a.current { color: #fff; font-weight: 600; }
+  .topbar .topbar-btn {
+    background: rgba(255,255,255,.12); color: #fff;
+    border: 1px solid rgba(255,255,255,.45);
+    padding: 5px 14px; border-radius: 9px; font-size: 13px; text-decoration: none;
+  }
+  .topbar .topbar-btn:hover { background: rgba(255,255,255,.22); text-decoration: none; }
+  main { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.7rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.25rem; margin: 2.2rem 0 .6rem; padding-top: .6rem; border-top: 1px solid var(--border); }
+  h3 { font-size: 1.02rem; margin: 1.2rem 0 .4rem; }
+  p, li { color: var(--fg); }
+  .sub { color: var(--muted); margin: 0 0 1.2rem; }
+  a { color: var(--accent); }
+  code { background: var(--code-bg); padding: .1em .35em; border-radius: 4px; font-size: .9em; }
+  .note {
+    background: var(--amber-bg); border: 1px solid var(--amber-border);
+    border-radius: 8px; padding: .8rem 1rem; margin: 1rem 0;
+  }
+  .note b { display: block; margin-bottom: .25rem; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin: .8rem 0; font-size: .93rem; }
+  th, td { border: 1px solid var(--border); padding: .45rem .6rem; text-align: left; vertical-align: top; }
+  th { background: var(--card); }
+  ol li, ul li { margin: .3rem 0; }
+  /* Numbered step cards for the walk-through. */
+  .steps { list-style: none; counter-reset: step; padding: 0; margin: 1rem 0; }
+  .steps > li {
+    counter-increment: step; position: relative;
+    padding: .1rem 0 1rem 3rem; margin: 0;
+  }
+  .steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: .1rem;
+    width: 2rem; height: 2rem; border-radius: 50%;
+    background: var(--accent); color: #fff; font-weight: 700; font-size: .95rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .steps > li h3 { margin: .15rem 0 .3rem; }
+  .top { position: fixed; right: 1rem; bottom: 1rem; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px; padding: .4rem .7rem;
+    text-decoration: none; font-size: .85rem; }
+  /* Shareable section links: a "#" appears on hover; click a heading to copy
+     a direct link to that section. */
+  h2[id], h3[id] { scroll-margin-top: 1rem; }
+  .anchor {
+    opacity: 0; text-decoration: none; color: var(--muted); font-weight: 400;
+    margin-left: .4rem; cursor: pointer; transition: opacity .12s;
+  }
+  h2:hover .anchor, h3:hover .anchor, .anchor:focus { opacity: .7; }
+  .anchor:hover { opacity: 1; color: var(--accent); }
+  :target { animation: flash 1.4s ease-out; }
+  @keyframes flash {
+    from { background: var(--amber-bg); }
+    to   { background: transparent; }
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%);
+    background: var(--brand); color: #fff; padding: .5rem .9rem; border-radius: 8px;
+    font-size: .85rem; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    :target { animation: none; }
+    .anchor { transition: none; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/"><svg class="brand-logo" viewBox="188 455 880 338" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g fill="none" stroke="#fff" stroke-width="32">
+      <path d="M 458.884 538.509 A 133 133 0 1 0 458.884 709.491"/>
+      <path d="M 563.116 538.509 A 133 133 0 0 1 766.884 538.509"/>
+      <path d="M 563.116 709.491 A 133 133 0 0 0 766.884 709.491"/>
+      <path d="M 846 754 V 496 H 950 A 73 62 0 0 1 950 620 H 846"/>
+      <path d="M 930 620 L 1035 759"/>
+    </g>
+    <circle cx="481" cy="624" r="15" fill="#339B98"/>
+    <circle cx="538" cy="624" r="15" fill="#339B98"/>
+  </svg></a>
+  <span class="lab">Psychological Text Analysis with Contextualized Construct Representation</span>
+  <nav>
+    <a href="/welcome">About</a>
+    <a href="/guide" class="current">Guide</a>
+    <a href="/testing" id="nav-testing" hidden>Testing</a>
+    <a href="/product" id="nav-product" hidden>How it works</a>
+    <a class="topbar-btn" href="/">Open dashboard</a>
+  </nav>
+</header>
+<main>
+
+<h1>How to use the CCR Platform</h1>
+<p class="sub">A guide to running a Contextualized Construct Representation (CCR) analysis:
+upload your texts, choose a psychological construct, and get per-text scores you can
+inspect, export, and reproduce. No coding required.</p>
+
+<h2 id="what">What the platform does</h2>
+<p>CCR measures how strongly a piece of text reflects a psychological construct (for
+example individualism, moral concern, depression, or gratitude) without relying on
+word counts or keyword lists. You provide a set of questionnaire-style items that define
+the construct - either from a validated scale in the built-in library, or your own. The
+platform embeds each item and each of your texts with a sentence-embedding language
+model, then scores every text by its semantic similarity (cosine) to the items. Higher
+similarity means the text more strongly reflects the construct.</p>
+<p>The pipeline is based on Atari et al. (2023) and follows the reference
+<code>ccr_wrapper</code> implementation, so scores are comparable to the published method.
+Everything runs on this server: your text is never sent to a third-party AI service for
+embedding.</p>
+
+<h2 id="accounts">Accounts (optional, but recommended)</h2>
+<p>You can try a small analysis without signing in. A free account lifts the anonymous
+limits and, importantly, <b>keeps your datasets and runs</b> instead of deleting the
+upload after each analysis. Sign in from the top right (email and password, or Google
+where enabled).</p>
+<div class="tablewrap">
+<table>
+  <tr><th></th><th>Signed out</th><th>Free account</th></tr>
+  <tr><td>Upload size</td><td>5&nbsp;MB</td><td>50&nbsp;MB</td></tr>
+  <tr><td>Rows per file</td><td>200</td><td>up to 50,000</td></tr>
+  <tr><td>Runs per day</td><td>3, then sign in</td><td>unlimited</td></tr>
+  <tr><td>Runs kept</td><td>none (upload deleted after each run)</td><td>saved</td></tr>
+  <tr><td>AI-drafted items</td><td>not available</td><td>available (daily cap)</td></tr>
+</table>
+</div>
+
+<h2 id="steps">Running an analysis, step by step</h2>
+<ol class="steps">
+  <li>
+    <h3>Create a project</h3>
+    <p>A project holds your datasets and runs. Name it after your study. Use the sidebar
+    to switch between projects or create a new one.</p>
+  </li>
+  <li>
+    <h3>Upload your corpus (Step 1)</h3>
+    <p>Upload a CSV or Excel file with <b>one text per row</b> - tweets, essays,
+    open-ended survey answers, transcripts. Extra columns (IDs, conditions, demographics)
+    are fine; they pass through untouched into the results file. The platform suggests
+    which column holds the text; confirm or change it.</p>
+  </li>
+  <li>
+    <h3>Choose your construct(s) (Step 2)</h3>
+    <p>Pick from the library of validated scales, or add your own. You can select several
+    constructs (up to 10) to score them together in one run and see how they correlate in
+    your texts. See <a href="#constructs">Constructs</a> below for all four ways to add
+    one, including drafting items with AI.</p>
+  </li>
+  <li>
+    <h3>Pick a model and language (Step 3)</h3>
+    <p>Choose the embedding model and the corpus language. Start with <b>MiniLM</b> (the
+    CCR reference model) for English. Scores are only comparable <i>within</i> the same
+    model, never across model families. See <a href="#models">Models</a>.</p>
+  </li>
+  <li>
+    <h3>Run, and read the warnings first</h3>
+    <p>Press Run. When it finishes, read the amber <b>warnings panel</b> before anything
+    else: it flags things like empty or duplicate rows, texts that were too short, texts
+    longer than the model's window (truncated), or a mismatch between your corpus language
+    and the model. Warnings never change your scores - they tell you how to read them.</p>
+  </li>
+  <li>
+    <h3>Inspect the results</h3>
+    <p>Each run shows a score distribution (histogram plus mean, SD, min, max), the
+    per-item loadings (how each questionnaire item contributed), and the top- and
+    bottom-scoring texts. If the top texts do not look like your construct, trust that
+    instinct. Multi-construct runs add a <b>correlation card</b> showing the Pearson
+    correlation between constructs across your texts.</p>
+  </li>
+  <li>
+    <h3>Export and reproduce</h3>
+    <p>Download the results CSV (your columns plus per-item similarities and the CCR
+    score), the run metadata, and a script that reproduces the numbers on your own
+    machine. See <a href="#repro">Exports and reproducibility</a>.</p>
+  </li>
+</ol>
+
+<h2 id="constructs">Constructs: four ways to add one</h2>
+<p>A construct is a set of short questionnaire-style items. There are four ways to provide
+them:</p>
+<ul>
+  <li><b>From the library.</b> Search the built-in collection of validated psychological
+      scales by name or category (for example "GAD-7" or "empathy"). This is the preferred
+      option whenever a validated scale exists.</li>
+  <li><b>Type or paste.</b> Enter a scale's items yourself, one per line. Append
+      <code>(R)</code> to a line to mark it reverse-scored.</li>
+  <li><b>Upload a file.</b> A CSV/XLSX with an item column (and optionally a reverse
+      column). You review the parsed items before saving. Uploaded item files are never
+      retained on the server.</li>
+  <li><b>Draft with AI.</b> When no validated scale exists, the platform can draft
+      candidate items from the construct's name and a short description. Signed-in users
+      only. See below.</li>
+</ul>
+
+<h3 id="ai">Drafting construct items with AI</h3>
+<p>For a construct with no validated questionnaire, describe it (name plus a few
+sentences) and the platform drafts candidate items for you to review. This is a starting
+point, <b>not</b> a validated scale: you review, edit, and delete items before saving, and
+everything the construct touches is labeled <b>"AI-generated - not validated"</b> in the
+picker, in the results, and in the exported metadata.</p>
+<div class="tablewrap">
+<table>
+  <tr><th>Detail</th><th>Value</th></tr>
+  <tr><td>Model</td><td><span id="ai-model">Claude Haiku 4.5</span> <span id="ai-provider" class="sub" style="font-size:.9em"></span></td></tr>
+  <tr><td>Prompt version</td><td><span id="ai-prompt-version">v1</span> (recorded on every draft, so a run's provenance names the exact instructions used)</td></tr>
+  <tr><td>Item style</td><td>First-person, positively-keyed statements only (no reverse-scored items in this version), plain language, one idea per item</td></tr>
+  <tr><td>Items per draft</td><td><span id="ai-nitems">5 to 20 (default 10)</span></td></tr>
+  <tr><td>Daily limit</td><td><span id="ai-cap">a per-account daily cap</span></td></tr>
+  <tr><td>Where it runs</td><td>The drafting model is a hosted language model (the construct name and description you type are sent to it). This is the <b>only</b> step that uses an external model; your uploaded corpus is embedded locally and is never sent anywhere.</td></tr>
+</table>
+</div>
+<p>The exact model name, provider, and prompt version shown above are read live from this
+instance, so they always match what actually drafts your items. The same details are
+stamped onto every saved AI construct and carried into run metadata and the reproduction
+script.</p>
+<div class="note">
+  <b>Read AI-drafted scores with caution.</b>
+  These items are drafted by a language model and have not been psychometrically
+  validated. Review every item, remove weak ones, and prefer a validated scale from the
+  library whenever one exists. A validation study (AI-drafted vs. validated scale items on
+  the same texts) is planned before these are recommended for real analyses.
+</div>
+
+<h2 id="repro">Exports and reproducibility</h2>
+<p>Every run is designed to be auditable and reproducible outside the platform. From the
+results page you can download:</p>
+<ul>
+  <li><b>Results CSV.</b> One row per text: all of your original columns, plus a similarity
+      column per construct item (<code>sim_item_1</code>, <code>sim_item_2</code>, ...) and
+      the overall <code>ccr_score</code>. Multi-construct runs prefix these columns per
+      construct (for example <code>mfq_care_sim_item_1</code>, <code>mfq_care_ccr_score</code>),
+      so every number - including the between-construct correlations - is recomputable from
+      the file.</li>
+  <li><b>Metadata (JSON).</b> The exact model revision, the construct snapshot with an item
+      hash, the language block, environment/package versions, and any warnings. For AI
+      constructs it also records the drafting model, prompt version, and date, plus a
+      machine-readable cautionary note.</li>
+  <li><b>Reproduction script + requirements.</b> A standalone Python script and a
+      <code>requirements</code> file, both stamped with your run's id.</li>
+</ul>
+<h3 id="repro-run">Running the reproduction script</h3>
+<p>The script re-embeds your items and texts and recomputes the scores with the same model
+and settings, on any machine, with no access to this platform. It embeds the construct
+items verbatim from the run, so the numbers reproduce offline. From the script's header
+(which lists the exact commands with your run id and file name):</p>
+<pre><code>pip install -r requirements-repro_&lt;run-id&gt;.txt
+python reproduce_analysis_&lt;run-id&gt;.py your_corpus.csv</code></pre>
+<p>The reproduced values match the exported CSV to within about 1e-5 with the real models.
+Because the script carries the model revision and the construct snapshot, it is also a
+durable record of exactly how a result was produced - useful for a methods section or a
+reviewer. If the run used AI-drafted items, the script and metadata carry that provenance
+too, so the caveat travels with the numbers.</p>
+
+<h2 id="models">Models available</h2>
+<p>Chosen on the Step 3 card. Larger models are slower and, the first time anyone selects
+one on this instance, take a couple of extra minutes to download before the run starts;
+after that they stay warm. Scores are comparable only within the same model.</p>
+<div class="tablewrap">
+<table>
+  <tr><th>Model</th><th>Best for</th><th>Notes</th></tr>
+  <tr><td>MiniLM L6 v2 <b>(default)</b></td><td>English, general use</td><td>Fast; the CCR reference model. Start here.</td></tr>
+  <tr><td>E5 Large v2</td><td>English, higher quality</td><td>Stronger but noticeably slower.</td></tr>
+  <tr><td>Multilingual E5 Base</td><td>50+ languages</td><td>Use for non-English corpora.</td></tr>
+  <tr><td>PsyEmbedding BERT / RoBERTa / GTE / E5 Large</td><td>Psychological text</td><td>Lab fine-tunes for psychology research. English; heavier, so the first run downloads a larger model.</td></tr>
+</table>
+</div>
+
+<h2 id="privacy">Your data and privacy</h2>
+<p>The embedding models run on this server - your uploaded text is never sent to a
+third-party AI service. The one exception is the optional AI item-drafting feature, where
+only the construct <i>name and description you type</i> (never your corpus) are sent to the
+drafting model. Signed-out uploads are deleted after each analysis; signed-in datasets and
+runs are kept until you delete them. Please avoid uploading sensitive or identifiable data.</p>
+<div class="note">
+  <b>Open-source disclaimer.</b>
+  This is open-source software: use at your own risk. It is provided "as is", without
+  warranties or guarantees of accuracy, reliability, security, fitness for a particular
+  purpose, or continued support. Users are responsible for validating outputs, protecting
+  their data, and determining whether the software is appropriate for their intended use.
+  The authors and contributors are not liable for losses or damages resulting from its use.
+</div>
+
+<h2 id="help">Questions or feedback</h2>
+<p>This platform is built and maintained by the
+<a href="https://websites.umass.edu/matari/" target="_blank" rel="noopener noreferrer">Culture &amp; Morality Lab</a>
+(PI: <a href="https://mohammadatari.com/" target="_blank" rel="noopener noreferrer">Mohammad Atari</a>)
+at the University of Massachusetts Amherst. For suggestions, questions, bugs, and ideas,
+reach the maintainer at <a href="mailto:devaanand@umass.edu">devaanand@umass.edu</a>.</p>
+
+</main>
+<a class="top" href="#">↑ Top</a>
+<div class="toast" id="toast" role="status" aria-live="polite">Link copied</div>
+<script>
+(function () {
+  var toast = document.getElementById('toast'), timer;
+  function ping(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(function () { toast.classList.remove('show'); }, 1600);
+  }
+  function share(id) {
+    if (history.replaceState) history.replaceState(null, '', '#' + id);
+    location.hash = id;
+    var url = location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(
+        function () { ping('Section link copied'); },
+        function () { ping('Link in address bar'); }
+      );
+    } else {
+      ping('Link in address bar');
+    }
+  }
+  var heads = document.querySelectorAll('h2[id], h3[id]');
+  Array.prototype.forEach.call(heads, function (h) {
+    var a = document.createElement('a');
+    a.className = 'anchor';
+    a.href = '#' + h.id;
+    a.textContent = '#';
+    a.setAttribute('aria-label', 'Copy link to this section');
+    a.addEventListener('click', function (e) { e.preventDefault(); share(h.id); });
+    h.appendChild(a);
+    h.style.cursor = 'pointer';
+    h.addEventListener('click', function (e) {
+      if (e.target.tagName === 'A') return;
+      share(h.id);
+    });
+  });
+})();
+</script>
+<script>
+  // Fill in the live AI model details and reveal the lab-only nav links.
+  // The model name/provider/prompt version come straight from the running
+  // instance so the guide never states a stale model (falls back to the
+  // static defaults already in the table if the call fails or is absent).
+  fetch("/api/auth/me").then(function (r) { return r.json(); }).then(function (me) {
+    if (["lab", "maintainer", "pi"].indexOf(me.role) !== -1) {
+      var t = document.getElementById("nav-testing"); if (t) t.hidden = false;
+      var p = document.getElementById("nav-product"); if (p) p.hidden = false;
+    }
+    var g = me.generation;
+    if (g && g.available) {
+      var setText = function (id, val) {
+        var el = document.getElementById(id);
+        if (el && val) el.textContent = val;
+      };
+      setText("ai-model", g.model_label || g.model);
+      if (g.provider_label) setText("ai-provider", "(" + g.provider_label + ")");
+      if (g.prompt_version) setText("ai-prompt-version", "v" + g.prompt_version);
+      if (g.n_items_min && g.n_items_max) {
+        setText("ai-nitems", g.n_items_min + " to " + g.n_items_max +
+          (g.n_items_default ? " (default " + g.n_items_default + ")" : ""));
+      }
+      if (g.max_generations_per_day) {
+        setText("ai-cap", g.max_generations_per_day + " drafts per day");
+      }
+    }
+  }).catch(function () {});
+</script>
+</body>
+</html>

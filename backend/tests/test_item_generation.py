@@ -69,6 +69,43 @@ def test_provider_inference(monkeypatch):
     assert item_generation.provider() == "groq"
 
 
+def test_public_info(monkeypatch):
+    """The UI/guide read the model identity from public_info() rather than
+    hardcoding it, so it must reflect the configured provider (or report
+    unavailable) without leaking secrets."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.delenv("CCR_GENERATION_PROVIDER", raising=False)
+    monkeypatch.delenv("CCR_GENERATION_MODEL", raising=False)
+
+    # Nothing configured: available False and no model/key details.
+    off = item_generation.public_info()
+    assert off == {"available": False}
+
+    # Anthropic configured: friendly label, provider, prompt version, caps.
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    info = item_generation.public_info()
+    assert info["available"] is True
+    assert info["provider"] == "anthropic"
+    assert info["model"] == item_generation.ANTHROPIC_MODEL_DEFAULT
+    assert info["model_label"] == "Claude Haiku 4.5"
+    assert info["prompt_version"] == item_generation.PROMPT_VERSION
+    assert info["n_items_min"] == item_generation.N_ITEMS_MIN
+    assert info["n_items_max"] == item_generation.N_ITEMS_MAX
+    assert info["max_generations_per_day"] == item_generation.user_max_generations_per_day()
+    # Never expose the key itself.
+    assert "sk-test" not in repr(info)
+
+
+def test_auth_me_carries_generation_block(client, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    monkeypatch.delenv("CCR_GENERATION_PROVIDER", raising=False)
+    me = client.get("/api/auth/me").json()  # anonymous is fine; block is public
+    assert me["generation_available"] is True
+    assert me["generation"]["available"] is True
+    assert me["generation"]["model_label"] == "Claude Haiku 4.5"
+
+
 def test_groq_response_parsing(monkeypatch):
     """The Groq path end-to-end with the HTTP call stubbed."""
     import io

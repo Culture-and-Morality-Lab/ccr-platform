@@ -164,3 +164,30 @@ def test_product_page_gated_to_lab_and_above(client):
     resp = client.get("/product")
     assert resp.status_code == 200
     assert "text/html" in resp.headers["content-type"]
+
+
+def test_testing_guide_gated_to_lab_and_above(client):
+    """/testing (the click-through testing guide) is internal like /product:
+    anonymous and external accounts see the 403 explainer; lab and above see
+    the guide. The public how-to guide at /guide stays open to everyone."""
+    assert client.get("/testing").status_code == 403  # anonymous
+    assert client.get("/guide").status_code == 200  # public guide, always open
+
+    client.post(
+        "/api/auth/register",
+        json={"email": "testing-int@test.edu", "password": "password123", "name": "Ext"},
+    )
+    assert client.get("/testing").status_code == 403  # signed in, external
+
+    from app.db import SessionLocal
+    from app.models import User
+
+    db = SessionLocal()
+    row = db.query(User).filter_by(email="testing-int@test.edu").one()
+    row.role = "lab"
+    db.commit()
+    db.close()
+
+    resp = client.get("/testing")
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]

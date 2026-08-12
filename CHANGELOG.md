@@ -47,9 +47,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 - Project lifecycle: archive/unarchive (reversible, collapses into an Archived sidebar
   group) and permanent delete with type-the-name confirmation. Delete cascades to datasets,
   runs, uploaded files, and result files, and is logged without retaining any text.
+- Public how-to guide at /guide (open to everyone): the upload to construct to run to
+  export walkthrough, the four ways to add a construct (library, typed, uploaded, AI
+  drafting) with the live AI model and prompt-version details, the models table, and a
+  reproducibility section covering the results CSV, run metadata, and the offline
+  reproduction script.
+- AI construct path shows the drafting model on demand: a "Drafted by <model>" line with
+  a hover/focus info bubble listing the model, provider, prompt version, item rules, and
+  daily cap, read live from the API so it always matches the configured model.
 
 ### Changed
 - Project-wide style rule: no em dashes in any project text (enforced by an edit hook).
+- Guides split: /guide is now the public how-to guide; the click-through testing guide
+  moved to /testing and is lab-only (same gate as /product). Lab members reach both from
+  the header.
+- Landing page links the PI's name (Mohammad Atari) to his website.
 
 ### Fixed
 - Existing local databases no longer 500 after schema additions: additive

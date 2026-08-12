@@ -263,7 +263,7 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
                 {corpora.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.filename} ({c.n_rows.toLocaleString()} rows)
-                    {c.file_available === false ? " — re-upload to run" : ""}
+                    {c.file_available === false ? " - re-upload to run" : ""}
                   </option>
                 ))}
               </select>
@@ -567,6 +567,21 @@ function NewConstructForm({ auth, constructs, source, onSourceChange, onCreated,
         }
       : null);
 
+  // Live drafting-model facts (from /api/auth/me) for the info tooltip. The
+  // model varies by deployment (Claude vs the interim open model), so this is
+  // read from the API, never hardcoded in the UI.
+  const gen = auth?.generation;
+  const genModelLabel = gen?.available ? gen.model_label || gen.model : null;
+  const genAria = genModelLabel
+    ? `AI item drafting uses ${genModelLabel}${
+        gen.provider_label ? ` (${gen.provider_label})` : ""
+      }, prompt version ${gen.prompt_version}. Positively-keyed items only, ${
+        gen.n_items_min
+      } to ${gen.n_items_max} per draft, ${
+        gen.max_generations_per_day
+      } drafts per day. Not a validated scale; the model, version, and date are recorded in each run's metadata.`
+    : "AI item drafting uses a hosted language model. Not a validated scale; the model, version, and date are recorded in each run's metadata.";
+
   // Simple library name-match (v1 guardrail, PI-approved): if a validated
   // scale with a similar name exists, say so before anyone generates.
   const nameQuery = name.trim().toLowerCase();
@@ -759,6 +774,45 @@ function NewConstructForm({ auth, constructs, source, onSourceChange, onCreated,
 
           {source === "ai" && (
             <>
+              {/* Live model details on demand (task: hover the i for version
+                  info). The label + tooltip read from auth.generation, so they
+                  always match the model this instance actually uses. */}
+              <div className="ai-modeline">
+                <span className="small muted">
+                  Drafted by{" "}
+                  <b>{genModelLabel || "a hosted AI language model"}</b>
+                </span>
+                <button
+                  type="button"
+                  className="infotip"
+                  aria-label={genAria}
+                  title={genAria}
+                >
+                  <span className="infotip-icon" aria-hidden="true">i</span>
+                  <span className="infotip-pop" role="tooltip" aria-hidden="true">
+                    <b>How AI drafting works</b>
+                    <ul>
+                      <li>
+                        Model: {genModelLabel || "hosted language model"}
+                        {gen?.provider_label ? ` (${gen.provider_label})` : ""}
+                      </li>
+                      <li>Prompt version: v{gen?.prompt_version ?? "1"}</li>
+                      <li>
+                        Positively-keyed items only,{" "}
+                        {gen ? `${gen.n_items_min}-${gen.n_items_max}` : "5-20"} per draft
+                      </li>
+                      <li>Limit: {gen?.max_generations_per_day ?? 20} drafts per day</li>
+                      <li>
+                        Not a validated scale. The model, prompt version, and date are
+                        recorded in every run's metadata and reproduction script.
+                      </li>
+                    </ul>
+                    <a href="/guide#ai" target="_blank" rel="noopener noreferrer">
+                      More in the guide
+                    </a>
+                  </span>
+                </button>
+              </div>
               <label className="field">
                 Description - a few sentences on what this construct means (the AI
                 drafts from this)
@@ -821,7 +875,7 @@ function NewConstructForm({ auth, constructs, source, onSourceChange, onCreated,
               </p>
               {genInfo && (
                 <p className="small">
-                  ✓ <b>{genInfo.n} items drafted — review them below.</b> Edit or remove
+                  ✓ <b>{genInfo.n} items drafted - review them below.</b> Edit or remove
                   weak ones, then Save. The saved construct will be labeled
                   “AI-generated · not validated” (model: {genInfo.model}).
                 </p>

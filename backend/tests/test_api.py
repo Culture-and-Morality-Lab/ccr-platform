@@ -83,6 +83,10 @@ def test_guide_welcome_pages_served(client):
         resp = client.get(path)
         assert resp.status_code == 200, path
         assert "text/html" in resp.headers["content-type"]
+    # /guide is the PUBLIC how-to guide (not the lab testing guide), open to all.
+    guide = client.get("/guide").text
+    assert "How to use the CCR Platform" in guide
+    assert "reproduc" in guide.lower()  # reproducibility section is documented
 
 
 def test_product_page_internal_only_for_anonymous(client):
@@ -93,6 +97,17 @@ def test_product_page_internal_only_for_anonymous(client):
     assert resp.status_code == 403
     assert "text/html" in resp.headers["content-type"]
     assert "internal" in resp.text.lower()
+
+
+def test_testing_guide_internal_only_for_anonymous(client):
+    # /testing (the click-through testing guide) is lab-only (split 2026-08-12);
+    # the public how-to guide lives at /guide. Anonymous visitors get the
+    # friendly explainer, which points them at the public guide.
+    resp = client.get("/testing")
+    assert resp.status_code == 403
+    assert "text/html" in resp.headers["content-type"]
+    assert "internal" in resp.text.lower()
+    assert "/guide" in resp.text
 
 
 def test_seed_constructs_present(client):

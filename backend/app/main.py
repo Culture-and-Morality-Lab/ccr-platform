@@ -325,6 +325,9 @@ def auth_me(
             # signed-in-only feature (PI decision 2026-08-05); False when the
             # instance has no ANTHROPIC_API_KEY - the UI hides the button
             "generation_available": item_generation.configured(),
+            # live model identity (name, provider, prompt version, item caps)
+            # so the construct form's info tooltip never hardcodes the model
+            "generation": item_generation.public_info(),
         }
     return {
         "signed_in": False,
@@ -340,6 +343,7 @@ def auth_me(
         # use AI drafting" nudge only when the feature actually exists here
         # (the endpoint itself still requires sign-in regardless)
         "generation_available": item_generation.configured(),
+        "generation": item_generation.public_info(),
     }
 
 
@@ -1016,48 +1020,78 @@ def export_script_requirements(job_id: str, db: Session = Depends(get_db)):
     )
 
 
-# ------------------------------------------------------------ tester guide + samples
-# /guide and /samples exist for the dev instance: a click-through testing guide
-# for the PI/students and the synthetic demo corpora it references. guide.html
-# lives in app/ (not static/, which `npm run build` wipes); sample_data/ sits at
-# the repo root, same resolution as packages/ (= / in the container).
+# ------------------------------------------------------------ guides + samples
+# Two guides (split 2026-08-12):
+#   /guide   - public how-to-use guide (public_guide.html): what CCR is, the
+#              upload -> construct -> run -> export flow, the AI-drafting model,
+#              and the reproducibility record. Anyone may read it.
+#   /testing - the click-through TESTING guide (guide.html) for the PI/students,
+#              with the synthetic demo corpora it references. Lab-only, same gate
+#              as /product (PI: keep it, but don't show testers' scenarios to the
+#              public).
+# Both HTMLs live in app/ (not static/, which `npm run build` wipes); sample_data/
+# sits at the repo root, same resolution as packages/ (= / in the container).
+PUBLIC_GUIDE_HTML = Path(__file__).resolve().parent / "public_guide.html"
 GUIDE_HTML = Path(__file__).resolve().parent / "guide.html"
 SAMPLES_DIR = Path(__file__).resolve().parents[2] / "sample_data"
 
-
-@app.get("/guide", include_in_schema=False)
-def testing_guide():
-    if not GUIDE_HTML.exists():
-        raise HTTPException(404, "Guide not available on this instance.")
-    return FileResponse(GUIDE_HTML, media_type="text/html")
-
-
-# /product: the under-the-hood companion to /guide - access model (tiers,
-# invites, pre-assignments, audit), architecture, data flow, retention.
-# The guide stays a how-to-use-and-test document; this page holds the
-# product/architecture detail (split requested 2026-07-22). Internal-only
-# since 2026-07-31 (PI request): lab members, maintainers, and the PI.
-PRODUCT_HTML = Path(__file__).resolve().parent / "product.html"
-
-PRODUCT_FORBIDDEN_HTML = """<!doctype html>
+# Shared "this page is internal to the lab" body for the gated docs (/testing,
+# /product). {what} names the specific doc so the message reads naturally.
+LAB_FORBIDDEN_HTML = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CCR Platform - Internal page</title>
 <style>
-  body { margin: 0; background: #f7f7f8; color: #1d2129;
-         font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 520px; margin: 14vh auto 0; padding: 0 1.25rem; text-align: center; }
-  h1 { font-size: 1.25rem; }
-  p { color: #667085; }
-  a { color: #26736f; font-weight: 600; }
+  body {{ margin: 0; background: #f7f7f8; color: #1d2129;
+         font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }}
+  main {{ max-width: 520px; margin: 14vh auto 0; padding: 0 1.25rem; text-align: center; }}
+  h1 {{ font-size: 1.25rem; }}
+  p {{ color: #667085; }}
+  a {{ color: #26736f; font-weight: 600; }}
 </style></head><body><main>
 <h1>This page is internal to the lab</h1>
-<p>The architecture and access-model docs are limited to Culture &amp; Morality Lab
+<p>{what} is limited to Culture &amp; Morality Lab
 members. If you are in the lab, sign in on the
 <a href="/">dashboard</a> with your lab account and come back; accounts are
 granted lab access by the admins.</p>
+<p>Looking for how to use the platform? The
+<a href="/guide">public guide</a> is open to everyone.</p>
 <p><a href="/">← Back to the CCR Platform</a></p>
 </main></body></html>"""
+
+
+@app.get("/guide", include_in_schema=False)
+def public_guide():
+    """Public how-to guide (no auth). Falls back to the testing guide only if
+    the public one is somehow absent, so /guide is never a dead link."""
+    if PUBLIC_GUIDE_HTML.exists():
+        return FileResponse(PUBLIC_GUIDE_HTML, media_type="text/html")
+    if GUIDE_HTML.exists():
+        return FileResponse(GUIDE_HTML, media_type="text/html")
+    raise HTTPException(404, "Guide not available on this instance.")
+
+
+@app.get("/testing", include_in_schema=False)
+def testing_guide(
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
+    """Lab-only testing guide (same gate as /product)."""
+    row = db.get(User, user["id"]) if user else None
+    if row is None or not auth.role_lab_or_above(row.role):
+        return HTMLResponse(
+            LAB_FORBIDDEN_HTML.format(what="The click-through testing guide"),
+            status_code=403,
+        )
+    if not GUIDE_HTML.exists():
+        raise HTTPException(404, "Testing guide not available on this instance.")
+    return FileResponse(GUIDE_HTML, media_type="text/html")
+
+
+# /product: the under-the-hood companion to the guides - access model (tiers,
+# invites, pre-assignments, audit), architecture, data flow, retention.
+# Internal-only since 2026-07-31 (PI request): lab members, maintainers, PI.
+PRODUCT_HTML = Path(__file__).resolve().parent / "product.html"
 
 
 @app.get("/product", include_in_schema=False)
@@ -1067,7 +1101,10 @@ def product_page(
 ):
     row = db.get(User, user["id"]) if user else None
     if row is None or not auth.role_lab_or_above(row.role):
-        return HTMLResponse(PRODUCT_FORBIDDEN_HTML, status_code=403)
+        return HTMLResponse(
+            LAB_FORBIDDEN_HTML.format(what="The architecture and access-model docs"),
+            status_code=403,
+        )
     if not PRODUCT_HTML.exists():
         raise HTTPException(404, "Product page not available on this instance.")
     return FileResponse(PRODUCT_HTML, media_type="text/html")

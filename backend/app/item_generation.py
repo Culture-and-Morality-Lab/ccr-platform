@@ -298,3 +298,39 @@ def generation_stamp() -> dict:
         "prompt_version": PROMPT_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
+
+
+# Friendly names for the info tooltip / docs. The raw id is the source of
+# truth (it's what lands in provenance); this only prettifies known ids.
+MODEL_LABELS = {
+    "claude-haiku-4-5": "Claude Haiku 4.5",
+    "llama-3.3-70b-versatile": "Llama 3.3 70B",
+}
+PROVIDER_LABELS = {"anthropic": "Anthropic", "groq": "Groq"}
+
+
+def model_label() -> str:
+    """Human-readable model name for the UI; falls back to the raw id."""
+    return MODEL_LABELS.get(generation_model(), generation_model())
+
+
+def public_info() -> dict:
+    """Non-secret facts about the item-generation model, for the construct
+    form's info tooltip, the public guide, and /api/auth/me. Model identity is
+    deployment-dependent (anthropic Claude vs the interim groq model), so the
+    UI reads it from here instead of hardcoding a name that can drift."""
+    if not configured():
+        return {"available": False}
+    p = provider()
+    return {
+        "available": True,
+        "provider": p,
+        "provider_label": PROVIDER_LABELS.get(p, p),
+        "model": generation_model(),
+        "model_label": model_label(),
+        "prompt_version": PROMPT_VERSION,
+        "n_items_min": N_ITEMS_MIN,
+        "n_items_max": N_ITEMS_MAX,
+        "n_items_default": N_ITEMS_DEFAULT,
+        "max_generations_per_day": user_max_generations_per_day(),
+    }
