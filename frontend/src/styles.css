@@ -694,6 +694,9 @@ details[open] > summary::before { transform: rotate(90deg); }
   border: 1px solid var(--line); border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   font-size: 12px; line-height: 1.45; text-align: left;
+  /* reset the base `button { white-space: nowrap }` so the bubble text wraps
+     inside its fixed width instead of overflowing the box */
+  white-space: normal; overflow-wrap: anywhere;
   opacity: 0; visibility: hidden; transform: translateY(-3px);
   transition: opacity .12s, transform .12s, visibility .12s;
   pointer-events: none;

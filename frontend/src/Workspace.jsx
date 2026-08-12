@@ -782,14 +782,20 @@ function NewConstructForm({ auth, constructs, source, onSourceChange, onCreated,
                   Drafted by{" "}
                   <b>{genModelLabel || "a hosted AI language model"}</b>
                 </span>
-                <button
-                  type="button"
+                {/* Focusable span, not a <button>: the bubble nests a list and
+                    a link (block/interactive content), which are invalid inside
+                    a button. aria-label carries the full text for screen
+                    readers, so the visual bubble is aria-hidden and its link is
+                    kept out of the tab order. */}
+                <span
                   className="infotip"
+                  tabIndex={0}
+                  role="note"
                   aria-label={genAria}
                   title={genAria}
                 >
                   <span className="infotip-icon" aria-hidden="true">i</span>
-                  <span className="infotip-pop" role="tooltip" aria-hidden="true">
+                  <span className="infotip-pop" aria-hidden="true">
                     <b>How AI drafting works</b>
                     <ul>
                       <li>
@@ -807,11 +813,11 @@ function NewConstructForm({ auth, constructs, source, onSourceChange, onCreated,
                         recorded in every run's metadata and reproduction script.
                       </li>
                     </ul>
-                    <a href="/guide#ai" target="_blank" rel="noopener noreferrer">
+                    <a href="/guide#ai" target="_blank" rel="noopener noreferrer" tabIndex={-1}>
                       More in the guide
                     </a>
                   </span>
-                </button>
+                </span>
               </div>
               <label className="field">
                 Description - a few sentences on what this construct means (the AI
