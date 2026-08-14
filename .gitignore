@@ -13,3 +13,7 @@ node_modules/
 # os
 .DS_Store
 .env
+
+# personal multi-agent tooling (not part of the project; .claude/ is the shared one)
+.agents/
+.codex/
