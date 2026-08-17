@@ -64,6 +64,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 - Landing page links the PI's name (Mohammad Atari) to his website.
 
 ### Fixed
+- Google sign-in no longer breaks when CCR_APP_URL is pasted with a trailing
+  newline or space: the app trims the value before building the sign-in return
+  URL. Untrimmed, the newline reached Supabase as %0A inside the redirect, so
+  the redirect never matched the allow list and browsers flagged the link.
 - Existing local databases no longer 500 after schema additions: additive
   SQLite auto-migration adds missing columns at startup (Alembic replaces this in
   Phase 2 with Postgres).

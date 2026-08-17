@@ -41,6 +41,14 @@ def test_login_redirects_to_supabase_with_pkce(client, google_env):
     assert auth_google.VERIFIER_COOKIE in resp.cookies
 
 
+def test_app_url_ignores_pasted_whitespace(monkeypatch):
+    """A dashboard-pasted CCR_APP_URL can carry a trailing newline. Untrimmed
+    it reaches Supabase as %0A inside redirect_to, so the redirect never
+    matches the allow list (production, 2026-08-17)."""
+    monkeypatch.setenv("CCR_APP_URL", "  https://example.org/\n")
+    assert auth_google.app_url() == "https://example.org"
+
+
 def test_callback_creates_user_and_signs_in(client, google_env, monkeypatch):
     monkeypatch.setattr(
         auth_google, "exchange",

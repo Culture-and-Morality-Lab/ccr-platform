@@ -48,8 +48,15 @@ def _supabase_url() -> str:
 
 def app_url() -> str:
     """Public base URL of THIS app (redirect target). Local default matches
-    the dev server; deployments set CCR_APP_URL."""
-    return os.environ.get("CCR_APP_URL", "http://127.0.0.1:8000").rstrip("/")
+    the dev server; deployments set CCR_APP_URL.
+
+    strip() before rstrip(): a value pasted into a hosting dashboard can carry
+    a trailing newline. Untrimmed it rides into redirect_to as %0A, so the URL
+    no longer matches the Supabase redirect allow list AND browsers flag the
+    link (a raw newline in a URL parameter reads as header injection). Seen in
+    production 2026-08-17.
+    """
+    return os.environ.get("CCR_APP_URL", "http://127.0.0.1:8000").strip().rstrip("/")
 
 
 def begin() -> tuple[str, str]:

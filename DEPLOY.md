@@ -1,17 +1,23 @@
-# Deploying the dev instance (Hugging Face Space)
+# Deploying the lab instance (Hugging Face Space)
 
 The Space builds from this repo's Dockerfile. One-time setup lives in the
-Space settings; after that, deploys are just `git push hf main`.
+Space settings; after that, deploys are just `git push prod main`.
+
+This repo deploys to the Space `Culture-and-Morality-Lab/ccr-platform`, which
+is served to the public at https://psychologicaltextanalysis.com through the
+Cloudflare Worker in `deploy/reverse-proxy-worker.js` (Spaces cannot hold a
+custom domain on any tier). Account-by-account setup and the migration from the
+personal dev stack live in `deploy/PRODUCTION_RUNBOOK.md`.
 
 ## Space settings (Settings > Variables and secrets)
 
 Hugging Face keeps **Variables** and **Secrets** in two separate stores, and a
 name defined in BOTH puts the Space into `CONFIG_ERROR` ("Collision on
 variables and secrets names") before it even builds. Add each key below to one
-store only — if the Space reports a config error after a settings change, look
+store only - if the Space reports a config error after a settings change, look
 for a duplicated name first, not a bad value.
 
-Secrets (credentials — encrypted, write-only once set):
+Secrets (credentials - encrypted, write-only once set):
 
 | Secret             | Value                                                       |
 | ------------------ | ----------------------------------------------------------- |
@@ -20,17 +26,23 @@ Secrets (credentials — encrypted, write-only once set):
 | SUPABASE_ANON_KEY  | from the same page (anon public key, NOT service_role)      |
 | DATABASE_URL       | Supabase session-pooler URI (see persistent storage below)  |
 
-Variables (non-sensitive tuning — visible in settings, safe to edit):
+Variables (non-sensitive tuning - visible in settings, safe to edit):
 
 | Variable               | Value                                               |
 | ---------------------- | --------------------------------------------------- |
-| CCR_APP_URL            | https://devaanand-ccr-platform.hf.space             |
+| CCR_APP_URL            | https://psychologicaltextanalysis.com               |
 | CCR_COOKIE_SECURE      | 1                                                   |
 | CCR_MAX_ROWS           | 20000 (global row ceiling; code default is 100000)  |
 | CCR_MAX_UPLOAD_BYTES   | optional; code default is 52428800 (50 MB)          |
 | CCR_ANON_MAX_BYTES     | optional; code default is 5242880 (5 MB)            |
 
-`CCR_MAX_ROWS` is the limit that actually bounds a run — embedding cost scales
+Paste `CCR_APP_URL` with no trailing space or newline. The app builds the
+Google sign-in return URL from it, so a stray newline arrives at Supabase as
+`%0A` inside `redirect_to`: the redirect stops matching the allow list and
+browsers flag the link as dangerous. The app trims the value since 2026-08-17,
+but older deployments and any other URL variable still take it literally.
+
+`CCR_MAX_ROWS` is the limit that actually bounds a run - embedding cost scales
 with rows and tokens, not file bytes, and on 2 vCPU it is *time*, not memory,
 that runs out first. Measured on the cpu-basic Space shape (2 vCPU / 16 GB):
 upload + parse peaks at roughly 5x file size, so even a 50 MB corpus costs
@@ -43,7 +55,7 @@ unauthenticated request cannot make the server parse a large file only to
 reject it at row 201.
 
 Embedding throughput at 2 threads, batch 64 (see `scripts/bench_models.py` to
-re-measure on the actual host — these are derated estimates, not Space-measured):
+re-measure on the actual host - these are derated estimates, not Space-measured):
 
 | model         | ~15-word rows | ~60-word rows | ~250-word rows |
 | ------------- | ------------- | ------------- | -------------- |
@@ -53,7 +65,7 @@ re-measure on the actual host — these are derated estimates, not Space-measure
 At `CCR_MAX_ROWS=20000` that is ~25 s to ~3 min for MiniLM, but up to ~40 min
 for E5 Large on long documents. Jobs that long are also *fragile*: a Space
 restart marks any running job failed (`recover_orphaned_jobs`), so worst-case
-job duration — not row count alone — is the number to keep in view.
+job duration - not row count alone - is the number to keep in view.
 
 Retention (CCR_ANON_TTL_HOURS=24) and model pre-warm are already defaults in
 the Dockerfile.
@@ -75,7 +87,9 @@ students that URL; no files need to be shared out of band.
    Google provider form.
 4. Authentication > URL Configuration: add BOTH redirect URLs:
    - http://127.0.0.1:8000/api/auth/google/callback
-   - https://devaanand-ccr-platform.hf.space/api/auth/google/callback
+   - https://psychologicaltextanalysis.com/api/auth/google/callback
+   Each entry must match what the app sends byte for byte, so keep the custom
+   domain (not the hf.space host) here once the Worker is live.
 5. Project Settings > API: copy the Project URL and anon key into the Space
    secrets (and your local .env).
 
@@ -83,13 +97,14 @@ students that URL; no files need to be shared out of band.
 
 ```bash
 git push origin main        # GitHub
-git push hf main            # Hugging Face Space (rebuilds + redeploys)
+git push prod main          # Hugging Face Space (rebuilds + redeploys)
 ```
 
-The hf remote has no stored token; use your HF username and a WRITE token as
-the password when prompted (or a credential helper).
+The prod remote has no stored token; use the lab HF username and a WRITE token
+as the password when prompted (or a credential helper). Pushing to origin alone
+changes nothing on the deployed instance.
 
-## Caveats of the free dev instance
+## Caveats of the deployed instance
 
 - ~~Ephemeral disk~~ RESOLVED (2026-08-06, verified): the Space now runs with
   `DATABASE_URL` (Supabase Postgres) and the `CCR_STORAGE=s3` R2 secrets set,
@@ -97,9 +112,9 @@ the password when prompted (or a credential helper).
   restarts. The paragraph below ("Persistent storage") documents that setup
   for anyone redeploying from scratch. Without those secrets, the old caveat
   applies: SQLite + local files reset on every rebuild.
-- The Space sleeps after ~48 h idle; first visit wakes it (~1 min). This is
-  the remaining free-tier limitation - an always-on tier or host arrives with
-  the production launch.
+- The lab Space runs on cpu-upgrade hardware, so it does not sleep. On the
+  free cpu-basic tier a Space sleeps after ~48 h idle and the first visit
+  wakes it (~1 min), which is still the behaviour of the personal dev Space.
 
 ## Persistent storage (make accounts/data survive restarts)
 

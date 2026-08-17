@@ -44,7 +44,7 @@
  * CCR_APP_URL and the Supabase redirect URL above.
  */
 
-const UPSTREAM_HOST = "REPLACE-WITH-owner-space.hf.space";
+const UPSTREAM_HOST = "culture-and-morality-lab-ccr-platform.hf.space";
 
 export default {
   async fetch(request) {
