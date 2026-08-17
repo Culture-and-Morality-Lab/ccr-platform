@@ -710,6 +710,24 @@ details[open] > summary::before { transform: rotate(90deg); }
 .infotip-pop li { margin: 2px 0; color: var(--ink); }
 .infotip-pop a { display: inline-block; margin-top: 6px; color: var(--brand); font-weight: 600; }
 
+/* Site identity footer: present on every page (see App.jsx). Deliberately
+   plain text rather than an icon row, because its job is to be readable by
+   whatever is looking, including clients that never run the JS bundle. */
+.site-footer {
+  max-width: 920px;
+  margin: 40px auto 0;
+  padding: 18px 1rem 28px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.site-footer p { margin: 0 0 6px; }
+.site-footer p:last-child { margin-bottom: 0; }
+.site-footer strong { color: var(--ink); }
+.site-footer a { color: var(--brand); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+
 @media (prefers-reduced-motion: reduce) {
   .infotip-pop { transition: none; }
   .picker-panel, .modal { animation: none; }

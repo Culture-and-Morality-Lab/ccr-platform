@@ -462,6 +462,34 @@ export default function App() {
         </main>
       </div>
       )}
+
+      {/* Every page carries the operator, affiliation, and contact. Beyond
+          being useful, it is what identifies the site to link scanners and
+          reviewers, who judge a domain by what it says about itself. */}
+      <footer className="site-footer">
+        <p>
+          <strong>CCR Platform</strong> - Contextualized Construct
+          Representation analysis for psychology research, operated by the{" "}
+          <a href="https://websites.umass.edu/matari/" target="_blank" rel="noopener noreferrer">
+            Culture and Morality Lab
+          </a>{" "}
+          at the University of Massachusetts Amherst. Principal investigator:
+          Dr. Mohammad Atari.
+        </p>
+        <p>
+          Contact <a href="mailto:devaanand@umass.edu">devaanand@umass.edu</a>
+          {" · "}
+          <a
+            href="https://github.com/Culture-and-Morality-Lab/ccr-platform"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Source code
+          </a>
+          {" · "}
+          <a href="/guide">How this tool works</a>
+        </p>
+      </footer>
     </div>
   );
 }

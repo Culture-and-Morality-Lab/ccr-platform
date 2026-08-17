@@ -5,10 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/ccr-logo.svg" />
     <title>CCR Platform - Contextualized Construct Representations</title>
-    <script type="module" crossorigin src="/assets/index-B4hdDMr1.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DNtTDK1r.css">
+    <!-- The app is a single-page bundle, so crawlers and link scanners never
+         execute the JS that renders the lab's identity. These tags and the
+         <noscript> block below put the operator, affiliation, and contact into
+         the served HTML itself, which is all a non-executing client can read. -->
+    <meta
+      name="description"
+      content="CCR Platform: open-source text analysis for psychology research, operated by the Culture and Morality Lab at the University of Massachusetts Amherst."
+    />
+    <meta property="og:site_name" content="CCR Platform" />
+    <meta property="og:title" content="CCR Platform - Contextualized Construct Representations" />
+    <meta
+      property="og:description"
+      content="Score a text corpus against validated psychological questionnaires. Operated by the Culture and Morality Lab, University of Massachusetts Amherst."
+    />
+    <script type="module" crossorigin src="/assets/index-CcTOklY6.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B86LHuCf.css">
   </head>
   <body>
+    <noscript>
+      <h1>CCR Platform</h1>
+      <p>
+        Contextualized Construct Representation analysis for psychology
+        research. Operated by the Culture and Morality Lab, University of
+        Massachusetts Amherst. Principal investigator: Dr. Mohammad Atari.
+      </p>
+      <p>
+        Contact: <a href="mailto:devaanand@umass.edu">devaanand@umass.edu</a>.
+        Source code:
+        <a href="https://github.com/Culture-and-Morality-Lab/ccr-platform"
+          >github.com/Culture-and-Morality-Lab/ccr-platform</a
+        >
+      </p>
+      <p><a href="/guide">How this tool works</a></p>
+    </noscript>
     <div id="root"></div>
   </body>
 </html>
