@@ -4,7 +4,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 
 ## [Unreleased]
 
+### Fixed
+- Signed-in users no longer see other people's anonymous projects. A signed-in
+  account's project list shows only its own projects; projects created without
+  signing in stay in the shared anonymous space.
+- The site identity footer now shows only on the public welcome page, not on the
+  dashboard and results views.
+
 ### Added
+- Public guide (/guide): a "Sample datasets" section that links ready-to-run example
+  corpora (served from /samples) so new users can try CCR without their own data, with
+  a pointer from the upload step. Suggested by Meriel Burnett.
 - Real accounts: register/sign in with email + password (free, no external service).
   Signing in lifts anonymous limits and keeps your data. No self-service password
   reset yet (contact the admin); Google sign-in arrives with the managed-auth swap.

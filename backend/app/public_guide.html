@@ -168,6 +168,39 @@ where enabled).</p>
 </table>
 </div>
 
+<h2 id="sample-data">Sample datasets: try it without your own data</h2>
+<p>New to CCR and don't have a corpus handy? Download one of these ready-to-run example
+files, upload it in Step 1, and pick the suggested construct. They are small synthetic
+demo texts made by the lab for trying the platform, not research data.</p>
+<div class="tablewrap">
+<table>
+  <tr><th>Dataset</th><th>What is in it</th><th>Good to pair with</th></tr>
+  <tr>
+    <td><a href="/samples/sample_corpus.csv" download>sample_corpus.csv</a></td>
+    <td>About 60 short first-person texts about life satisfaction and wellbeing</td>
+    <td>Search the library for <b>Satisfaction With Life</b></td>
+  </tr>
+  <tr>
+    <td><a href="/samples/moral_foundations_demo.csv" download>moral_foundations_demo.csv</a></td>
+    <td>About 40 texts expressing moral concern (mostly care and harm)</td>
+    <td>Search for <b>Care (MFQ-2)</b></td>
+  </tr>
+  <tr>
+    <td><a href="/samples/large_demo.csv" download>large_demo.csv</a></td>
+    <td>About 800 short everyday texts, a bigger corpus to feel real run times</td>
+    <td>Any construct; try <b>PANAS</b> positive or negative affect</td>
+  </tr>
+  <tr>
+    <td><a href="/samples/long_documents_demo.csv" download>long_documents_demo.csv</a></td>
+    <td>About 10 long multi-paragraph texts</td>
+    <td>Any construct; useful for seeing the truncation warning</td>
+  </tr>
+</table>
+</div>
+<p>Each file has one text per row (a <code>text</code> column) and the platform detects
+the text column for you. When you choose a construct, prefer a validated scale from the
+library whenever one exists.</p>
+
 <h2 id="steps">Running an analysis, step by step</h2>
 <ol class="steps">
   <li>
@@ -180,7 +213,8 @@ where enabled).</p>
     <p>Upload a CSV or Excel file with <b>one text per row</b> - tweets, essays,
     open-ended survey answers, transcripts. Extra columns (IDs, conditions, demographics)
     are fine; they pass through untouched into the results file. The platform suggests
-    which column holds the text; confirm or change it.</p>
+    which column holds the text; confirm or change it. No corpus of your own yet? Start
+    with a <a href="#sample-data">sample dataset</a>.</p>
   </li>
   <li>
     <h3>Choose your construct(s) (Step 2)</h3>
