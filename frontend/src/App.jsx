@@ -463,9 +463,12 @@ export default function App() {
       </div>
       )}
 
-      {/* Every page carries the operator, affiliation, and contact. Beyond
-          being useful, it is what identifies the site to link scanners and
-          reviewers, who judge a domain by what it says about itself. */}
+      {/* Site identity footer, shown on the public welcome/landing view only.
+          Link scanners and reviewers judge the domain by its public face, and
+          the lab identity is also baked into the served HTML (see da069b3), so
+          the dashboard and results views drop it to keep the working area
+          uncluttered. */}
+      {showWelcome && (
       <footer className="site-footer">
         <p>
           <strong>CCR Platform</strong> - Contextualized Construct
@@ -490,6 +493,7 @@ export default function App() {
           <a href="/guide">How this tool works</a>
         </p>
       </footer>
+      )}
     </div>
   );
 }
