@@ -303,6 +303,21 @@ def test_owned_projects_invisible_and_untouchable_to_others(client):
     assert client.patch(f"/api/projects/{owned['id']}", json={"archived": True}).status_code == 403
 
 
+def test_anonymous_projects_hidden_from_signed_in_users():
+    """A signed-in account must not SEE the shared anonymous bucket in its
+    project list: the projects other people created without signing in.
+    Regression for a leak where every signed-in user saw all anonymous
+    projects in their sidebar."""
+    with TestClient(app) as anon:
+        proj = anon.post("/api/projects", json={"name": "AnonScratch"}).json()
+        assert proj["id"] in [p["id"] for p in anon.get("/api/projects").json()]
+
+    with TestClient(app) as user:
+        register(user, "isolated@test.edu", "Iso")
+        ids = [p["id"] for p in user.get("/api/projects").json()]
+        assert proj["id"] not in ids  # the leak this guards against
+
+
 # ------------------------------------------------- construct file upload
 def test_parse_construct_file_with_reverse_column(client):
     csv = "item,reverse\nI am satisfied with my life.,0\nI rarely feel content. ,1\n,\nI am satisfied with my life.,0\n"

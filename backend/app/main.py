@@ -495,12 +495,21 @@ def logout(response: Response):
 
 # --------------------------------------------------------------- projects
 def _visible_owners(user: dict | None) -> tuple[str, ...]:
-    """Anonymous viewers see anonymous projects; signed-in users additionally
-    see their own. Other users' projects are invisible (and untouchable)."""
-    return ("",) if user is None else ("", user["id"])
+    """Who a viewer may see projects for. Signed-in users see ONLY their own
+    projects; anonymous viewers see the shared anonymous bucket
+    (owner_user_id == ""). A signed-in user must never see other people's work,
+    including the anonymous demo projects. (Signed-in users used to also get the
+    anonymous bucket, which surfaced everyone's anonymous projects to any
+    signed-in account - the privacy leak this fixes.)"""
+    return (user["id"],) if user else ("",)
 
 
 def _require_project_access(project: Project, user: dict | None) -> None:
+    # Owned projects are gated to their owner. Anonymous projects (owner "")
+    # stay open by design: they have no identity to gate by, and a visitor who
+    # starts anonymously then signs in mid-session must keep working on the
+    # project they just created. They simply never appear in a signed-in user's
+    # project LIST (see _visible_owners) - that listing leak is what was fixed.
     if project.owner_user_id and (user is None or project.owner_user_id != user["id"]):
         raise HTTPException(403, "This project belongs to another account.")
 
