@@ -24,6 +24,9 @@ export default function ResultsView({ jobId, onBack }) {
   // Multi-construct runs summarize per construct + a correlation matrix;
   // single-construct summaries keep the original flat shape.
   const multi = Array.isArray(summary.constructs);
+  // Anchor-vector (bipolar) runs score along the axis between two poles: the
+  // score is centered on 0, negative meaning "toward the opposite pole".
+  const anchored = summary.anchored === true;
 
   return (
     <>
@@ -52,16 +55,31 @@ export default function ResultsView({ jobId, onBack }) {
           {metadata.construct} × {metadata.corpus_file}
         </h3>
         <p className="hint">
-          CCR score = mean cosine similarity between each text and a construct&apos;s
-          scale items. Higher = the text expresses the construct more strongly.
-          {multi &&
-            " All constructs were scored on the same pass over the corpus, so scores are row-aligned and directly comparable."}
+          {anchored ? (
+            <>
+              Anchored (bipolar) score = {summary.metric === "dot" ? "dot product" : "cosine"} of
+              each text with the anchor vector (target centroid minus opposite centroid). Positive
+              = toward <b>{summary.target_name}</b>; negative = toward <b>{summary.opposite_name}</b>.
+              The two per-pole CCR scores are in the export.
+            </>
+          ) : (
+            <>
+              CCR score = mean cosine similarity between each text and a construct&apos;s scale
+              items. Higher = the text expresses the construct more strongly.
+              {multi &&
+                " All constructs were scored on the same pass over the corpus, so scores are row-aligned and directly comparable."}
+            </>
+          )}
         </p>
         {/* Cautionary wording approved by the PI (2026-08-05); source_type
             comes from the construct snapshot in the run metadata (top-level
             construct_snapshot on single runs, constructs[].snapshot on multi). */}
-        {[metadata.construct_snapshot, ...(metadata.constructs || []).map((c) => c.snapshot)]
-          .some((s) => s?.source_type === "llm_generated") && (
+        {[
+          metadata.construct_snapshot,
+          metadata.target_construct?.snapshot,
+          metadata.opposite_construct?.snapshot,
+          ...(metadata.constructs || []).map((c) => c.snapshot),
+        ].some((s) => s?.source_type === "llm_generated") && (
           <p className="small muted">
             ⚠ This run uses a construct whose items were AI-generated and have not been
             psychometrically validated. Interpret scores with appropriate caution.
@@ -70,7 +88,15 @@ export default function ResultsView({ jobId, onBack }) {
 
         <div className="stat-grid">
           <Stat k="Texts scored" v={summary.n_docs.toLocaleString()} />
-          {multi ? (
+          {anchored ? (
+            <>
+              <Stat k="Mean anchor score" v={summary.score_mean.toFixed(3)} />
+              <Stat k="SD" v={summary.score_sd.toFixed(3)} />
+              <Stat k={`Mean toward ${summary.target_name}`} v={summary.target_score_mean.toFixed(3)} />
+              <Stat k={`Mean toward ${summary.opposite_name}`} v={summary.opposite_score_mean.toFixed(3)} />
+              <Stat k="Metric" v={summary.metric} />
+            </>
+          ) : multi ? (
             <Stat k="Constructs" v={summary.constructs.length} />
           ) : (
             <>
@@ -105,7 +131,9 @@ export default function ResultsView({ jobId, onBack }) {
 
       {multi && <CorrelationCard correlations={summary.correlations} />}
 
-      {multi ? (
+      {anchored ? (
+        <AnchorBody summary={summary} />
+      ) : multi ? (
         summary.constructs.map((c, i) => (
           <details
             className="card construct-results"
@@ -175,9 +203,15 @@ export default function ResultsView({ jobId, onBack }) {
       <div className="meta-footer">
         <strong>Reproducibility record</strong> - model: <code>{metadata.model}</code> (dim{" "}
         {metadata.embedding_dim})
-        {!multi && (
+        {!multi && !anchored && (
           <>
             {" "}· items hash: <code>{metadata.items_sha256_16}</code>
+          </>
+        )}
+        {anchored && (
+          <>
+            {" "}· metric: <code>{summary.metric}</code> · anchor vector norm{" "}
+            <code>{metadata.anchor_vector_norm}</code>
           </>
         )}{" "}
         · text column: <code>{metadata.text_column}</code> · run:{" "}
@@ -185,11 +219,26 @@ export default function ResultsView({ jobId, onBack }) {
         numpy {metadata.numpy}
         {metadata.sentence_transformers &&
           ` · sentence-transformers ${metadata.sentence_transformers}`}
-        {multi ? (
+        {anchored ? (
+          <div className="mt small">
+            <div>
+              {metadata.target_construct?.name} (target) - items hash{" "}
+              <code>{metadata.target_items_sha256_16}</code>
+              {metadata.target_construct?.reference ? ` · ${metadata.target_construct.reference}` : ""}
+            </div>
+            <div>
+              {metadata.opposite_construct?.name} (opposite) - items hash{" "}
+              <code>{metadata.opposite_items_sha256_16}</code>
+              {metadata.opposite_construct?.reference
+                ? ` · ${metadata.opposite_construct.reference}`
+                : ""}
+            </div>
+          </div>
+        ) : multi ? (
           <div className="mt small">
             {metadata.constructs.map((c) => (
               <div key={c.column_prefix}>
-                {c.name} — items hash <code>{c.items_sha256_16}</code>
+                {c.name} - items hash <code>{c.items_sha256_16}</code>
                 {c.reference ? ` · ${c.reference}` : ""}
               </div>
             ))}
@@ -199,6 +248,47 @@ export default function ResultsView({ jobId, onBack }) {
             Construct reference: {metadata.construct_reference || "-"}
           </div>
         )}
+      </div>
+    </>
+  );
+}
+
+// Bipolar (anchor-vector) run body: distribution centered on 0, per-pole item
+// loadings side by side, and top/bottom texts labeled by pole (spec 0006).
+function AnchorBody({ summary }) {
+  return (
+    <>
+      <div className="card">
+        <h3>Score distribution</h3>
+        <p className="hint">
+          Centered on zero. Texts to the right lean toward <b>{summary.target_name}</b>; to the
+          left, toward <b>{summary.opposite_name}</b>.
+        </p>
+        <Histogram histogram={summary.histogram} />
+      </div>
+
+      <div className="row">
+        <div className="grow card">
+          <h3>{summary.target_name} items</h3>
+          <p className="hint">Mean similarity of the corpus to each target-pole item.</p>
+          <ItemBars itemMeans={summary.target_item_means} />
+        </div>
+        <div className="grow card">
+          <h3>{summary.opposite_name} items</h3>
+          <p className="hint">Mean similarity to each opposite-pole item.</p>
+          <ItemBars itemMeans={summary.opposite_item_means} />
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="grow card">
+          <h3>Most {summary.target_name}</h3>
+          <DocTable docs={summary.top_docs} />
+        </div>
+        <div className="grow card">
+          <h3>Most {summary.opposite_name}</h3>
+          <DocTable docs={summary.bottom_docs} />
+        </div>
       </div>
     </>
   );
@@ -250,7 +340,7 @@ function CorrelationCard({ correlations }) {
                 </th>
                 {matrix[i].map((r, j) => (
                   <td key={j} style={cellStyle(r, i === j)}>
-                    {i === j ? "—" : r == null ? "n/a" : r.toFixed(2)}
+                    {i === j ? "-" : r == null ? "n/a" : r.toFixed(2)}
                   </td>
                 ))}
               </tr>

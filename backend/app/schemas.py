@@ -112,6 +112,11 @@ class JobCreate(BaseModel):
     # multi-construct run. Exactly one of the two must be provided.
     construct_id: str | None = None
     construct_ids: list[str] | None = None
+    # Anchor-vector (bipolar) run (spec 0006): a contrasting opposite-pole
+    # construct plus the similarity metric. Anchored runs are single-target
+    # (exactly one construct_id/construct_ids entry) vs one opposite.
+    opposite_construct_id: str | None = None
+    similarity_metric: str = "cosine"  # "cosine" (default) | "dot"
     text_column: str
     model_name: str = "all-minilm-l6-v2"  # registry id (spec 0003)
     language: str = "en"
@@ -125,6 +130,11 @@ class JobOut(BaseModel):
     construct_ids: list[str] = []
     construct_name: str = ""
     construct_names: list[str] = []
+    # Anchor-vector run echo-back (spec 0006): empty on normal runs.
+    opposite_construct_id: str = ""
+    opposite_construct_name: str = ""
+    similarity_metric: str = ""
+    anchored: bool = False
     corpus_filename: str = ""
     text_column: str
     model_name: str

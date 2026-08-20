@@ -172,6 +172,12 @@ class Job(Base):
     # Multi-construct runs: the full ordered id list. construct_id stays the
     # first entry (FK + legacy rows, whose "[]" here means "just construct_id").
     construct_ids_json: Mapped[str] = mapped_column(Text, default="[]")
+    # Anchor-vector (bipolar) runs (spec 0006): the contrasting opposite-pole
+    # construct and the similarity metric. "" on both = a normal, non-anchored
+    # run. Plain String (not FK) so the additive SQLite auto-migration can add
+    # it to existing DBs, mirroring construct_ids_json.
+    opposite_construct_id: Mapped[str] = mapped_column(String(32), default="")
+    similarity_metric: Mapped[str] = mapped_column(String(12), default="")  # "" | "cosine" | "dot"
     text_column: Mapped[str] = mapped_column(String(200))
     model_name: Mapped[str] = mapped_column(String(200))  # registry id (or test fake)
     language: Mapped[str] = mapped_column(String(12), default="en")  # selected analysis language

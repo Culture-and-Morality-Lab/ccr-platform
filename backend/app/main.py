@@ -195,6 +195,8 @@ def _job_out(db: Session, j: Job) -> JobOut:
     constructs = [db.get(Construct, cid) for cid in construct_ids]
     names = [c.name if c else "?" for c in constructs]
     corpus = db.get(Corpus, j.corpus_id)
+    opp_id = j.opposite_construct_id or ""
+    opp = db.get(Construct, opp_id) if opp_id else None
     return JobOut(
         id=j.id,
         project_id=j.project_id,
@@ -203,6 +205,10 @@ def _job_out(db: Session, j: Job) -> JobOut:
         construct_ids=construct_ids,
         construct_name=names[0] if names else "",
         construct_names=names,
+        opposite_construct_id=opp_id,
+        opposite_construct_name=(opp.name if opp else ""),
+        similarity_metric=j.similarity_metric or "",
+        anchored=bool(opp_id),
         corpus_filename=corpus.filename if corpus else "",
         text_column=j.text_column,
         model_name=j.model_name,
@@ -869,6 +875,27 @@ def create_job(
     for cid in construct_ids:
         _get_or_404(db, Construct, cid)
 
+    # Anchor-vector (bipolar) run (spec 0006): a single target construct scored
+    # against one opposite pole. Mutually exclusive with multi-construct.
+    opposite_id = (body.opposite_construct_id or "").strip()
+    metric = (body.similarity_metric or "cosine").strip().lower()
+    if opposite_id:
+        if len(construct_ids) != 1:
+            raise HTTPException(
+                400,
+                "An anchored (bipolar) run scores exactly one target construct "
+                "against one opposite pole. Provide a single target construct.",
+            )
+        if opposite_id == construct_ids[0]:
+            raise HTTPException(400, "The contrasting construct must differ from the target.")
+        if metric not in ("cosine", "dot"):
+            raise HTTPException(
+                400, f"similarity_metric must be 'cosine' or 'dot' (got '{body.similarity_metric}')."
+            )
+        _get_or_404(db, Construct, opposite_id)
+    else:
+        metric = ""  # only meaningful for anchored runs
+
     # Anonymous tier: N runs per day, then sign-in (PI decision 2026-07-10).
     # Cookie counter = a nudge, not a security boundary (recorded in DECISIONS.md).
     if user is None:
@@ -919,6 +946,8 @@ def create_job(
         corpus_id=body.corpus_id,
         construct_id=construct_ids[0],
         construct_ids_json=json.dumps(construct_ids),
+        opposite_construct_id=opposite_id,
+        similarity_metric=metric,
         text_column=body.text_column,
         model_name=body.model_name,
         language=language,

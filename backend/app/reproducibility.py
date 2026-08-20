@@ -89,6 +89,8 @@ def _model_loader(metadata: dict) -> tuple[str, str]:
 
 def script_text(metadata: dict) -> str:
     """Standalone Python script reproducing the run's similarities and scores."""
+    if metadata.get("scoring", {}).get("method") == "anchored_vector":
+        return _script_text_anchored(metadata)
     constructs_meta = metadata.get("constructs")
     if constructs_meta and len(constructs_meta) > 1:
         return _script_text_multi(metadata, constructs_meta)
@@ -164,6 +166,118 @@ def main(csv_path: str) -> None:
 
     work.to_csv("reproduced_results.csv", index=False)
     print(f"Wrote reproduced_results.csv ({{len(work)}} rows, {{sims.shape[1]}} items).")
+    print("Compare against the platform export - values should match to ~1e-5.")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: python {script_name} <corpus.csv>")
+    main(sys.argv[1])
+'''
+
+
+def _script_text_anchored(metadata: dict) -> str:
+    """Anchored (bipolar) variant: embeds BOTH item sets and reproduces the
+    anchor-vector math (centroids, AV = C_target - C_opposite, then the chosen
+    metric), so the exported anchor_score reproduces offline (spec 0006)."""
+    target = metadata.get("target_construct", {})
+    opposite = metadata.get("opposite_construct", {})
+    target_items = target.get("snapshot", {}).get("items", [])
+    opposite_items = opposite.get("snapshot", {}).get("items", [])
+    metric = metadata.get("scoring", {}).get("similarity", "cosine")
+    model_id = metadata.get("model_registry_id", metadata.get("model", ""))
+    provider = metadata.get("provider_model_id", metadata.get("model", ""))
+    revision = metadata.get("model_revision")
+    st_import, model_loader = _model_loader(metadata)
+    item_prefix = metadata.get("item_prefix", "")
+    text_prefix = metadata.get("text_prefix", "")
+    text_column = metadata.get("text_column", "text")
+
+    target_literal = _items_literal(target_items)
+    opposite_literal = _items_literal(opposite_items)
+
+    script_name = script_filename(metadata.get("job_id"))
+    reqs_name = requirements_filename(metadata.get("job_id"))
+    corpus_csv = metadata.get("corpus_file") or "your_corpus.csv"
+    corpus_arg = f'"{corpus_csv}"' if any(c.isspace() for c in corpus_csv) else corpus_csv
+
+    return f'''#!/usr/bin/env python3
+"""Reproduce a CCR anchored (bipolar) analysis independently of the platform.
+
+run_id:                {metadata.get("job_id", "?")}
+created_at:            {metadata.get("started_at", "?")}
+platform_version:      {metadata.get("platform_version", "?")}
+output_schema_version: {metadata.get("output_schema_version", "1.2")}
+target construct:      {target.get("name", "?")}
+opposite construct:    {opposite.get("name", "?")}
+model:                 {model_id} -> {provider} (revision: {revision or "unpinned"})
+scoring:               anchored_vector, similarity={metric}
+
+AV = mean(target item embeddings) - mean(opposite item embeddings).
+anchor_score = {metric}(text_embedding, AV): higher = toward target, negative = toward opposite.
+
+Usage:
+    pip install -r {reqs_name}
+    python {script_name} {corpus_arg}
+Outputs reproduced_results.csv with the same columns as the platform export.
+"""
+
+import sys
+
+import numpy as np
+import pandas as pd
+{st_import}
+
+TEXT_COLUMN = {text_column!r}
+ITEM_PREFIX = {item_prefix!r}   # model-required prefix (E5 family); empty = none
+TEXT_PREFIX = {text_prefix!r}
+METRIC = {metric!r}             # "cosine" or "dot"
+
+TARGET_ITEMS = {target_literal}
+OPPOSITE_ITEMS = {opposite_literal}
+
+
+def _encode_items(model, items):
+    return model.encode([ITEM_PREFIX + i["text"] for i in items],
+                        convert_to_numpy=True, normalize_embeddings=True)
+
+
+def main(csv_path: str) -> None:
+    df = pd.read_csv(csv_path)
+    texts_all = df[TEXT_COLUMN].astype("string")
+    mask = texts_all.notna() & (texts_all.str.strip() != "")
+    work = df.loc[mask].reset_index(drop=True)          # platform drops empty rows the same way
+    texts = work[TEXT_COLUMN].astype(str).tolist()
+
+    {model_loader}
+    target_emb = _encode_items(model, TARGET_ITEMS)
+    opposite_emb = _encode_items(model, OPPOSITE_ITEMS)
+    doc_emb = model.encode([TEXT_PREFIX + t for t in texts],
+                           convert_to_numpy=True, normalize_embeddings=True)
+
+    target_sims = doc_emb @ target_emb.T                 # normalized -> cosine
+    opposite_sims = doc_emb @ opposite_emb.T
+    target_score = target_sims.mean(axis=1)              # == doc . target_centroid
+    opposite_score = opposite_sims.mean(axis=1)
+
+    AV = target_emb.mean(axis=0) - opposite_emb.mean(axis=0)
+    av_norm = float(np.linalg.norm(AV))
+    dot = doc_emb @ AV                                   # == target_score - opposite_score
+    if METRIC == "dot":
+        anchor = dot
+    else:
+        anchor = dot / av_norm if av_norm > 1e-8 else np.zeros_like(dot)
+
+    for j in range(target_sims.shape[1]):
+        work[f"target_sim_item_{{j + 1}}"] = np.round(target_sims[:, j], 6)
+    for j in range(opposite_sims.shape[1]):
+        work[f"opposite_sim_item_{{j + 1}}"] = np.round(opposite_sims[:, j], 6)
+    work["target_ccr_score"] = np.round(target_score, 6)
+    work["opposite_ccr_score"] = np.round(opposite_score, 6)
+    work["anchor_score"] = np.round(anchor, 6)
+
+    work.to_csv("reproduced_results.csv", index=False)
+    print(f"Wrote reproduced_results.csv ({{len(work)}} rows, metric={{METRIC}}).")
     print("Compare against the platform export - values should match to ~1e-5.")
 
 

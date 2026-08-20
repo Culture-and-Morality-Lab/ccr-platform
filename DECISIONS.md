@@ -151,3 +151,15 @@ so it is the design doc's "one vendor for auth + DB + backups" with zero new cos
 was Postgres-portable by design; auto-migrate is now dialect-aware; psycopg v3 driver.
 Note: uploaded FILES still live on the local (ephemeral) disk - full file durability is
 the separate CCR_STORAGE=s3 (R2) switch, already implemented.
+
+## 2026-08-12 - Anchor vectors: cosine default (+ dot toggle); per-pole score = mean-of-item-cosine (spec 0006)
+Bipolar constructs score along AV = target_centroid - opposite_centroid. Similarity metric
+defaults to cosine (the PI's formula) with a per-run dot-product toggle, because the paper
+(Teitelbaum & Simchon 2025, Appendix B) found dot sometimes better - a config flag lets us
+compare rather than guess. The per-pole "plain" score reported/exported is the standard CCR
+score (mean of per-item cosines), which equals text · pole_centroid; this makes the dot
+anchor score exactly target_score - opposite_score, so the export is self-checking. Rejected:
+cos(text, centroid) as the per-pole number (would not equal a normal single-construct CCR
+score, breaking cross-checks) and auto-negating reverse-scored items (kept as v1: (R) flags
+recorded, not applied - paper footnote 27 is a later option). Revisit: lab validation may fix
+one metric, or promote reverse-item negation.

@@ -265,3 +265,143 @@ def run_ccr(
     if progress_cb:
         progress_cb(0.97)
     return CCRResult(similarities=sims, scores=scores, metadata=metadata, doc_embeddings=doc_emb)
+
+
+@dataclass
+class AnchorResult:
+    """Bipolar (anchor-vector) scoring result. Similarities are kept per pole so
+    the results view can show item loadings for each side; scores are the two
+    per-pole CCR scores plus the single bipolar anchor score."""
+
+    target_similarities: np.ndarray  # (n_docs, n_target_items)
+    opposite_similarities: np.ndarray  # (n_docs, n_opposite_items)
+    target_scores: np.ndarray  # (n_docs,) mean cosine to target items
+    opposite_scores: np.ndarray  # (n_docs,) mean cosine to opposite items
+    anchor_scores: np.ndarray  # (n_docs,) cosine or dot of text with AV
+    metadata: dict
+    doc_embeddings: np.ndarray | None = None
+    degenerate: bool = False
+
+
+ANCHOR_METRICS = ("cosine", "dot")
+
+
+def run_ccr_anchored(
+    texts: list[str],
+    target_items: list[str],
+    opposite_items: list[str],
+    backend: EmbeddingBackend,
+    metric: str = "cosine",
+    progress_cb: ProgressCb | None = None,
+    item_prefix: str = "",
+    text_prefix: str = "",
+    doc_embeddings: np.ndarray | None = None,
+) -> AnchorResult:
+    """Score texts along the axis BETWEEN two construct poles (design §11, spec 0006).
+
+    C = centroid of target item embeddings, C_opp = centroid of opposite item
+    embeddings, AV = C - C_opp. The anchor score is cos(T, AV) (default) or the
+    raw dot T·AV. Every embedding is L2-normalized, so a pole's CCR score (mean
+    of its per-item cosines) equals T·C; the dot metric is therefore exactly
+    target_score - opposite_score, which makes the export self-checking.
+    """
+    if not texts:
+        raise ValueError("Corpus contains no non-empty texts.")
+    if not target_items:
+        raise ValueError("Target construct has no items.")
+    if not opposite_items:
+        raise ValueError("Opposite (contrasting) construct has no items.")
+    if metric not in ANCHOR_METRICS:
+        raise ValueError(f"Unknown similarity metric '{metric}' (use 'cosine' or 'dot').")
+
+    started = datetime.now(timezone.utc)
+
+    def enc_items(items: list[str]) -> tuple[np.ndarray, bool]:
+        prefixed = [item_prefix + i for i in items] if item_prefix else items
+        return encode_items_cached(backend, prefixed)
+
+    target_emb, target_cached = enc_items(target_items)
+    opposite_emb, opposite_cached = enc_items(opposite_items)
+    if progress_cb:
+        progress_cb(0.02)
+
+    def doc_progress(frac: float):
+        if progress_cb:
+            progress_cb(0.02 + 0.93 * frac)
+
+    from_cache = doc_embeddings is not None and len(doc_embeddings) == len(texts)
+    if from_cache:
+        doc_emb = doc_embeddings
+        doc_progress(1.0)
+    else:
+        texts_for_encoding = [text_prefix + t for t in texts] if text_prefix else texts
+        doc_emb = encode_unique(backend, texts_for_encoding, progress_cb=doc_progress)
+
+    # Per-pole similarities and scores. The mean over a pole's per-item cosines
+    # equals T·C (C = centroid of that pole's normalized item embeddings).
+    target_sims = doc_emb @ target_emb.T
+    opposite_sims = doc_emb @ opposite_emb.T
+    target_scores = target_sims.mean(axis=1)
+    opposite_scores = opposite_sims.mean(axis=1)
+
+    C = target_emb.mean(axis=0)
+    C_opp = opposite_emb.mean(axis=0)
+    AV = C - C_opp
+    av_norm = float(np.linalg.norm(AV))
+    dot_scores = doc_emb @ AV  # == target_scores - opposite_scores by construction
+
+    # Degenerate: the two poles embed to nearly the same direction, so AV ~ 0
+    # and cosine is numerically unstable. Report it, but still return a value.
+    degenerate = av_norm < 1e-8
+    if metric == "cosine":
+        anchor_scores = np.zeros_like(dot_scores) if degenerate else dot_scores / av_norm
+    else:
+        anchor_scores = dot_scores
+
+    finished = datetime.now(timezone.utc)
+    thash = hashlib.sha256("\n".join(target_items).encode()).hexdigest()[:16]
+    ohash = hashlib.sha256("\n".join(opposite_items).encode()).hexdigest()[:16]
+
+    metadata = {
+        "method": "CCR anchored vector (bipolar construct)",
+        "model": backend.name,
+        "embedding_dim": int(doc_emb.shape[1]),
+        "model_max_seq_length": getattr(backend, "max_seq_length", None),
+        "item_embeddings_from_cache": bool(target_cached and opposite_cached),
+        "doc_embeddings_from_cache": from_cache,
+        "n_texts": len(texts),
+        "n_target_items": len(target_items),
+        "n_opposite_items": len(opposite_items),
+        "target_items_sha256_16": thash,
+        "opposite_items_sha256_16": ohash,
+        "item_prefix": item_prefix,
+        "text_prefix": text_prefix,
+        "similarity": metric,
+        "anchor_vector_norm": round(av_norm, 6),
+        "degenerate_poles": degenerate,
+        "score": f"{metric}(text, target_centroid - opposite_centroid)",
+        "python": sys.version.split()[0],
+        "numpy": np.__version__,
+        "started_at": started.isoformat(timespec="seconds"),
+        "finished_at": finished.isoformat(timespec="seconds"),
+        "duration_seconds": round((finished - started).total_seconds(), 2),
+    }
+    try:
+        import sentence_transformers
+
+        metadata["sentence_transformers"] = sentence_transformers.__version__
+    except ImportError:
+        pass
+
+    if progress_cb:
+        progress_cb(0.97)
+    return AnchorResult(
+        target_similarities=target_sims,
+        opposite_similarities=opposite_sims,
+        target_scores=target_scores,
+        opposite_scores=opposite_scores,
+        anchor_scores=anchor_scores,
+        metadata=metadata,
+        doc_embeddings=doc_emb,
+        degenerate=degenerate,
+    )

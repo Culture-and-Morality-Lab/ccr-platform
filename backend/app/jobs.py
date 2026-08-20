@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 import numpy as np
 
 from . import registry, warnings_engine
-from .ccr import FAKE_MODEL_NAME, get_backend, run_ccr
+from .ccr import FAKE_MODEL_NAME, get_backend, run_ccr, run_ccr_anchored
 from .construct_lib import construct_snapshot
 from .db import DATA_DIR, SessionLocal
 from .ingest import load_corpus
@@ -42,6 +42,9 @@ OUTPUT_SCHEMA_VERSION = "1.0"  # bump on ANY export-column change (CLAUDE.md har
 # {slug}_ccr_score) instead of the flat single-construct shape, so they carry
 # their own schema version; single-construct exports are unchanged at 1.0.
 MULTI_OUTPUT_SCHEMA_VERSION = "1.1"
+# Anchor-vector (bipolar) runs export per-pole similarities + per-pole scores +
+# a single bipolar anchor_score (spec 0006); their own schema version.
+ANCHOR_OUTPUT_SCHEMA_VERSION = "1.2"
 
 logger = logging.getLogger("ccr.jobs")
 
@@ -169,6 +172,52 @@ def _score_stats(result, items: list[str], texts: list[str]) -> dict:
     }
 
 
+def _anchor_stats(res, target_items: list[str], opposite_items: list[str], texts: list[str],
+                  target_name: str, opposite_name: str) -> dict:
+    """Bipolar summary for an anchor-vector run: the score is centered on 0, so
+    top docs are 'most target' and bottom docs are 'most opposite'. Item
+    loadings are reported per pole; the two per-pole CCR scores are kept so the
+    reader can see each side on its own."""
+    scores = res.anchor_scores
+    order = np.argsort(scores)
+    hist_counts, hist_edges = np.histogram(scores, bins=HIST_BINS)
+
+    def doc_entry(i: int) -> dict:
+        return {
+            "row": int(i),
+            "score": round(float(scores[i]), 4),
+            "text": texts[i][:SNIPPET_LEN] + ("…" if len(texts[i]) > SNIPPET_LEN else ""),
+        }
+
+    def item_means(sims, items) -> list[dict]:
+        return [
+            {"item": items[j], "mean": round(float(sims[:, j].mean()), 4)}
+            for j in range(len(items))
+        ]
+
+    return {
+        "anchored": True,
+        "target_name": target_name,
+        "opposite_name": opposite_name,
+        "metric": res.metadata["similarity"],
+        "degenerate_poles": bool(res.degenerate),
+        "score_mean": round(float(scores.mean()), 4),
+        "score_sd": round(float(scores.std(ddof=1)), 4) if len(scores) > 1 else 0.0,
+        "score_min": round(float(scores.min()), 4),
+        "score_max": round(float(scores.max()), 4),
+        "target_score_mean": round(float(res.target_scores.mean()), 4),
+        "opposite_score_mean": round(float(res.opposite_scores.mean()), 4),
+        "histogram": {
+            "counts": hist_counts.tolist(),
+            "edges": [round(float(e), 4) for e in hist_edges],
+        },
+        "target_item_means": item_means(res.target_similarities, target_items),
+        "opposite_item_means": item_means(res.opposite_similarities, opposite_items),
+        "top_docs": [doc_entry(i) for i in order[::-1][:TOP_N]],  # most target
+        "bottom_docs": [doc_entry(i) for i in order[:TOP_N]],  # most opposite
+    }
+
+
 def _score_correlations(names: list[str], results: list) -> dict:
     """Pearson r between per-text scores of each construct pair - the
     interrelation view a multi-construct run exists for. Scores come from the
@@ -209,6 +258,14 @@ def run_job(job_id: str) -> None:
         constructs = [db.get(Construct, cid) for cid in job_construct_ids(job)]
         items_per_construct = [json.loads(c.items_json) for c in constructs]
         multi = len(constructs) > 1
+        # Anchor-vector (bipolar) run: the target construct is constructs[0] and
+        # the opposite pole is a second construct. Never combined with multi.
+        anchored = bool(job.opposite_construct_id)
+        opposite = db.get(Construct, job.opposite_construct_id) if anchored else None
+        if anchored and opposite is None:
+            raise ValueError("The contrasting (opposite) construct was not found.")
+        opposite_items = json.loads(opposite.items_json) if anchored else []
+        metric = (job.similarity_metric or "cosine") if anchored else ""
         parse_info = json.loads(corpus.parse_info_json or "{}")
 
         # Materialize the corpus locally (a no-op on the local backend; a
@@ -275,26 +332,39 @@ def run_job(job_id: str) -> None:
         backend = get_backend(job.model_name)
         run_started = datetime.now(timezone.utc)
 
-        # The first construct pays for embedding the corpus (or reuses the
-        # disk cache); every further construct scores against the SAME document
-        # embeddings. That reuse is the whole point of a multi-construct run -
-        # N constructs cost barely more than one.
-        def first_progress(frac: float):
-            progress(frac * 0.92 if multi else frac)
-
-        result = run_ccr(
-            texts, items_per_construct[0], backend,
-            progress_cb=first_progress, item_prefix=item_prefix, text_prefix=text_prefix,
-            doc_embeddings=cached_embeddings,
-        )
-        results = [result]
-        for k in range(1, len(constructs)):
-            results.append(run_ccr(
-                texts, items_per_construct[k], backend,
+        if anchored:
+            # Bipolar run: score along (target centroid - opposite centroid).
+            # Uses the same corpus-embedding cache as the normal path - the doc
+            # embeddings depend on corpus+model+prefix, not on the construct.
+            anchor_result = run_ccr_anchored(
+                texts, items_per_construct[0], opposite_items, backend,
+                metric=metric, progress_cb=progress,
                 item_prefix=item_prefix, text_prefix=text_prefix,
-                doc_embeddings=result.doc_embeddings,
-            ))
-            progress(0.92 + 0.05 * k / (len(constructs) - 1))
+                doc_embeddings=cached_embeddings,
+            )
+            result = anchor_result  # shared warnings + cache-save read .metadata/.doc_embeddings
+            results = [anchor_result]
+        else:
+            # The first construct pays for embedding the corpus (or reuses the
+            # disk cache); every further construct scores against the SAME
+            # document embeddings. That reuse is the whole point of a
+            # multi-construct run - N constructs cost barely more than one.
+            def first_progress(frac: float):
+                progress(frac * 0.92 if multi else frac)
+
+            result = run_ccr(
+                texts, items_per_construct[0], backend,
+                progress_cb=first_progress, item_prefix=item_prefix, text_prefix=text_prefix,
+                doc_embeddings=cached_embeddings,
+            )
+            results = [result]
+            for k in range(1, len(constructs)):
+                results.append(run_ccr(
+                    texts, items_per_construct[k], backend,
+                    item_prefix=item_prefix, text_prefix=text_prefix,
+                    doc_embeddings=result.doc_embeddings,
+                ))
+                progress(0.92 + 0.05 * k / (len(constructs) - 1))
         run_finished = datetime.now(timezone.utc)
         if (
             cache_enabled and cache_path is not None and cached_embeddings is None
@@ -349,19 +419,36 @@ def run_job(job_id: str) -> None:
                 warnings.append(mlw)
         for user_warning in (model_cfg.user_warnings if model_cfg else ()):
             warnings.append(W("MODEL_NOTE", "info", user_warning))
+        if anchored and anchor_result.degenerate:
+            warnings.append(W(
+                "ANCHOR_DEGENERATE_POLES", "warning",
+                "The two poles embed to nearly the same direction, so the anchor "
+                "vector is near zero and the bipolar score is unstable. Check that "
+                "the contrasting construct is a genuine opposite of the target.",
+            ))
 
         # Export mirrors ccr_wrapper's shape: input columns + per-item
         # similarity columns + overall score, so it drops into existing
         # CCR workflows. Multi-construct runs prefix each construct's columns
         # with its slug ({slug}_sim_item_N, {slug}_ccr_score) - one row-aligned
         # CSV is exactly what correlating constructs downstream needs.
-        prefixes = _column_prefixes(constructs) if multi else [""]
         out = work_df.copy()
-        for k, res in enumerate(results):
-            col = f"{prefixes[k]}_" if multi else ""
-            for j in range(res.similarities.shape[1]):
-                out[f"{col}sim_item_{j + 1}"] = np.round(res.similarities[:, j], 6)
-            out[f"{col}ccr_score"] = np.round(res.scores, 6)
+        if anchored:
+            tsim, osim = anchor_result.target_similarities, anchor_result.opposite_similarities
+            for j in range(tsim.shape[1]):
+                out[f"target_sim_item_{j + 1}"] = np.round(tsim[:, j], 6)
+            for j in range(osim.shape[1]):
+                out[f"opposite_sim_item_{j + 1}"] = np.round(osim[:, j], 6)
+            out["target_ccr_score"] = np.round(anchor_result.target_scores, 6)
+            out["opposite_ccr_score"] = np.round(anchor_result.opposite_scores, 6)
+            out["anchor_score"] = np.round(anchor_result.anchor_scores, 6)
+        else:
+            prefixes = _column_prefixes(constructs) if multi else [""]
+            for k, res in enumerate(results):
+                col = f"{prefixes[k]}_" if multi else ""
+                for j in range(res.similarities.shape[1]):
+                    out[f"{col}sim_item_{j + 1}"] = np.round(res.similarities[:, j], 6)
+                out[f"{col}ccr_score"] = np.round(res.scores, 6)
         local_result = RESULTS_DIR / f"{job.id}.csv"
         out.to_csv(local_result, index=False)
         result_path = storage.move_local_into_storage("results", f"{job.id}.csv", local_result)
@@ -371,7 +458,12 @@ def run_job(job_id: str) -> None:
             "n_dropped_empty": dropped,
             "warnings": warnings,
         }
-        if multi:
+        if anchored:
+            summary.update(_anchor_stats(
+                anchor_result, items_per_construct[0], opposite_items, texts,
+                constructs[0].name, opposite.name,
+            ))
+        elif multi:
             summary["constructs"] = [
                 {
                     "construct_id": c.id,
@@ -392,7 +484,10 @@ def run_job(job_id: str) -> None:
             **result.metadata,
             "job_id": job.id,
             "platform_version": PLATFORM_VERSION,
-            "output_schema_version": MULTI_OUTPUT_SCHEMA_VERSION if multi else OUTPUT_SCHEMA_VERSION,
+            "output_schema_version": (
+                ANCHOR_OUTPUT_SCHEMA_VERSION if anchored
+                else MULTI_OUTPUT_SCHEMA_VERSION if multi else OUTPUT_SCHEMA_VERSION
+            ),
             "corpus_file": corpus.filename,
             "corpus_parse_info": parse_info,
             "text_column": job.text_column,
@@ -402,13 +497,39 @@ def run_job(job_id: str) -> None:
             "model_revision": model_cfg.revision if model_cfg else None,
             "model_pooling_fallback": model_cfg.pooling_fallback if model_cfg else None,
             "model_max_seq_length": model_cfg.max_seq_length if model_cfg else None,
-            "scoring": {"adjustment_strategy": "none", "aggregate": "mean_all_items"},
+            "scoring": (
+                {"method": "anchored_vector", "similarity": metric, "adjustment_strategy": "none"}
+                if anchored else {"adjustment_strategy": "none", "aggregate": "mean_all_items"}
+            ),
             "output_schema": list(out.columns),
             "warnings": warnings,
             "n_rows_input": int(corpus.n_rows),
             "n_rows_dropped_empty": dropped,
         }
-        if multi:
+        if anchored:
+            target = constructs[0]
+            metadata.update({
+                "construct": f"{target.name} vs {opposite.name}",
+                "anchor": {
+                    "target_construct_id": target.id,
+                    "opposite_construct_id": opposite.id,
+                    "metric": metric,
+                },
+                "target_construct": {
+                    "name": target.name,
+                    "reference": target.reference,
+                    "snapshot": construct_snapshot(target),
+                },
+                "opposite_construct": {
+                    "name": opposite.name,
+                    "reference": opposite.reference,
+                    "snapshot": construct_snapshot(opposite),
+                },
+                "started_at": run_started.isoformat(timespec="seconds"),
+                "finished_at": run_finished.isoformat(timespec="seconds"),
+                "duration_seconds": round((run_finished - run_started).total_seconds(), 2),
+            })
+        elif multi:
             # Per-construct identity lives in constructs[]; the first result's
             # items hash and per-call timings would be misleading at top level.
             metadata.update({

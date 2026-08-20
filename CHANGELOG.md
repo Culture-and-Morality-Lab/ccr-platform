@@ -12,6 +12,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   dashboard and results views.
 
 ### Added
+- Anchor vectors (bipolar constructs): a run can score texts along the axis between a
+  target construct and a contrasting "opposite" construct (anchor vector = target
+  centroid minus opposite centroid), with a cosine (default) or dot-product metric.
+  Results are bipolar - the distribution is centered on zero, top/bottom texts are
+  labeled "most <target>" / "most <opposite>", and item loadings show per pole. The
+  export adds target_/opposite_ per-item similarities, both per-pole CCR scores, and
+  anchor_score under output_schema_version 1.2; run metadata records both construct
+  snapshots and the scoring block; the reproduction script embeds both item sets and
+  reproduces the anchor-vector math. (spec 0006)
 - Public guide (/guide): a "Sample datasets" section that links ready-to-run example
   corpora (served from /samples) so new users can try CCR without their own data, with
   a pointer from the upload step. Suggested by Meriel Burnett.

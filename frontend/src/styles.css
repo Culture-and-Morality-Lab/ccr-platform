@@ -349,6 +349,21 @@ table.docs tbody tr:hover td { background: var(--bg); }
 .construct-items { margin: 8px 0 0; padding-left: 20px; color: var(--muted); font-size: 12.5px; }
 .construct-items li { margin-bottom: 2px; }
 
+/* Anchor vectors (bipolar constructs): the opposite-pole picker + metric toggle. */
+.anchor-toggle { margin-top: 14px; display: flex; flex-direction: column; gap: 3px; }
+.anchor-panel {
+  margin-top: 10px; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg);
+}
+.anchor-metric {
+  margin: 12px 0 0; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+}
+.anchor-metric legend { padding: 0 4px; }
+.check { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 13.5px; }
+.check input { width: auto; height: auto; margin: 0; }
+
 .meta-footer {
   font-size: 12px; color: var(--muted); background: var(--bg);
   border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 14px;

@@ -12,6 +12,11 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   const [corpusId, setCorpusId] = useState("");
   const [textColumn, setTextColumn] = useState("");
   const [constructIds, setConstructIds] = useState([]);
+  // Anchor-vector (bipolar) run (spec 0006): an optional opposite pole scored
+  // against a single target construct, plus the similarity metric.
+  const [anchorMode, setAnchorMode] = useState(false);
+  const [oppositeId, setOppositeId] = useState("");
+  const [metric, setMetric] = useState("cosine");
   const [modelName, setModelName] = useState("");
   const [languages, setLanguages] = useState(["en"]);
   const [language, setLanguage] = useState("en");
@@ -123,6 +128,9 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
         text_column: textColumn,
         model_name: modelName,
         language,
+        ...(anchorMode && oppositeId
+          ? { opposite_construct_id: oppositeId, similarity_metric: metric }
+          : {}),
       });
       await refreshJobs();
       onAuthRefresh?.(); // anonymous run counter changed
@@ -146,8 +154,14 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   }
 
   const fileMissing = corpus && corpus.file_available === false;
+  const oppositeConstruct = constructs.find((c) => c.id === oppositeId) || null;
+  // Anchored runs need exactly one target and a distinct opposite pole.
+  const anchorReady =
+    !anchorMode ||
+    (constructIds.length === 1 && oppositeId && oppositeId !== constructIds[0]);
   const canRun =
-    corpusId && textColumn && constructIds.length > 0 && modelName && !running && !fileMissing;
+    corpusId && textColumn && constructIds.length > 0 && modelName && !running &&
+    !fileMissing && anchorReady;
 
   return (
     <>
@@ -379,6 +393,94 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
           </details>
         ))}
 
+        {/* Anchor vectors (bipolar constructs, spec 0006): score along the axis
+            between a target and a contrasting construct. */}
+        <div className="anchor-toggle">
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={anchorMode}
+              onChange={(e) => {
+                setAnchorMode(e.target.checked);
+                if (!e.target.checked) setOppositeId("");
+              }}
+            />
+            Add a contrasting construct (anchor vector)
+          </label>
+          <span className="small muted">
+            Scores texts along the axis between two poles - higher = toward the target,
+            negative = toward the opposite.
+          </span>
+        </div>
+
+        {anchorMode && (
+          <div className="anchor-panel">
+            {constructIds.length !== 1 ? (
+              <p className="small muted">
+                An anchored run uses exactly one target construct above. Select a single
+                target to choose its opposite pole.
+              </p>
+            ) : (
+              <>
+                <label className="small muted">Contrasting (opposite) construct</label>
+                <ConstructPicker
+                  constructs={constructs.filter((c) => c.id !== constructIds[0])}
+                  selectedIds={oppositeId ? [oppositeId] : []}
+                  onToggle={(id) => setOppositeId((cur) => (cur === id ? "" : id))}
+                />
+                {oppositeConstruct && (
+                  <details className="construct-selected" open>
+                    <summary>
+                      <span className="construct-selected-name">{oppositeConstruct.name}</span>
+                      <span className="picker-meta">
+                        {" "}
+                        {oppositeConstruct.items.length} item
+                        {oppositeConstruct.items.length === 1 ? "" : "s"} · opposite pole
+                      </span>
+                      <button
+                        type="button"
+                        className="linkish construct-remove"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setOppositeId("");
+                        }}
+                      >
+                        remove
+                      </button>
+                    </summary>
+                    <ul className="construct-items">
+                      {oppositeConstruct.items.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+                <fieldset className="anchor-metric">
+                  <legend className="small muted">Similarity metric</legend>
+                  <label className="check">
+                    <input
+                      type="radio"
+                      name="anchor-metric"
+                      checked={metric === "cosine"}
+                      onChange={() => setMetric("cosine")}
+                    />
+                    Cosine (default)
+                  </label>
+                  <label className="check">
+                    <input
+                      type="radio"
+                      name="anchor-metric"
+                      checked={metric === "dot"}
+                      onChange={() => setMetric("dot")}
+                    />
+                    Dot product
+                  </label>
+                </fieldset>
+              </>
+            )}
+          </div>
+        )}
+
         {constructFormTab && (
           <NewConstructForm
             auth={auth}
@@ -430,9 +532,11 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
           <button className="primary run-button" disabled={!canRun} onClick={handleRun}>
             {running
               ? "Starting…"
-              : constructIds.length > 1
-                ? `Run CCR analysis (${constructIds.length} constructs)`
-                : "Run CCR analysis"}
+              : anchorMode && oppositeId
+                ? "Run anchored CCR analysis"
+                : constructIds.length > 1
+                  ? `Run CCR analysis (${constructIds.length} constructs)`
+                  : "Run CCR analysis"}
           </button>
         </div>
         {/* Disabled-until-valid with the reason inline (same pattern as the
@@ -445,6 +549,8 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
               !corpusId && "a dataset (Step 1)",
               corpusId && !textColumn && "a text column (Step 1)",
               constructIds.length === 0 && "at least one construct (Step 2)",
+              anchorMode && constructIds.length > 1 && "a single target construct for the anchor (Step 2)",
+              anchorMode && constructIds.length === 1 && !oppositeId && "a contrasting construct (Step 2)",
             ]
               .filter(Boolean)
               .join(", ")}
