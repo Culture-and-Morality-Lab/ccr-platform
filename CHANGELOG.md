@@ -5,6 +5,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Fixed
+- PsyEmbedding models now load through the standard sentence-transformers path.
+  The lab's four Hugging Face repos were missing the 1_Pooling config their
+  modules.json references; the fix was pushed upstream (2026-08-22), the
+  registry re-pins each model to the fixed revision (one commit above the old
+  pin, identical weights, identical scores), and the pooling_fallback
+  workaround is gone from models.yaml. Reproduction scripts for new runs use
+  the plain one-line loader; scripts from older runs still carry the explicit
+  module assembly and keep working.
 - Signed-in users no longer see other people's anonymous projects. A signed-in
   account's project list shows only its own projects; projects created without
   signing in stay in the shared anonymous space.

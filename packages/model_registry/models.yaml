@@ -86,7 +86,7 @@ models:
   - id: psyembedding-bert-large
     provider_model_id: Culture-and-Morality-Lab/psyembedding-bert-large-uncased
     display_name: "PsyEmbedding BERT Large (psychology fine-tune)"
-    revision: c5bd80df046c9fe92838b808f14bee34c8a329ae
+    revision: 66ab7cd5704cf124584168b01b4f307cde1850a1
     default: false
     supported_languages: ["en"]
     embedding_dimension: 1024
@@ -96,11 +96,7 @@ models:
     usage_config:
       requires_prefix: false
       symmetric_similarity_prefix: null
-      pooling: mean                            # per model card; see pooling_fallback
-      # The published repos' modules.json references a 1_Pooling config the
-      # repos do not contain, so SentenceTransformer(id) cannot auto-load
-      # them; the backend builds Transformer+mean-Pooling explicitly.
-      pooling_fallback: mean
+      pooling: mean                            # per model card
       normalize_embeddings: true
     operational_config:
       expected_time_per_1k_texts_cpu: benchmark_required
@@ -115,7 +111,7 @@ models:
   - id: psyembedding-roberta-large
     provider_model_id: Culture-and-Morality-Lab/psyembedding-roberta-large
     display_name: "PsyEmbedding RoBERTa Large (psychology fine-tune)"
-    revision: b50e9378e31661260958b3f6e1d086cde57ee292
+    revision: f323f413fbb7ef4e47d3f244ae2d9e5e85c98901
     default: false
     supported_languages: ["en"]
     embedding_dimension: 1024
@@ -125,11 +121,7 @@ models:
     usage_config:
       requires_prefix: false
       symmetric_similarity_prefix: null
-      pooling: mean                            # per model card; see pooling_fallback
-      # The published repos' modules.json references a 1_Pooling config the
-      # repos do not contain, so SentenceTransformer(id) cannot auto-load
-      # them; the backend builds Transformer+mean-Pooling explicitly.
-      pooling_fallback: mean
+      pooling: mean                            # per model card
       normalize_embeddings: true
     operational_config:
       expected_time_per_1k_texts_cpu: benchmark_required
@@ -144,7 +136,7 @@ models:
   - id: psyembedding-gte-large
     provider_model_id: Culture-and-Morality-Lab/psyembedding-gte-large
     display_name: "PsyEmbedding GTE Large (psychology fine-tune)"
-    revision: cee3a9074921445843265ddbd42b7e156bc92b84
+    revision: 154d88da086590f8ea8cda9bf3fc5f6158a29c7b
     default: false
     supported_languages: ["en"]
     embedding_dimension: 1024
@@ -154,11 +146,7 @@ models:
     usage_config:
       requires_prefix: false
       symmetric_similarity_prefix: null
-      pooling: mean                            # per model card; see pooling_fallback
-      # The published repos' modules.json references a 1_Pooling config the
-      # repos do not contain, so SentenceTransformer(id) cannot auto-load
-      # them; the backend builds Transformer+mean-Pooling explicitly.
-      pooling_fallback: mean
+      pooling: mean                            # per model card
       normalize_embeddings: true
     operational_config:
       expected_time_per_1k_texts_cpu: benchmark_required
@@ -173,7 +161,7 @@ models:
   - id: psyembedding-e5-large-v2
     provider_model_id: Culture-and-Morality-Lab/psyembedding-e5-large-v2
     display_name: "PsyEmbedding E5 Large v2 (psychology fine-tune)"
-    revision: fbaa37fe0432bf7620fd1baa20ed4f100b771f3b
+    revision: 7691c202154844e38cfcfd42ce1655b0a3edd37a
     default: false
     supported_languages: ["en"]
     embedding_dimension: 1024
@@ -186,11 +174,7 @@ models:
       # pooling+normalize config, so we match the card exactly.
       requires_prefix: false
       symmetric_similarity_prefix: null
-      pooling: mean                            # per model card; see pooling_fallback
-      # The published repos' modules.json references a 1_Pooling config the
-      # repos do not contain, so SentenceTransformer(id) cannot auto-load
-      # them; the backend builds Transformer+mean-Pooling explicitly.
-      pooling_fallback: mean
+      pooling: mean                            # per model card
       normalize_embeddings: true
     operational_config:
       expected_time_per_1k_texts_cpu: benchmark_required

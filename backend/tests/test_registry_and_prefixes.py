@@ -110,17 +110,18 @@ def test_model_language_unsupported_warning():
     assert model_language_warning("zz", "m", frozenset(), None) is None  # unknown coverage: no warning
 
 
-# ------------------------------------- psyembedding models (pooling fallback)
-def test_psyembedding_models_registered_with_pooling_fallback():
-    """The published PsyEmbedding repos lack the 1_Pooling config their
-    modules.json references, so plain SentenceTransformer(id) cannot load
-    them; the registry must flag them for explicit module assembly."""
+# ------------------------------------------------------ psyembedding models
+def test_psyembedding_models_load_without_pooling_fallback():
+    """The PsyEmbedding repos were fixed upstream on 2026-08-22 (the missing
+    1_Pooling config was added; pinned revisions sit one commit above the old
+    pins), so plain SentenceTransformer(id, revision) auto-loads them and the
+    registry must NOT reintroduce the explicit-assembly workaround."""
     from app import registry
 
     psy = [m for m in registry.list_models() if m.id.startswith("psyembedding-")]
     assert len(psy) == 4
     for m in psy:
-        assert m.pooling_fallback == "mean", m.id
+        assert m.pooling_fallback is None, m.id
         assert not m.requires_prefix, m.id
         assert m.embedding_dimension == 1024 and m.max_seq_length == 512, m.id
         assert m.lazy_load, m.id

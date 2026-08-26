@@ -32,10 +32,10 @@ order. Detailed specs for the numbered features live in the sections below.
       PsyEmbedding model ("prominent or default" was the PI's ask).
 
 **Bugs / fixes**
-- [ ] PsyEmbedding HF repos: push the 1_Pooling fix
-      (scripts/fix_psyembedding_pooling.py) with lab HF credentials, then
-      re-pin the four revisions in models.yaml and drop pooling_fallback.
-      Blocked on lab HF write access (Deva/Dr. Chen).
+- [x] PsyEmbedding HF repos: DONE 2026-08-22. The missing 1_Pooling config
+      was pushed to all four repos with lab credentials; models.yaml re-pins
+      each to the fixed revision (one commit above the old pin, identical
+      weights) and the pooling_fallback workaround is removed.
 - [ ] PsyEmbedding benchmarks: registry still says
       expected_time_per_1k_texts_cpu: benchmark_required for all four
       (scripts/bench_models.py exists).
@@ -130,7 +130,7 @@ Higher = toward the target pole, negative = toward the opposing pole.
 - Should anchored runs also report the plain per-pole similarities
   (cos(T, C), cos(T, C_opp)) in the export for transparency?
 
-## 3. Multi-construct runs — IMPLEMENTED
+## 3. Multi-construct runs - IMPLEMENTED
 
 **Problem.** Each construct had to be run separately, which is slow when the
 goal is to see how two or more constructs are interrelated in the same texts.
