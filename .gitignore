@@ -4,8 +4,13 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# runtime data (DB, uploaded corpora, results) — never commit research data
+# runtime data (DB, uploaded corpora, results) - never commit research data
 backend/data/
+
+# planning docs and PI correspondence drafted at the repo root: these live in the
+# lab's Drive, and this repo is public. Documentation that belongs to the repo goes
+# in docs/ (docs/design/*.docx stays tracked).
+/*.docx
 
 # node
 node_modules/

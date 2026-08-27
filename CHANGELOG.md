@@ -4,6 +4,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 
 ## [Unreleased]
 
+### Changed
+- Construct library verified against the source publications. All 525 items across the
+  94 constructs were reviewed (wording, reverse-scoring keys, subscale grouping,
+  citations); 88 constructs are now marked verified and show who reviewed them and
+  when, instead of the blanket "needs verification" flag every construct carried. The
+  review corrected 61 reverse-scoring flags across 14 constructs (the library had 35
+  flagged items, it now has 96), 9 item wordings, one subscale grouping in the SCS-SF,
+  and a batch of dead or incomplete citation links. Corrected constructs ship as a new
+  version: the picker offers the corrected one, and runs that used the earlier version
+  still open, export, and reproduce exactly as before. Six constructs (the five IPIP
+  Big Five scales and the K10) stay flagged pending two wording decisions. Four
+  constructs are now entirely reverse-scored, which blocks their aggregate under the
+  exclude-reversed strategy. (spec 0007)
+- Model picker timing estimates are real measurements instead of placeholders. Every
+  model in the registry now records seconds per 1,000 texts for short, medium, and long
+  texts, with the machine and date they were measured on.
+
 ### Fixed
 - PsyEmbedding models now load through the standard sentence-transformers path.
   The lab's four Hugging Face repos were missing the 1_Pooling config their

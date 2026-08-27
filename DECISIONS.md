@@ -163,3 +163,35 @@ cos(text, centroid) as the per-pole number (would not equal a normal single-cons
 score, breaking cross-checks) and auto-negating reverse-scored items (kept as v1: (R) flags
 recorded, not applied - paper footnote 27 is a later option). Revisit: lab validation may fix
 one metric, or promote reverse-item negation.
+
+## 2026-08-26 - Construct library: corrections ship as new versions; non-hash metadata re-syncs
+The 2026-08-25 library review (spec 0007) changed items in 23 constructs and status/citations
+in the rest. Split by the item hash: anything the hash covers (item text, order, reverse flags)
+ships as a NEW version file and the old one is kept and marked archived, so runs that pinned it
+still resolve; everything the hash does not cover (verification_status, citation, source_url,
+name, description, category) is edited in place and now re-syncs onto existing DB rows.
+The picker collapses seed constructs to the newest version per slug. Rejected: bumping the
+version for a status-only change (version would stop meaning "these items", and every
+verification pass would fork the library); and leaving sync insert-only (a review would never
+reach an already-seeded database, which is every deployed instance). The append-only guard on
+ITEMS is unchanged and still a hard error. Revisit: if a construct ever needs a third version,
+confirm the picker's "newest wins" is still what researchers expect.
+
+## 2026-08-26 - License: MIT only, not dual MIT/Apache-2.0
+The repo ships a single MIT LICENSE, matching what was already committed and the landing
+page's "free, open-source" claim. Two untracked drafts (an exact duplicate LICENSE-MIT and an
+Apache-2.0 alternative) are removed. Rejected: dual MIT OR Apache-2.0 - its main benefit is
+Apache's explicit patent grant, which is not a live concern for an academic text-analysis
+tool, and widening the license terms is the PI's and the university's call to make, not a
+cleanup task. README now states the license and separates it from the questionnaire items,
+which belong to their original authors. Revisit: if the lab distributes a packaged library
+(e.g. a PyPI ccr_engine) or a funder/university requires a specific license.
+
+## 2026-08-26 - Model timing recorded as a curve with its measurement host, not one number
+All seven registry models said `expected_time_per_1k_texts_cpu: benchmark_required`. Measured
+with scripts/bench_models.py. Throughput varies ~50x between a 15-word social post and a
+250-word document, so the field is now three numbers (short/medium/long) rather than one, with
+a comment naming the host and date. Rejected: a single representative figure (40x wrong at one
+end of the range) and recording laptop numbers unlabelled (the script's own docstring warns a
+shared cloud vCPU runs 2-4x slower). Revisit: re-run on the Space before these are shown to
+users anywhere in the UI.

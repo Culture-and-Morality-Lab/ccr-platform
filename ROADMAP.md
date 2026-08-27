@@ -18,10 +18,11 @@ order. Detailed specs for the numbered features live in the sections below.
       Remaining before Friday launch: ANTHROPIC_API_KEY on the Space (billing),
       live smoke test, then the SWLS/MFQ validation run (correlate per-text
       CCR scores from generated vs. validated items).
-- [ ] Anchor vectors / bipolar constructs (feature 2 below) - next per the
-      original sequencing. PI re-sent the full spec 2026-07-31; it matches
-      feature 2 (AV = C - C_opposite centroids, cos(T, AV), items entered or
-      uploaded for both poles).
+- [x] Anchor vectors / bipolar constructs (feature 2 below): SHIPPED 2026-08-22
+      (spec 0006). AV = C - C_opposite centroids with a cosine default and a
+      dot-product toggle, both item sets entered or uploaded, bipolar results
+      and export at output_schema_version 1.2. Live on dev; NOT yet on the lab
+      production Space.
 - [ ] Automatic chunking for over-limit rows (feature 1 below). PI re-sent
       the spec 2026-07-31; matches feature 1 (optional, warn about
       truncation without it, chunk-embedding vs chunk-similarity averaging
@@ -36,16 +37,24 @@ order. Detailed specs for the numbered features live in the sections below.
       was pushed to all four repos with lab credentials; models.yaml re-pins
       each to the fixed revision (one commit above the old pin, identical
       weights) and the pooling_fallback workaround is removed.
-- [ ] PsyEmbedding benchmarks: registry still says
-      expected_time_per_1k_texts_cpu: benchmark_required for all four
-      (scripts/bench_models.py exists).
+- [x] PsyEmbedding benchmarks: DONE 2026-08-26. All SEVEN models were
+      unbenchmarked, not just the four. Each now records short/medium/long
+      seconds per 1k texts, measured on an Apple M4 Pro at 2 threads and
+      labelled as such. Still worth a re-run on the Space before the numbers
+      are shown to users: a shared vCPU is roughly 2-4x slower.
 
 **Updates / chores**
 - [x] Open-source warning text from the PI: received and placed verbatim on
       the landing page (2026-07-31), along with his hero copy and "Who runs
       this" text.
-- [ ] Add a LICENSE file - the repo has none; the landing-page disclaimer is
-      not a license, and "CCR is free, open-source" is now a public claim.
+- [x] LICENSE: DONE. MIT, single-licensed (DECISIONS 2026-08-26); the two
+      untracked drafts (a duplicate MIT and an Apache-2.0 alternative) are
+      removed and README now states the license and separates it from the
+      questionnaire items, which belong to their original authors.
+- [x] Construct library verification pass: DONE 2026-08-26 (spec 0007). Noor's
+      review of all 525 items applied; 88 of 94 constructs verified. Two
+      wording decisions still need the PI: the IPIP "I" prefix (50 items,
+      5 constructs) and restoring the K10 stem (10 items).
 - [ ] Verify Dr. Chen's maintainer pre-assignment exists on /admin and that
       she can sign in.
 - [ ] Self-service password reset (currently admin-only; tied to the planned
