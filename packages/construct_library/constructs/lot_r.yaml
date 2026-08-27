@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: lot_r
 version: 1
 name: Life Orientation Test–Revised (LOT-R)
@@ -7,12 +8,18 @@ description: Optimism - Life Orientation Test–Revised (LOT-R).
 citation: 'Scheier, M. F., Carver, C. S., & Bridges, M. W. (1994). Distinguishing optimism from neuroticism:
   A reevaluation of the Life Orientation Test. Journal of Personality and Social Psychology, 67(6), 1063–1078.
   https://doi.org/10.1037/0022-3514.67.6.1063'
-verification_status: needs_verification
-source_url: https://fetzer.org/sites/default/files/images/stories/pdf/selfmeasures/Self_Measures_for_Optimism_LIFE_ORIENTATION_TEST.pdf
+verification_status: verified
+source_url: https://psycnet.apa.org/fulltext/1995-07978-001.pdf
 rights_note: Publicly posted scale handout; verify permission for commercial redistribution.
 questionnaire: Life Orientation Test–Revised (LOT-R)
-reverse_flags_source: subconstruct_markers
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
+  notes: The scale's 4 filler items are correctly excluded from this construct; they are not scored in
+    the source.
 items:
 - item_id: lot_r_1
   text: In uncertain times, I usually expect the best.

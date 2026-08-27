@@ -1,3 +1,5 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: mfq_2_proportionality
 version: 1
 name: Proportionality (MFQ-2)
@@ -7,12 +9,16 @@ description: Moral foundations - Proportionality dimension of the Moral Foundati
 citation: 'Atari, M., Haidt, J., Graham, J., Koleva, S., Stevens, S. T., & Dehghani, M. (2023). Morality
   beyond the WEIRD: How the nomological network of morality varies across cultures. Journal of Personality
   and Social Psychology, 125(5), 1157–1188. https://doi.org/10.1037/pspp0000470'
-verification_status: needs_verification
+verification_status: archived
 source_url: https://psycnet.apa.org/record/2023-99083-001
 rights_note: nan
 questionnaire: Moral Foundations Questionnaire-2 (MFQ-2)
 reverse_flags_source: not_provided_pending_verification
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
 - item_id: mfq_2_proportionality_3
   text: I think people who are more hard-working should end up with more money.

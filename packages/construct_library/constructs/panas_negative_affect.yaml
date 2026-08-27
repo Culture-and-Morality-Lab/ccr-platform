@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: panas_negative_affect
 version: 1
 name: Negative affect (PANAS)
@@ -8,13 +9,17 @@ description: Positive and negative affect - Negative affect dimension of the Pos
 citation: 'Watson, D., Clark, L. A., & Tellegen, A. (1988). Development and validation of brief measures
   of positive and negative affect: The PANAS scales. Journal of Personality and Social Psychology, 54(6),
   1063–1070. https://doi.org/10.1037/0022-3514.54.6.1063'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://www.scienceofbehaviorchange.org/wp-content/uploads/2019/10/PANAS.Watson.1988.pdf
 rights_note: Items are in the published article and publicly posted copies; verify permission for commercial
   redistribution.
 questionnaire: Positive and Negative Affect Schedule (PANAS)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: panas_negative_affect_2
   text: Distressed

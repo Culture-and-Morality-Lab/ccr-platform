@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: spane_positive
 version: 1
 name: Positive (SPANE)
@@ -8,12 +9,16 @@ description: Positive and negative affect - Positive dimension of the Scale of P
 citation: 'Diener, E., Wirtz, D., Tov, W., Kim-Prieto, C., Choi, D., Oishi, S., & Biswas-Diener, R. (2010).
   New well-being measures: Short scales to assess flourishing and positive and negative feelings. Social
   Indicators Research, 97, 143–156. https://doi.org/10.1007/s11205-009-9493-y'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://eddiener.com/scale-of-positive-and-negative-experience-spane/
 rights_note: Author-hosted scale page; verify permission for commercial redistribution.
 questionnaire: Scale of Positive and Negative Experience (SPANE)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: spane_positive_1
   text: Positive

@@ -6,6 +6,9 @@ Source of truth is the versioned YAML files (spec 0004, design doc §10.1). Rule
   * item_hash uses the REFERENCE implementation from validate_constructs.py (loaded
     by file path) so validator, seeder, and metadata always agree;
   * verification_status flows to the UI - unverified wording is visibly flagged.
+    It, and the other fields outside the hash, re-sync onto an existing row: a
+    library review that verifies wording changes status without changing items,
+    and that has to reach databases seeded before the review (spec 0007).
 
 New questionnaires from the lab land as new YAML files; `python packages/construct_library/
 validate_constructs.py` first, then restart the app (or call sync) to pick them up.
@@ -47,10 +50,22 @@ def load_yaml_constructs() -> list[dict]:
     return out
 
 
+# Fields that do NOT feed item_hash, so they can change without a new version.
+# The YAML library is the durable source of truth and the DB row is the
+# operational overlay (see admin.py), which is what makes re-syncing safe.
+_MUTABLE_FIELDS = {
+    "verification_status": lambda c: c.get("verification_status", "needs_verification"),
+    "name": lambda c: c["name"],
+    "description": lambda c: c.get("description", ""),
+    "reference": lambda c: c.get("citation", ""),
+    "category": lambda c: c.get("category", ""),
+}
+
+
 def sync_library(db: Session) -> dict:
     """Idempotent seed/update of library constructs. Returns a small report."""
     item_hash = _reference_item_hash()
-    report = {"inserted": 0, "unchanged": 0, "errors": []}
+    report = {"inserted": 0, "updated": 0, "unchanged": 0, "errors": []}
 
     for c in load_yaml_constructs():
         slug, version = c["construct_id"], int(c["version"])
@@ -69,8 +84,17 @@ def sync_library(db: Session) -> dict:
                     f"(hash {existing.item_hash[:12]} -> {computed_hash[:12]}). "
                     "Create a NEW version instead of editing this one."
                 )
-            else:
-                report["unchanged"] += 1
+                continue
+            # Items are identical, so only non-hash metadata can have moved. Sync it:
+            # a verification pass that promotes a construct to `verified` in YAML has
+            # to reach databases that were seeded before the pass, and inserting is
+            # not an option (the version is unchanged, by design).
+            changed = [
+                f for f, read in _MUTABLE_FIELDS.items() if getattr(existing, f) != read(c)
+            ]
+            for f in changed:
+                setattr(existing, f, _MUTABLE_FIELDS[f](c))
+            report["updated" if changed else "unchanged"] += 1
             continue
 
         db.add(

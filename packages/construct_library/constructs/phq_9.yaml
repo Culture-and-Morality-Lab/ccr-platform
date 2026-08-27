@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: phq_9
 version: 1
 name: Patient Health Questionnaire-9 (PHQ-9)
@@ -7,13 +8,17 @@ description: Depression symptoms - Patient Health Questionnaire-9 (PHQ-9). Scree
   diagnosis.
 citation: 'Kroenke, K., Spitzer, R. L., & Williams, J. B. W. (2001). The PHQ-9: Validity of a brief depression
   severity measure. Journal of General Internal Medicine, 16(9), 606–613. https://doi.org/10.1046/j.1525-1497.2001.016009606.x'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://www.phqscreeners.com/
 rights_note: Pfizer states PHQ/GAD screeners are available without copyright restriction and at no charge.
   Screening tool only; not a diagnosis.
 questionnaire: Patient Health Questionnaire-9 (PHQ-9)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: phq_9_1
   text: Little interest or pleasure in doing things

@@ -1,3 +1,5 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: rses
 version: 1
 name: Rosenberg Self-Esteem Scale (RSES)
@@ -5,12 +7,16 @@ language: en
 category: Self-esteem
 description: Self-esteem - Rosenberg Self-Esteem Scale (RSES).
 citation: Rosenberg, M. (1965). Society and the adolescent self-image. Princeton University Press.
-verification_status: needs_verification
+verification_status: archived
 source_url: https://socy.umd.edu/about-us/rosenberg-self-esteem-scale
 rights_note: University of Maryland Rosenberg page states the RSES is public domain.
 questionnaire: Rosenberg Self-Esteem Scale (RSES)
 reverse_flags_source: not_provided_pending_verification
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
 - item_id: rses_1
   text: On the whole, I am satisfied with myself.

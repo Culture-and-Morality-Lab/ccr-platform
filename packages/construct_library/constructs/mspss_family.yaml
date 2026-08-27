@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: mspss_family
 version: 1
 name: Family (MSPSS)
@@ -7,12 +8,16 @@ description: Perceived social support - Family dimension of the Multidimensional
   Support (MSPSS).
 citation: Zimet, G. D., Dahlem, N. W., Zimet, S. G., & Farley, G. K. (1988). The Multidimensional Scale
   of Perceived Social Support. Journal of Personality Assessment, 52(1), 30–41. https://doi.org/10.1207/s15327752jpa5201_2
-verification_status: needs_verification
+verification_status: verified
 source_url: https://gzimet.wixsite.com/mspss
 rights_note: Author-hosted scale site; verify permission for commercial redistribution.
 questionnaire: Multidimensional Scale of Perceived Social Support (MSPSS)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: mspss_family_3
   text: My family really tries to help me.

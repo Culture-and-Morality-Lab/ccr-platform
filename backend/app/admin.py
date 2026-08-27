@@ -95,8 +95,10 @@ def overview(db: Session = Depends(get_db), _admin: dict = Depends(require_admin
         "runs_by_status": runs_by_status,
         "runs_last_7_days": db.query(Job).filter(Job.created_at >= week_ago).count(),
         "signups_last_7_days": db.query(User).filter(User.created_at >= week_ago).count(),
+        # Archived rows are superseded versions, already re-verified under a newer
+        # one (spec 0007); counting them would overstate the review backlog.
         "constructs_unverified": db.query(Construct)
-        .filter(Construct.verification_status != "verified")
+        .filter(Construct.verification_status.notin_(["verified", "archived"]))
         .filter_by(is_seed=True)
         .count(),
         # Feature flags the admin UI adapts to (invites are on hold; the
@@ -418,11 +420,17 @@ def constructs_for_review(
     q = db.query(Construct).filter_by(is_seed=True)
     if status:
         q = q.filter(Construct.verification_status == status)
+    else:
+        # Superseded versions are archived, not deleted (spec 0007). They would
+        # otherwise fill the review queue with constructs already re-verified
+        # under a newer version; ask for them explicitly with ?status=archived.
+        q = q.filter(Construct.verification_status != "archived")
     return [
         {
             "id": c.id,
             "name": c.name,
             "slug": c.construct_slug,
+            "version": c.version or 1,
             "category": c.category or "",
             "n_items": len(json.loads(c.items_json)),
             "verification_status": c.verification_status or "draft",

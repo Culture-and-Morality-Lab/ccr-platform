@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: k10
 version: 1
 name: Kessler Psychological Distress Scale (K10)
@@ -13,8 +14,14 @@ source_url: https://www.tac.vic.gov.au/files-to-move/media/upload/k10_english.pd
 rights_note: Publicly posted government PDF; verify permission for redistribution. Screening tool only;
   not a diagnosis.
 questionnaire: Kessler Psychological Distress Scale (K10)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: pending_pi_decision
+  notes: Items are stored as bare fragments; reviewer flags that each should carry the source stem 'During
+    the last 30 days, about how often did you feel'. Pending PI decision (spec 0007).
 items:
 - item_id: k10_1
   text: tired out for no good reason?

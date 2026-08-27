@@ -1,21 +1,28 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: individualism_horizontal
 version: 1
 name: Individualism (Horizontal)
 language: en
 category: cultural-orientation
 description: Self-reliance and independence from in-groups (Triandis & Gelfand horizontal individualism).
-citation: "Triandis, H. C., & Gelfand, M. J. (1998). Converging measurement of horizontal and vertical individualism and collectivism. JPSP, 74(1)."
-verification_status: needs_verification
+citation: Triandis, H. C., & Gelfand, M. J. (1998). Converging measurement of horizontal and vertical
+  individualism and collectivism. JPSP, 74(1).
+verification_status: archived
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
-  - item_id: hi_1
-    text: "I'd rather depend on myself than others."
-    reverse_scored: false
-  - item_id: hi_2
-    text: "I rely on myself most of the time; I rarely rely on others."
-    reverse_scored: false
-  - item_id: hi_3
-    text: "I often do my own thing."
-    reverse_scored: false
-  - item_id: hi_4
-    text: "My personal identity, independent of others, is very important to me."
-    reverse_scored: false
+- item_id: hi_1
+  text: I'd rather depend on myself than others.
+  reverse_scored: false
+- item_id: hi_2
+  text: I rely on myself most of the time; I rarely rely on others.
+  reverse_scored: false
+- item_id: hi_3
+  text: I often do my own thing.
+  reverse_scored: false
+- item_id: hi_4
+  text: My personal identity, independent of others, is very important to me.
+  reverse_scored: false

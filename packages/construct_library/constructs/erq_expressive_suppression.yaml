@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: erq_expressive_suppression
 version: 1
 name: Expressive suppression (ERQ)
@@ -8,12 +9,16 @@ description: Emotion regulation - Expressive suppression dimension of the Emotio
 citation: 'Gross, J. J., & John, O. P. (2003). Individual differences in two emotion regulation processes:
   Implications for affect, relationships, and well-being. Journal of Personality and Social Psychology,
   85(2), 348–362. https://doi.org/10.1037/0022-3514.85.2.348'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://spl.stanford.edu/sites/g/files/sbiybj19321/files/media/file/english_0.pdf
 rights_note: Stanford Psychophysiology Lab-hosted questionnaire; verify permission for commercial redistribution.
 questionnaire: Emotion Regulation Questionnaire (ERQ)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: erq_expressive_suppression_2
   text: I keep my emotions to myself.

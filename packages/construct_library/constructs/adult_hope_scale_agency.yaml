@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: adult_hope_scale_agency
 version: 1
 name: Agency (Adult Hope Scale)
@@ -8,12 +9,16 @@ citation: 'Snyder, C. R., Harris, C., Anderson, J. R., Holleran, S. A., Irving, 
   Yoshinobu, L., Gibb, J., Langelle, C., & Harney, P. (1991). The will and the ways: Development and validation
   of an individual-differences measure of hope. Journal of Personality and Social Psychology, 60(4), 570–585.
   https://doi.org/10.1037/0022-3514.60.4.570'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://ppc.sas.upenn.edu/sites/default/files/hopescale.pdf
 rights_note: University research center-hosted questionnaire; verify permission for commercial redistribution.
 questionnaire: Adult Hope Scale
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: adult_hope_scale_agency_2
   text: I energetically pursue my goals.

@@ -1,3 +1,5 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: shs
 version: 1
 name: Subjective Happiness Scale (SHS)
@@ -6,12 +8,16 @@ category: Subjective happiness
 description: Subjective happiness - Subjective Happiness Scale (SHS).
 citation: 'Lyubomirsky, S., & Lepper, H. S. (1999). A measure of subjective happiness: Preliminary reliability
   and construct validation. Social Indicators Research, 46, 137–155. https://doi.org/10.1023/A:1006824100041'
-verification_status: needs_verification
+verification_status: archived
 source_url: https://ppc.sas.upenn.edu/resources/questionnaires-researchers/subjective-happiness-scale
 rights_note: University research center-hosted questionnaire; verify permission for commercial redistribution.
 questionnaire: Subjective Happiness Scale (SHS)
 reverse_flags_source: not_provided_pending_verification
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
 - item_id: shs_1
   text: 'In general, I consider myself:'

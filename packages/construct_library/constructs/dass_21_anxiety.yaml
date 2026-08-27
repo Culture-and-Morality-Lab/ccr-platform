@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: dass_21_anxiety
 version: 1
 name: Anxiety (DASS-21)
@@ -7,13 +8,17 @@ description: Depression/anxiety/stress symptoms - Anxiety dimension of the Depre
   (DASS-21). Screening tool only; not a diagnosis.
 citation: Lovibond, S. H., & Lovibond, P. F. (1995). Manual for the Depression Anxiety Stress Scales (2nd
   ed.). Psychology Foundation of Australia.
-verification_status: needs_verification
+verification_status: verified
 source_url: https://www2.psy.unsw.edu.au/dass/
 rights_note: DASS materials are publicly available and often described as public-domain; verify permission
   for website redistribution. Screening tool only; not a diagnosis.
 questionnaire: Depression Anxiety Stress Scales–21 (DASS-21)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: dass_21_anxiety_2
   text: I was aware of dryness of my mouth

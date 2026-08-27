@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: dirty_dozen_machiavellianism
 version: 1
 name: Machiavellianism (Dirty Dozen)
@@ -6,12 +7,16 @@ category: Dark Triad
 description: Dark Triad - Machiavellianism dimension of the Dirty Dozen.
 citation: 'Jonason, P. K., & Webster, G. D. (2010). The Dirty Dozen: A concise measure of the Dark Triad.
   Psychological Assessment, 22(2), 420–432. https://doi.org/10.1037/a0019265'
-verification_status: needs_verification
-source_url: https://www.researchgate.net/publication/44591108_The_Dirty_Dozen_A_Concise_Measure_of_the_Dark_Triad
+verification_status: verified
+source_url: https://psycnet.apa.org/fulltext/2010-10892-021.pdf
 rights_note: Items are publicly visible in author-posted copies; verify permission for commercial redistribution.
 questionnaire: Dirty Dozen
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: dirty_dozen_machiavellianism_1
   text: I tend to manipulate others to get my way.

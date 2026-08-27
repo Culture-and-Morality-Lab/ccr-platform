@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: maas
 version: 1
 name: Mindful Attention Awareness Scale (MAAS)
@@ -6,13 +7,17 @@ category: Mindfulness
 description: Mindfulness - Mindful Attention Awareness Scale (MAAS).
 citation: 'Brown, K. W., & Ryan, R. M. (2003). The benefits of being present: Mindfulness and its role
   in psychological well-being. Journal of Personality and Social Psychology, 84(4), 822–848. https://doi.org/10.1037/0022-3514.84.4.822'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://selfdeterminationtheory.org/mindfulness-attention-awareness/
 rights_note: Official Self-Determination Theory site hosts the scale; verify permission for commercial
   redistribution.
 questionnaire: Mindful Attention Awareness Scale (MAAS)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: maas_1
   text: I could be experiencing some emotion and not be conscious of it until some time later.

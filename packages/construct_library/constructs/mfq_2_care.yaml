@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: mfq_2_care
 version: 1
 name: Care (MFQ-2)
@@ -7,12 +8,16 @@ description: Moral foundations - Care dimension of the Moral Foundations Questio
 citation: 'Atari, M., Haidt, J., Graham, J., Koleva, S., Stevens, S. T., & Dehghani, M. (2023). Morality
   beyond the WEIRD: How the nomological network of morality varies across cultures. Journal of Personality
   and Social Psychology, 125(5), 1157–1188. https://doi.org/10.1037/pspp0000470'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://psycnet.apa.org/record/2023-99083-001
 rights_note: nan
 questionnaire: Moral Foundations Questionnaire-2 (MFQ-2)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: mfq_2_care_1
   text: Caring for people who have suffered is an important virtue.

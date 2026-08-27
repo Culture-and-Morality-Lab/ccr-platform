@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: sins
 version: 1
 name: Single Item Narcissism Scale (SINS)
@@ -6,12 +7,16 @@ category: Narcissism
 description: Narcissism - Single Item Narcissism Scale (SINS).
 citation: Konrath, S., Meier, B. P., & Bushman, B. J. (2014). Development and validation of the Single
   Item Narcissism Scale (SINS). PLoS ONE, 9(8), e103469. https://doi.org/10.1371/journal.pone.0103469
-verification_status: needs_verification
+verification_status: verified
 source_url: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0103469
 rights_note: Open-access article includes the item; verify reuse under the article license.
 questionnaire: Single Item Narcissism Scale (SINS)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: sins_1
   text: 'To what extent do you agree with this statement: I am a narcissist. (Note: The word “narcissist”

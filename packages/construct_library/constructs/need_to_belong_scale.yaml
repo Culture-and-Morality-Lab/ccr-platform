@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: need_to_belong_scale
 version: 1
 name: Need to Belong Scale
@@ -7,12 +8,16 @@ description: Need to belong - Need to Belong Scale.
 citation: 'Leary, M. R., Kelly, K. M., Cottrell, C. A., & Schreindorfer, L. S. (2013). Construct validity
   of the Need to Belong Scale: Mapping the nomological network. Journal of Personality Assessment, 95(6),
   610–624. https://doi.org/10.1080/00223891.2013.819511'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://sites.duke.edu/leary/files/2019/05/NTB.pdf
 rights_note: Researcher-hosted questionnaire PDF; verify permission for commercial redistribution.
 questionnaire: Need to Belong Scale
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: need_to_belong_scale_1
   text: If other people don’t seem to accept me, I don’t let it bother me.

@@ -1,0 +1,34 @@
+# Construct: versioned, append-only. Version 2 applies the 2026-08-25 library review (spec 0007).
+construct_id: adult_hope_scale_pathways
+version: 2
+name: Pathways (Adult Hope Scale)
+language: en
+category: Hope
+description: Hope - Pathways dimension of the Adult Hope Scale.
+citation: 'Snyder, C. R., Harris, C., Anderson, J. R., Holleran, S. A., Irving, L. M., Sigmon, S. T.,
+  Yoshinobu, L., Gibb, J., Langelle, C., & Harney, P. (1991). The will and the ways: Development and validation
+  of an individual-differences measure of hope. Journal of Personality and Social Psychology, 60(4), 570–585.
+  https://doi.org/10.1037/0022-3514.60.4.570'
+verification_status: verified
+source_url: https://ppc.sas.upenn.edu/sites/default/files/hopescale.pdf
+rights_note: University research center-hosted questionnaire; verify permission for commercial redistribution.
+questionnaire: Adult Hope Scale
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
+imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
+items:
+- item_id: adult_hope_scale_pathways_1
+  text: I can think of many ways to get out of a jam.
+  reverse_scored: false
+- item_id: adult_hope_scale_pathways_4
+  text: There are lots of ways around any problem.
+  reverse_scored: false
+- item_id: adult_hope_scale_pathways_6
+  text: I can think of many ways to get the things in life that are important to me.
+  reverse_scored: false
+- item_id: adult_hope_scale_pathways_8
+  text: Even when others get discouraged, I know I can find a way to solve the problem.
+  reverse_scored: false

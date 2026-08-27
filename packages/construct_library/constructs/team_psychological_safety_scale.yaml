@@ -1,3 +1,5 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: team_psychological_safety_scale
 version: 1
 name: Team Psychological Safety Scale
@@ -6,12 +8,16 @@ category: Psychological safety
 description: Psychological safety - Team Psychological Safety Scale.
 citation: Edmondson, A. (1999). Psychological safety and learning behavior in work teams. Administrative
   Science Quarterly, 44(2), 350–383. https://doi.org/10.2307/2666999
-verification_status: needs_verification
+verification_status: archived
 source_url: https://web.mit.edu/curhan/www/docs/Articles/15341_Readings/Group_Performance/Edmondson%20Psychological%20safety.pdf
 rights_note: Author paper/public PDF includes scale; verify permission for commercial redistribution.
 questionnaire: Team Psychological Safety Scale
 reverse_flags_source: not_provided_pending_verification
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
 - item_id: team_psychological_safety_scale_1
   text: If you make a mistake on this team, it is often held against you.

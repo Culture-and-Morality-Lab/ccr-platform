@@ -1,3 +1,5 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: need_for_cognition_scale_18_item_short_form
 version: 1
 name: Need for Cognition Scale, 18-item short form
@@ -6,12 +8,16 @@ category: Need for cognition
 description: Need for cognition - Need for Cognition Scale, 18-item short form.
 citation: Cacioppo, J. T., Petty, R. E., & Kao, C. F. (1984). The efficient assessment of need for cognition.
   Journal of Personality Assessment, 48(3), 306–307. https://doi.org/10.1207/s15327752jpa4803_13
-verification_status: needs_verification
+verification_status: archived
 source_url: https://richardepetty.com/wp-content/uploads/2019/01/1984-jpa-cacioppopettykao.pdf
 rights_note: Researcher-hosted article with complete item table; verify permission for commercial redistribution.
 questionnaire: Need for Cognition Scale, 18-item short form
 reverse_flags_source: not_provided_pending_verification
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
 - item_id: need_for_cognition_scale_18_item_short_form_1
   text: I would prefer complex to simple problems.

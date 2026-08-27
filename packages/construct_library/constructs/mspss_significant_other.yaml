@@ -1,3 +1,5 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: mspss_significant_other
 version: 1
 name: Significant other (MSPSS)
@@ -7,12 +9,16 @@ description: Perceived social support - Significant other dimension of the Multi
   Social Support (MSPSS).
 citation: Zimet, G. D., Dahlem, N. W., Zimet, S. G., & Farley, G. K. (1988). The Multidimensional Scale
   of Perceived Social Support. Journal of Personality Assessment, 52(1), 30–41. https://doi.org/10.1207/s15327752jpa5201_2
-verification_status: needs_verification
+verification_status: archived
 source_url: https://gzimet.wixsite.com/mspss
 rights_note: Author-hosted scale site; verify permission for commercial redistribution.
 questionnaire: Multidimensional Scale of Perceived Social Support (MSPSS)
 reverse_flags_source: not_provided_pending_verification
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
 - item_id: mspss_significant_other_1
   text: There is a special person who is around when I am in need.

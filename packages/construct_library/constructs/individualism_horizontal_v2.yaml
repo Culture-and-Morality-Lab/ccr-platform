@@ -1,0 +1,30 @@
+# Construct: versioned, append-only. Version 2 applies the 2026-08-25 library review (spec 0007).
+construct_id: individualism_horizontal
+version: 2
+name: Individualism (Horizontal)
+language: en
+category: cultural-orientation
+description: Self-reliance and independence from in-groups (Triandis & Gelfand horizontal individualism).
+citation: Triandis, H. C., & Gelfand, M. J. (1998). Converging measurement of horizontal and vertical
+  individualism and collectivism. Journal of Personality and Social Psychology, 74(1), 118-128. https://doi.org/10.1037/0022-3514.74.1.118
+verification_status: verified
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
+source_url: https://psycnet.apa.org/fulltext/1997-38342-009.pdf
+questionnaire: Horizontal and Vertical Individualism and Collectivism Scale
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
+items:
+- item_id: hi_1
+  text: I'd rather depend on myself than others.
+  reverse_scored: false
+- item_id: hi_2
+  text: I rely on myself most of the time; I rarely rely on others.
+  reverse_scored: false
+- item_id: hi_3
+  text: I often do "my own thing."
+  reverse_scored: false
+- item_id: hi_4
+  text: My personal identity, independent of others, is very important to me.
+  reverse_scored: false

@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: pcl_5
 version: 1
 name: PTSD Checklist for DSM-5 (PCL-5)
@@ -6,13 +7,17 @@ category: PTSD symptoms
 description: PTSD symptoms - PTSD Checklist for DSM-5 (PCL-5). Screening tool only; not a diagnosis.
 citation: Weathers, F. W., Litz, B. T., Keane, T. M., Palmieri, P. A., Marx, B. P., & Schnurr, P. P. (2013).
   The PTSD Checklist for DSM-5 (PCL-5). National Center for PTSD.
-verification_status: needs_verification
+verification_status: verified
 source_url: https://www.ptsd.va.gov/professional/assessment/adult-sr/ptsd-checklist.asp
 rights_note: VA National Center for PTSD states the PCL-5 is public domain and not copyrighted. Screening
   tool only; not a diagnosis.
 questionnaire: PTSD Checklist for DSM-5 (PCL-5)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: pcl_5_1
   text: Repeated, disturbing, and unwanted memories of the stressful experience?

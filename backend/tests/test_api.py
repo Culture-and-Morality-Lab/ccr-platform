@@ -245,7 +245,9 @@ def test_constructs_carry_library_fields(client):
         c for c in client.get("/api/constructs").json()
         if c["name"] == "Satisfaction with Life"
     )
-    assert swls["verification_status"] == "needs_verification"
+    # verified by the 2026-08-25 library review (spec 0007); its items were already
+    # correct, so it stays at version 1 and only the citation gained a DOI.
+    assert swls["verification_status"] == "verified"
     assert swls["version"] == 1
     assert len(swls["item_hash"]) == 16
     assert swls["reverse_scored"] == [False] * 5

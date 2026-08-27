@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: gad_7
 version: 1
 name: Generalized Anxiety Disorder-7 (GAD-7)
@@ -6,13 +7,17 @@ category: Anxiety symptoms
 description: Anxiety symptoms - Generalized Anxiety Disorder-7 (GAD-7). Screening tool only; not a diagnosis.
 citation: 'Spitzer, R. L., Kroenke, K., Williams, J. B. W., & Löwe, B. (2006). A brief measure for assessing
   generalized anxiety disorder: The GAD-7. Archives of Internal Medicine, 166(10), 1092–1097. https://doi.org/10.1001/archinte.166.10.1092'
-verification_status: needs_verification
+verification_status: verified
 source_url: https://www.phqscreeners.com/
 rights_note: Pfizer states PHQ/GAD screeners are available without copyright restriction and at no charge.
   Screening tool only; not a diagnosis.
 questionnaire: Generalized Anxiety Disorder-7 (GAD-7)
-reverse_flags_source: not_provided_pending_verification
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: gad_7_1
   text: Feeling nervous, anxious, or on edge

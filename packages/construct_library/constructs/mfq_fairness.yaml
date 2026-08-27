@@ -1,21 +1,29 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: mfq_fairness
 version: 1
 name: Moral Foundations - Fairness
 language: en
 category: moral-foundations
 description: Concern with justice, rights, and equal treatment (MFQ Fairness/Cheating).
-citation: "Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). Mapping the moral domain. JPSP, 101(2)."
-verification_status: needs_verification
+citation: Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). Mapping the
+  moral domain. JPSP, 101(2).
+verification_status: archived
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
-  - item_id: fair_1
-    text: "Justice is the most important requirement for a society."
-    reverse_scored: false
-  - item_id: fair_2
-    text: "When the government makes laws, the number one principle should be ensuring that everyone is treated fairly."
-    reverse_scored: false
-  - item_id: fair_3
-    text: "Whether or not some people were treated differently than others."
-    reverse_scored: false
-  - item_id: fair_4
-    text: "Whether or not someone acted unfairly."
-    reverse_scored: false
+- item_id: fair_1
+  text: Justice is the most important requirement for a society.
+  reverse_scored: false
+- item_id: fair_2
+  text: When the government makes laws, the number one principle should be ensuring that everyone is treated
+    fairly.
+  reverse_scored: false
+- item_id: fair_3
+  text: Whether or not some people were treated differently than others.
+  reverse_scored: false
+- item_id: fair_4
+  text: Whether or not someone acted unfairly.
+  reverse_scored: false

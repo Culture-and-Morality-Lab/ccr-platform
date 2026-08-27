@@ -730,10 +730,30 @@ async def upload_corpus(
 
 
 # -------------------------------------------------------------- constructs
+def _latest_seed_versions(rows: list[Construct]) -> list[Construct]:
+    """Collapse library constructs to the newest version of each slug.
+
+    Versions are append-only, so a corrected construct ships as a new version
+    alongside the old one (spec 0007). Only the newest belongs in the picker;
+    superseded rows stay in the database and stay reachable by id, so runs,
+    results, and reproduction scripts that used them still resolve. Custom
+    constructs are not versioned and pass through untouched.
+    """
+    newest: dict[str, Construct] = {}
+    for c in rows:
+        if not (c.is_seed and c.construct_slug):
+            continue
+        best = newest.get(c.construct_slug)
+        if best is None or (c.version or 1) > (best.version or 1):
+            newest[c.construct_slug] = c
+    keep = {id(c) for c in newest.values()}
+    return [c for c in rows if not (c.is_seed and c.construct_slug) or id(c) in keep]
+
+
 @app.get("/api/constructs", response_model=list[ConstructOut])
 def list_constructs(db: Session = Depends(get_db)):
     rows = db.query(Construct).order_by(Construct.is_seed.desc(), Construct.name).all()
-    return [_construct_out(c) for c in rows]
+    return [_construct_out(c) for c in _latest_seed_versions(rows)]
 
 
 @app.post("/api/constructs", response_model=ConstructOut, status_code=201)

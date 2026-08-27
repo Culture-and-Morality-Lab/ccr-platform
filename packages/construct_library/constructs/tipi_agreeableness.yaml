@@ -1,3 +1,4 @@
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: tipi_agreeableness
 version: 1
 name: Agreeableness (TIPI)
@@ -7,12 +8,16 @@ description: Big Five personality traits - Agreeableness dimension of the Ten-It
   (TIPI).
 citation: Gosling, S. D., Rentfrow, P. J., & Swann, W. B., Jr. (2003). A very brief measure of the Big-Five
   personality domains. Journal of Research in Personality, 37(6), 504–528. https://doi.org/10.1016/S0092-6566(03)00046-1
-verification_status: needs_verification
+verification_status: verified
 source_url: https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/
 rights_note: Author/lab-hosted measure; verify permission for commercial redistribution.
 questionnaire: Ten-Item Personality Inventory (TIPI)
-reverse_flags_source: subconstruct_markers
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
 items:
 - item_id: tipi_agreeableness_2
   text: Critical, quarrelsome.

@@ -1,3 +1,5 @@
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: gq_6
 version: 1
 name: Gratitude Questionnaire–Six Item Form (GQ-6)
@@ -6,12 +8,16 @@ category: Gratitude
 description: Gratitude - Gratitude Questionnaire–Six Item Form (GQ-6).
 citation: 'McCullough, M. E., Emmons, R. A., & Tsang, J.-A. (2002). The grateful disposition: A conceptual
   and empirical topography. Journal of Personality and Social Psychology, 82(1), 112–127. https://doi.org/10.1037/0022-3514.82.1.112'
-verification_status: needs_verification
+verification_status: archived
 source_url: https://ppc.sas.upenn.edu/resources/questionnaires-researchers/gratitude-questionnaire
 rights_note: University research center-hosted questionnaire; verify permission for commercial redistribution.
 questionnaire: Gratitude Questionnaire–Six Item Form (GQ-6)
 reverse_flags_source: not_provided_pending_verification
 imported_from: lib.xlsx
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: superseded_by_version_2
 items:
 - item_id: gq_6_1
   text: I have so much in life to be thankful for.
