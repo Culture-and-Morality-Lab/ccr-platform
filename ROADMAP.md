@@ -51,25 +51,18 @@ order. Detailed specs for the numbered features live in the sections below.
       untracked drafts (a duplicate MIT and an Apache-2.0 alternative) are
       removed and README now states the license and separates it from the
       questionnaire items, which belong to their original authors.
-- [x] Construct library verification pass: DONE 2026-08-26 (spec 0007). Noor's
-      review of all 525 items applied; 81 of 94 constructs verified.
-- [ ] Construct library: 13 constructs still unverified, each with the reason
-      in its review.notes. Needs decisions, roughly in priority order:
-      * PI: the IPIP "I" prefix (50 items, 5 constructs) and restoring the K10
-        stem (10 items).
-      * Reconcile two reviewer corrections that contradict the cited paper -
-        mfq_fairness ("differently than/from others", MFQ30 says "than") and
-        team_psychological_safety_scale ("risk on/in this team", Edmondson
-        1999 says "on"). Published wording kept for now.
-      * Decide the item ORDER for rses and cbi_work_related_burnout: the
-        reviewer says both differ from the source. Order feeds item_hash and
-        the sim_item_N export columns, so this is a scoring-visible change.
-      * Find a reachable source document for bas_2, cage_questionnaire,
-        mfq_care and mfq_fairness.
-- [ ] Durable source links: the Grit-S entries now point at personal Dropbox
-      URLs, and dirty_dozen_* traded a working ResearchGate link for a
-      paywalled PsycNET one (the reviewer's link carried a session token that
-      could not be committed). Both want a stable replacement.
+- [x] Construct library verification pass: DONE 2026-08-27 (spec 0007). Noor's
+      review of all 525 items applied, and her follow-up answers resolved every
+      open question except the two PI decisions; 88 of 94 constructs verified.
+- [ ] Construct library: 6 constructs still unverified, all waiting on the PI:
+      the IPIP "I" prefix (50 items, 5 constructs) and restoring the K10 stem
+      (10 items). Everything else from the review is resolved.
+- [ ] Durable source links: the Grit-S entries point at personal Dropbox URLs,
+      dirty_dozen_* traded a working ResearchGate link for a paywalled PsycNET
+      one (the reviewer's link carried a session token that could not be
+      committed), cage_questionnaire uses a token-style USPSTF file URL, and
+      mfq_care/mfq_fairness point at a third-party mirror of the cited paper.
+      All four want a stable replacement.
 - [ ] Verify Dr. Chen's maintainer pre-assignment exists on /admin and that
       she can sign in.
 - [ ] Self-service password reset (currently admin-only; tied to the planned

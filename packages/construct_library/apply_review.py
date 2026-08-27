@@ -50,51 +50,12 @@ PENDING = {
     "ipip_50_item_big_five_factor_markers_extraversion",
     "ipip_50_item_big_five_factor_markers_intellect_imagination",
     "k10",
-    # Reviewer's correction disagrees with the cited publication (see below).
-    "team_psychological_safety_scale",
-    # Reviewer reported an item-ORDER problem, which is not applied here. Order
-    # feeds item_hash and decides what sim_item_N means in an export, so it is
-    # not a cosmetic change to make without a decision.
-    "rses",
-    "cbi_work_related_burnout",
-    # No reachable source on record, so "verified verbatim against the original
-    # publication" cannot honestly be claimed.
-    "bas_2",
-    "cage_questionnaire",
 }
 PENDING_NOTE = {
     "k10": (
         "Items are stored as bare fragments; reviewer flags that each should carry the "
         "source stem 'During the last 30 days, about how often did you feel'. Pending PI "
         "decision (spec 0007)."
-    ),
-    "team_psychological_safety_scale": (
-        "Reviewer proposed 'It is safe to take a risk in this team' from a third-party "
-        "questionnaire (novopsych TPS-7). The cited source, Edmondson (1999), reads 'It is "
-        "safe to take a risk on this team' - the wording already stored here. Kept as "
-        "published; the two sources disagree and the citation should decide."
-    ),
-    "rses": (
-        "Reviewer maps stored items 1,2,3,6,7,9,10 to source item numbers 7,10,2,9,1,3,6: "
-        "the item ORDER does not match the source. Reverse-scoring corrections are applied; "
-        "the reordering is not, because order feeds item_hash and the sim_item_N export "
-        "columns. Pending a decision."
-    ),
-    "cbi_work_related_burnout": (
-        "Reviewer maps stored items 7,8,9,10,11,12,13 to source item numbers "
-        "11,13,12,7,8,9,10: the item ORDER does not match the source. Not applied; order "
-        "feeds item_hash and the sim_item_N export columns. Pending a decision."
-    ),
-    "bas_2": (
-        "Reviewer could not reach the recorded source URL and checked wording against the "
-        "publisher PDF; her note adds that BAS-2 has no reverse-scored items and is scored "
-        "by averaging all 10. A working source link is still needed before this can be "
-        "called verified."
-    ),
-    "cage_questionnaire": (
-        "Citation is correct but the recorded source URL is no longer accessible. The "
-        "reviewer's wording correction ('ought to' -> 'should') is applied; a working "
-        "source link is still needed before this can be called verified."
     ),
 }
 IPIP_NOTE = (
@@ -120,16 +81,42 @@ WORDING_FIX = {
         "There is a special person with whom I can share joys and sorrows.",
     "shs_2":
         "Compared to most of my peers, I consider myself:",
-    # NOT applied, and deliberately so: two of the reviewer's wording corrections
-    # disagree with the publication each construct cites, so applying them would
-    # move a `verified` item AWAY from its source. Both are checked quotes:
-    #   fair_3  - published MFQ30 reads "treated differently than others"
-    #             (moralfoundations.org MFQ30), not "from others".
-    #   team_psychological_safety_scale_4 - Edmondson (1999), the cited paper and
-    #             the recorded source_url, reads "It is safe to take a risk on this
-    #             team"; "in this team" comes from a third-party questionnaire.
-    # Both constructs are in PENDING with the discrepancy recorded.
+    # The reviewer read this off the questionnaire printed in Graham et al.
+    # (2011), which is the paper this construct cites, and the paper does say
+    # "from others" (twice). The moralfoundations.org MFQ30 handout says "than
+    # others"; the cited paper wins.
+    "fair_3":
+        "Whether or not some people were treated differently from others.",
+    # NOT applied: team_psychological_safety_scale_4. The reviewer proposed "risk
+    # in this team" from a third-party questionnaire because she could not reach
+    # Edmondson (1999) through the library, and said to keep the original if the
+    # paper disagreed. It does: the recorded Edmondson PDF reads "risk on this
+    # team", so the stored wording stands.
 }
+
+# Item ORDER corrections. Order feeds item_hash and decides which item each
+# sim_item_N export column refers to, so a construct whose stored order does not
+# match its own cited source mislabels every per-item column. Values are the
+# construct's item_ids in the source's printed order; ids are renumbered by
+# position afterwards so item_id once again means "source item number".
+# Both were checked against the source_url recorded on the construct.
+ITEM_ORDER = {
+    # socy.umd.edu questionnaire image (Morris Rosenberg Foundation): item 1 is
+    # "I feel that I'm a person of worth". Wording there matches ours exactly.
+    "rses": ["rses_7", "rses_3", "rses_9", "rses_4", "rses_5",
+             "rses_10", "rses_1", "rses_8", "rses_6", "rses_2"],
+    # emerge.ucsd.edu CBI: the work-related subscale runs 7..13 starting with
+    # "Do you feel worn out at the end of the working day?".
+    "cbi_work_related_burnout": [
+        "cbi_work_related_burnout_10", "cbi_work_related_burnout_11",
+        "cbi_work_related_burnout_12", "cbi_work_related_burnout_13",
+        "cbi_work_related_burnout_7", "cbi_work_related_burnout_9",
+        "cbi_work_related_burnout_8",
+    ],
+}
+# Source item number of the first item in each reordered construct, so renumbered
+# ids keep matching the printed questionnaire.
+ITEM_ORDER_START = {"rses": 1, "cbi_work_related_burnout": 7}
 
 # One item moves subscale per the SCS-SF coding key. It is renumbered into the
 # destination construct's own id convention ({construct}_{source item number});
@@ -170,8 +157,17 @@ SOURCE_URL_FIX = {
     "lot_r": "https://psycnet.apa.org/fulltext/1995-07978-001.pdf",
     # The sheet went out with no source_url for these two, so the reviewer had
     # nothing to check against. Added afterwards and confirmed item by item.
-    "mfq_care": "https://moralfoundations.org/wp-content/uploads/files/MFQ30.doc",
-    "mfq_fairness": "https://moralfoundations.org/wp-content/uploads/files/MFQ30.doc",
+    # The reviewer read the MFQ off the questionnaire printed at the end of
+    # Graham et al. (2011), which is the paper both constructs cite. Pointing at
+    # the paper rather than the later MFQ30 handout keeps items, citation, and
+    # source in agreement (they differ on one item's wording).
+    "mfq_care": "https://www.the-brights.net/morality/statement_1_studies/14.%20Graham,%20J.,%20Nosek,%20B.%20A.,%20Haidt,%20J.,%20Iyer,%20R.,%20Koleva,%20S.,%20&%20Ditto,%20P.%20H.%20(2011).%20Mapping%20the%20moral%20domain.%20Journal%20of%20Personality%20and%20Social%20Psychology,%20101(2),%20366-385.pdf",
+    "mfq_fairness": "https://www.the-brights.net/morality/statement_1_studies/14.%20Graham,%20J.,%20Nosek,%20B.%20A.,%20Haidt,%20J.,%20Iyer,%20R.,%20Koleva,%20S.,%20&%20Ditto,%20P.%20H.%20(2011).%20Mapping%20the%20moral%20domain.%20Journal%20of%20Personality%20and%20Social%20Psychology,%20101(2),%20366-385.pdf",
+    # Replacements supplied by the reviewer after the review; both verified to
+    # resolve and to contain the items. The recorded links were dead (BAS-2 404,
+    # CAGE 403 even from a browser user agent).
+    "bas_2": "https://emerge.ucsd.edu/r_264jgxeqd35y1ox/",
+    "cage_questionnaire": "https://www.uspreventiveservicestaskforce.org/home/getfilebytoken/QETZFZLBsJbtPmVNVCgA7Z",
     "collectivism_horizontal": "https://psycnet.apa.org/fulltext/1997-38342-009.pdf",
     "individualism_horizontal": "https://psycnet.apa.org/fulltext/1997-38342-009.pdf",
 }
@@ -195,6 +191,16 @@ CITATION_FIX = {
         "Triandis, H. C., & Gelfand, M. J. (1998). Converging measurement of horizontal and "
         "vertical individualism and collectivism. Journal of Personality and Social "
         "Psychology, 74(1). https://doi.org/10.1037/0022-3514.74.1.118",
+    # Page range and DOI are printed on the paper itself (now the recorded
+    # source_url), not looked up.
+    "mfq_care":
+        "Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). "
+        "Mapping the moral domain. Journal of Personality and Social Psychology, 101(2), "
+        "366-385. https://doi.org/10.1037/a0021847",
+    "mfq_fairness":
+        "Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). "
+        "Mapping the moral domain. Journal of Personality and Social Psychology, 101(2), "
+        "366-385. https://doi.org/10.1037/a0021847",
 }
 
 QUESTIONNAIRE_FIX = {
@@ -207,14 +213,32 @@ QUESTIONNAIRE_FIX = {
 REVIEW_NOTE = {
     "lot_r": "The scale's 4 filler items are correctly excluded from this construct; they are "
              "not scored in the source.",
-    "mfq_care": "Reviewer flagged the missing source_url (the sheet shipped without one for this "
-                "construct). Source added and all 4 items confirmed verbatim against the "
-                "published MFQ30. The construct uses a subset of the foundation's items, which "
-                "the reviewer confirmed as correctly grouped.",
-    "mfq_fairness": "Reviewer flagged the missing source_url (the sheet shipped without one) and "
-                    "proposed 'treated differently from others'. Source added: the published "
-                    "MFQ30 reads 'treated differently than others', which is the wording already "
-                    "stored here, so it is kept and all 4 items are confirmed verbatim.",
+    "mfq_care": "The review sheet shipped without a source_url for this construct. The "
+                "questionnaire printed in the cited paper is now recorded and all 4 items "
+                "confirmed verbatim against it. The construct uses a subset of the foundation's "
+                "items, which the reviewer confirmed as correctly grouped.",
+    "mfq_fairness": "The review sheet shipped without a source_url. The reviewer read the MFQ "
+                    "off the appendix of the cited paper, which reads 'treated differently from "
+                    "others'; her correction is applied and all 4 items confirmed verbatim. The "
+                    "later MFQ30 handout says 'than others', so items, citation, and source_url "
+                    "now all point at the paper.",
+    "team_psychological_safety_scale": "Reviewer proposed 'risk in this team' from a third-party "
+                                       "questionnaire because Edmondson (1999) was not reachable "
+                                       "through her library, and said to keep the original if the "
+                                       "paper disagreed. The recorded Edmondson PDF reads 'risk on "
+                                       "this team', so the stored wording stands.",
+    "rses": "Item order corrected to the printed order of the questionnaire at the recorded "
+            "source_url (Morris Rosenberg Foundation), per the reviewer's mapping; item ids "
+            "renumbered to match. Wording and reverse keys there match this construct exactly.",
+    "cbi_work_related_burnout": "Item order corrected to the printed order at the recorded "
+                                "source_url, per the reviewer's mapping; item ids renumbered to "
+                                "match the source's 7 to 13.",
+    "bas_2": "Recorded source URL was dead (404). Replacement supplied by the reviewer, and all "
+             "10 items confirmed verbatim against it. Her note that BAS-2 has no reverse-scored "
+             "items and is scored by averaging all 10 is consistent with the flags here.",
+    "cage_questionnaire": "Recorded source URL returned 403. Replacement supplied by the reviewer "
+                          "and the wording correction ('ought to' -> 'should') confirmed against "
+                          "it. The replacement is a token-style URL and may not be durable.",
 }
 
 
@@ -282,6 +306,25 @@ def main() -> int:
                 arrow = "no -> REVERSE" if review_flags[iid] else "REVERSE -> no"
                 plan["detail"].append(f"  {cid}/{iid}: {arrow}")
                 it["reverse_scored"] = review_flags[iid]
+                changed_items = True
+
+        if cid in ITEM_ORDER:
+            wanted = ITEM_ORDER[cid]
+            by_id = {i["item_id"]: i for i in items}
+            missing = [x for x in wanted if x not in by_id]
+            assert not missing and len(wanted) == len(items), (
+                f"{cid}: ITEM_ORDER does not cover the construct exactly ({missing=})"
+            )
+            if [i["item_id"] for i in items] != wanted:
+                items = [by_id[x] for x in wanted]
+                # ids encode the source's item number, so renumber by position
+                start = ITEM_ORDER_START[cid]
+                for n, it in enumerate(items, start=start):
+                    it["item_id"] = f"{cid}_{n}"
+                plan["detail"].append(
+                    f"  {cid}: reordered to the source's printed order, ids renumbered "
+                    f"{start}..{start + len(items) - 1}"
+                )
                 changed_items = True
 
         src, dst = SUBSCALE_MOVE["from"], SUBSCALE_MOVE["to"]

@@ -7,8 +7,8 @@ category: Body appreciation / body image
 description: Body appreciation / body image - Body Appreciation Scale-2 (BAS-2).
 citation: 'Tylka, T. L., & Wood-Barcalow, N. L. (2015). The Body Appreciation Scale-2: Item refinement
   and psychometric evaluation. Body Image, 12, 53–67. https://doi.org/10.1016/j.bodyim.2014.09.006'
-verification_status: needs_verification
-source_url: https://emerge.ucsd.edu/r_4dsm5/body-appreciation-scale-2/
+verification_status: verified
+source_url: https://emerge.ucsd.edu/r_264jgxeqd35y1ox/
 rights_note: Research center item page; verify permission for commercial redistribution.
 questionnaire: Body Appreciation Scale-2 (BAS-2)
 reverse_flags_source: reviewed_2026-08-25_noor_skhiri
@@ -16,10 +16,10 @@ imported_from: lib.xlsx
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: pending_pi_decision
-  notes: Reviewer could not reach the recorded source URL and checked wording against the publisher PDF;
-    her note adds that BAS-2 has no reverse-scored items and is scored by averaging all 10. A working
-    source link is still needed before this can be called verified.
+  outcome: verified
+  notes: Recorded source URL was dead (404). Replacement supplied by the reviewer, and all 10 items confirmed
+    verbatim against it. Her note that BAS-2 has no reverse-scored items and is scored by averaging all
+    10 is consistent with the flags here.
 items:
 - item_id: bas_2_1
   text: I respect my body.

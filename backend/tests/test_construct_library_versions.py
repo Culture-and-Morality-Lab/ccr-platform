@@ -174,9 +174,9 @@ def test_review_applied_expected_shape():
     for c in constructs:
         by_status.setdefault(c["verification_status"], []).append(c)
 
-    assert len(by_status["archived"]) == 21, "superseded v1 files"
-    assert len(by_status["verified"]) == 83
-    assert len(by_status["needs_verification"]) == 11
+    assert len(by_status["archived"]) == 23, "superseded v1 files"
+    assert len(by_status["verified"]) == 88
+    assert len(by_status["needs_verification"]) == 6
 
     live = [c for c in constructs if c["verification_status"] != "archived"]
     assert len({c["construct_id"] for c in live}) == 94, "one live version per construct"
@@ -198,14 +198,6 @@ def test_review_applied_expected_shape():
             "ipip_50_item_big_five_factor_markers_intellect_imagination",
             # PI decision: restoring the shared K10 stem onto each item
             "k10",
-            # reviewer's correction contradicts the cited publication
-            "team_psychological_safety_scale",
-            # reviewer reported an item-ORDER problem that is not applied
-            "cbi_work_related_burnout",
-            "rses",
-            # no reachable source on record, so "verified" cannot be claimed
-            "bas_2",
-            "cage_questionnaire",
         ]
     )
     for c in by_status["needs_verification"]:
@@ -224,27 +216,33 @@ def test_every_live_construct_records_who_verified_it():
 
 
 def test_superseded_files_keep_their_original_items():
-    """Append-only means a published version's ITEMS are never rewritten.
+    """Append-only means a PUBLISHED version's ITEMS are never rewritten.
 
-    Compares each tracked construct against the committed version in git rather
-    than against its own v2 - comparing v1 to v2 would pass even if v1's items
-    had been quietly edited, which is the exact failure this guards.
+    Compares each tracked construct against git rather than against its own v2 -
+    comparing v1 to v2 would pass even if v1's items had been quietly edited,
+    which is the exact failure this guards.
+
+    "Published" means merged to the default branch, so the baseline is the
+    merge-base with main, not HEAD. A version being drafted on a feature branch
+    can still be revised (that is what review is for); once it lands on main a
+    run can have used it, and from then on this test freezes it.
     """
     repo = CONSTRUCTS_DIR.parents[2]
     base = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True
+        ["git", "merge-base", "HEAD", "main"], cwd=repo, capture_output=True, text=True
     )
-    if base.returncode != 0:  # not a git checkout (e.g. a packaged install)
-        pytest.skip("not a git checkout")
+    if base.returncode != 0:  # not a git checkout, or no main (packaged install)
+        pytest.skip("not a git checkout with a main branch")
+    baseline = base.stdout.strip()
 
     checked = 0
     for path in sorted(CONSTRUCTS_DIR.glob("*.yaml")):
         rel = path.relative_to(repo)
         show = subprocess.run(
-            ["git", "show", f"HEAD:{rel.as_posix()}"], cwd=repo, capture_output=True, text=True
+            ["git", "show", f"{baseline}:{rel.as_posix()}"], cwd=repo, capture_output=True, text=True
         )
         if show.returncode != 0:
-            continue  # new file in this change, nothing committed to compare against
+            continue  # new since main, nothing published to compare against
         committed = yaml.safe_load(show.stdout)
         current = yaml.safe_load(path.read_text())
         if committed["version"] != current["version"]:

@@ -7,7 +7,7 @@ category: Psychological safety
 description: Psychological safety - Team Psychological Safety Scale.
 citation: Edmondson, A. (1999). Psychological safety and learning behavior in work teams. Administrative
   Science Quarterly, 44(2), 350–383. https://doi.org/10.2307/2666999
-verification_status: needs_verification
+verification_status: verified
 source_url: https://web.mit.edu/curhan/www/docs/Articles/15341_Readings/Group_Performance/Edmondson%20Psychological%20safety.pdf
 rights_note: Author paper/public PDF includes scale; verify permission for commercial redistribution.
 questionnaire: Team Psychological Safety Scale
@@ -16,10 +16,10 @@ imported_from: lib.xlsx
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: pending_pi_decision
-  notes: Reviewer proposed 'It is safe to take a risk in this team' from a third-party questionnaire (novopsych
-    TPS-7). The cited source, Edmondson (1999), reads 'It is safe to take a risk on this team' - the wording
-    already stored here. Kept as published; the two sources disagree and the citation should decide.
+  outcome: verified
+  notes: Reviewer proposed 'risk in this team' from a third-party questionnaire because Edmondson (1999)
+    was not reachable through her library, and said to keep the original if the paper disagreed. The recorded
+    Edmondson PDF reads 'risk on this team', so the stored wording stands.
 items:
 - item_id: team_psychological_safety_scale_1
   text: If you make a mistake on this team, it is often held against you.

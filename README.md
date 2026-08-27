@@ -54,10 +54,9 @@ Configuration: copy `.env.example` to `.env` and fill what you need.
   storage is ephemeral and the instance may reset.
 - The construct library ships the lab's full collection of 94 constructs. Item wording,
   reverse-scoring keys, subscale grouping, and citations were reviewed against the source
-  publications in August 2026: 83 constructs are marked verified and carry the reviewer
-  and review date. The other 11 stay flagged in the interface and each records why - an
-  open wording question, a proposed correction that disagreed with the cited paper, an
-  unresolved item-ordering question, or no reachable source document. See
+  publications in August 2026: 88 constructs are marked verified and carry the reviewer
+  and review date. The other 6 stay flagged in the interface pending two wording
+  decisions (the IPIP scales and the K10). See
   `docs/specs/0007-construct-library-verification-pass.md`.
 - Tests: `cd backend && CCR_FAKE_EMBEDDINGS=1 python -m pytest -q` (137 tests, no ML
   downloads needed).

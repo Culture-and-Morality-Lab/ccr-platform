@@ -34,17 +34,22 @@ because item text, item order, and reverse flags all feed `item_hash`:
 
 - 61 reverse-scoring flags flipped `false -> true` across 14 constructs. No flag went
   the other way; the library goes from 35 to 96 reverse-flagged items.
-- 7 verbatim wording corrections, one item each, in 7 constructs.
+- 8 verbatim wording corrections, one item each, in 8 constructs.
+- 2 item-ORDER corrections (`rses`, `cbi_work_related_burnout`): the stored order did
+  not match the printed order of each construct's own recorded source, which mislabels
+  every `sim_item_N` export column. Item ids are renumbered by position so `item_id`
+  again means "source item number". Scores are unaffected: the CCR score is the mean
+  across items, which is order-independent.
 - 1 subscale regrouping: `scs_sf_self_judgment_1` moves to `scs_sf_over_identification`
   per the SCS-SF coding key, changing the item list of both constructs.
 
-21 constructs get a `version: 2` file. The `version: 1` files stay exactly as they are:
+23 constructs get a `version: 2` file. The `version: 1` files stay exactly as they are:
 append-only means old versions remain resolvable for runs that already used them.
 
 Metadata-level changes do NOT feed `item_hash` and are therefore applied in place on
 the existing version:
 
-- `verification_status` promoted `needs_verification -> verified` for 83 constructs.
+- `verification_status` promoted `needs_verification -> verified` for 88 constructs.
 - Citation and `source_url` repairs (dead links replaced with the URLs the reviewer
   supplied, DOIs she supplied added).
 - A `review:` provenance block on every construct recording reviewer, review date, and
@@ -91,40 +96,37 @@ construct reproduce exactly as before, because v1 rows are never mutated.
 
 ## Non-goals
 
-11 constructs keep `verification_status: needs_verification`, each with the reason
-recorded in its `review.notes`.
+Only 6 constructs keep `verification_status: needs_verification`, and both reasons are
+PI decisions rather than open verification questions.
 
-**Two of the reviewer's wording corrections are NOT applied, because each disagrees with
-the publication its own construct cites.** Both were checked against the source:
+Four findings that this spec originally held back were resolved by going back to the
+reviewer (2026-08-27). Her answers are worth recording, because in three of the four the
+disagreement was about WHICH PRINTING of a scale is authoritative, not about who read it
+correctly:
 
-- `mfq_fairness` item 3: she proposed "treated differently from others"; the published
-  MFQ30 reads "treated differently **than** others", which is what the library already
-  had. This one is resolved: the MFQ30 is now recorded as the construct's `source_url`
-  (the review sheet shipped without one), all four items check out verbatim against it,
-  and the construct is verified.
-- `team_psychological_safety_scale` item 4: she proposed "It is safe to take a risk **in**
-  this team", sourced from a third-party questionnaire (novopsych TPS-7); Edmondson
-  (1999), the cited paper and the recorded `source_url`, reads "on this team", which is
-  what the library already had. Her replacement `source_url` is not applied either - the
-  recorded Edmondson PDF resolves and contains the scale.
+- **MFQ Fairness.** She read the questionnaire printed at the end of Graham et al.
+  (2011), the paper this construct cites, which reads "treated differently **from**
+  others" (twice). The moralfoundations.org MFQ30 handout reads "than others". The cited
+  paper wins, so her correction IS applied, and `source_url` now points at the paper so
+  items, citation, and source agree. An earlier draft of this spec reverted her here on
+  the strength of the handout; that was wrong.
+- **RSES item order.** She used the `source_url` recorded on the construct
+  (socy.umd.edu, the Morris Rosenberg Foundation), whose questionnaire starts with "I
+  feel that I'm a person of worth" and whose wording and reverse keys match this
+  construct exactly. Her mapping is correct against our own recorded source, so the
+  reorder is applied.
+- **CBI work-related burnout item order.** Same: confirmed against the recorded
+  `source_url`, mapping applied.
+- **Team Psychological Safety.** She could not reach Edmondson (1999) through her
+  library, used a third-party questionnaire, and said to keep the original if the paper
+  disagreed. It does ("risk **on** this team"), so the stored wording stands and the
+  construct is verified.
 
-Both keep their published wording and are held back for someone to reconcile the
-disagreement. Applying them would have moved a `verified` item away from its source,
-which is the opposite of what this pass is for.
-
-**Two item-ORDER findings are recorded but not applied.** For `rses` the reviewer maps
-stored items 1,2,3,6,7,9,10 to source items 7,10,2,9,1,3,6, and for
-`cbi_work_related_burnout` she maps stored 7..13 to source 11,13,12,7,8,9,10. Item order
-feeds `item_hash` and decides what each `sim_item_N` export column refers to, so
-reordering is a scoring-visible change that needs a decision rather than a silent fix.
-Their reverse-scoring corrections ARE applied.
-
-**Two constructs have no reachable source on record** (`bas_2`, whose recorded URL 404s,
-and `cage_questionnaire`, whose URL returns 403). "Verified verbatim against the original
-publication" cannot honestly be claimed without one, so they stay unverified until a
-working source is on file. `mfq_care` and `mfq_fairness` were in this group because the
-review sheet shipped with an EMPTY `source_url` for both - our omission, not a missing
-document. The MFQ30 is now recorded for each and their items confirmed verbatim.
+Two constructs (`bas_2`, `cage_questionnaire`) had genuinely dead source links (404 and
+403 even from a browser user agent). She supplied working replacements, both verified to
+contain the items, so both are verified. `mfq_care` and `mfq_fairness` were unverifiable
+only because the review sheet shipped with an EMPTY `source_url` for them, which was our
+omission.
 
 **Two findings are left pending an explicit PI decision:**
 
@@ -155,7 +157,7 @@ similarities plus flags; `adjustment_strategy` remains a recorded parameter).
   updates the existing row.
 - `test_sync_still_refuses_item_change_under_same_version` - the append-only guard is
   intact.
-- `test_review_applied_expected_shape` - 21 v2 files, 83 verified, 11
+- `test_review_applied_expected_shape` - 23 v2 files, 88 verified, 6
   needs_verification, 96 reverse flags, and every unverified construct carries a recorded
   reason.
 - `test_superseded_files_keep_their_original_items` - compares every tracked construct
@@ -164,12 +166,12 @@ similarities plus flags; `adjustment_strategy` remains a recorded parameter).
 - `test_all_reversed_construct_warns_about_score_direction` /
   `test_normal_construct_does_not_warn_about_direction` - the direction warning fires for
   an all-reversed construct and stays silent otherwise.
-- `validate_constructs.py` passes with 115 files and reports the 4 new all-reversed
+- `validate_constructs.py` passes with 117 files and reports the 4 new all-reversed
   warnings alongside the pre-existing `grit_s_consistency_of_interests`.
 
 ## Implementation notes
 
-Files changed: `packages/construct_library/constructs/*.yaml` (21 new v2 files, 94
+Files changed: `packages/construct_library/constructs/*.yaml` (23 new v2 files, 94
 in-place metadata updates), `packages/construct_library/apply_review.py` (new),
 `packages/construct_library/reviews/` (new, the returned review file),
 `backend/app/construct_lib.py` (metadata sync), `backend/app/main.py` (collapse to

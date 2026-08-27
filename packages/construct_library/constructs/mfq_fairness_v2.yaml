@@ -1,0 +1,34 @@
+# Construct: versioned, append-only. Version 2 applies the 2026-08-25 library review (spec 0007).
+construct_id: mfq_fairness
+version: 2
+name: Moral Foundations - Fairness
+language: en
+category: moral-foundations
+description: Concern with justice, rights, and equal treatment (MFQ Fairness/Cheating).
+citation: Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). Mapping the
+  moral domain. Journal of Personality and Social Psychology, 101(2), 366-385. https://doi.org/10.1037/a0021847
+verification_status: verified
+review:
+  reviewer: Noor Skhiri
+  date: '2026-08-25'
+  outcome: verified
+  notes: The review sheet shipped without a source_url. The reviewer read the MFQ off the appendix of
+    the cited paper, which reads 'treated differently from others'; her correction is applied and all
+    4 items confirmed verbatim. The later MFQ30 handout says 'than others', so items, citation, and source_url
+    now all point at the paper.
+source_url: https://www.the-brights.net/morality/statement_1_studies/14.%20Graham,%20J.,%20Nosek,%20B.%20A.,%20Haidt,%20J.,%20Iyer,%20R.,%20Koleva,%20S.,%20&%20Ditto,%20P.%20H.%20(2011).%20Mapping%20the%20moral%20domain.%20Journal%20of%20Personality%20and%20Social%20Psychology,%20101(2),%20366-385.pdf
+reverse_flags_source: reviewed_2026-08-25_noor_skhiri
+items:
+- item_id: fair_1
+  text: Justice is the most important requirement for a society.
+  reverse_scored: false
+- item_id: fair_2
+  text: When the government makes laws, the number one principle should be ensuring that everyone is treated
+    fairly.
+  reverse_scored: false
+- item_id: fair_3
+  text: Whether or not some people were treated differently from others.
+  reverse_scored: false
+- item_id: fair_4
+  text: Whether or not someone acted unfairly.
+  reverse_scored: false

@@ -1,4 +1,5 @@
-# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
+# Superseded by version 2 (spec 0007). Kept so runs that used this
+# version still resolve; never edit a published version in place.
 construct_id: mfq_fairness
 version: 1
 name: Moral Foundations - Fairness
@@ -7,14 +8,11 @@ category: moral-foundations
 description: Concern with justice, rights, and equal treatment (MFQ Fairness/Cheating).
 citation: Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). Mapping the
   moral domain. JPSP, 101(2).
-verification_status: verified
+verification_status: archived
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: verified
-  notes: 'Reviewer flagged the missing source_url (the sheet shipped without one) and proposed ''treated
-    differently from others''. Source added: the published MFQ30 reads ''treated differently than others'',
-    which is the wording already stored here, so it is kept and all 4 items are confirmed verbatim.'
+  outcome: superseded_by_version_2
 source_url: https://moralfoundations.org/wp-content/uploads/files/MFQ30.doc
 items:
 - item_id: fair_1
