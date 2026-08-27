@@ -7,17 +7,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ### Changed
 - Construct library verified against the source publications. All 525 items across the
   94 constructs were reviewed (wording, reverse-scoring keys, subscale grouping,
-  citations); 81 constructs are now marked verified and show who reviewed them and
+  citations); 83 constructs are now marked verified and show who reviewed them and
   when, instead of the blanket "needs verification" flag every construct carried. The
   review corrected 61 reverse-scoring flags across 14 constructs (the library had 35
   flagged items, it now has 96), 7 item wordings, one subscale grouping in the SCS-SF,
   and a batch of dead or incomplete citation links. Corrected constructs ship as a new
   version: the picker offers the corrected one, and runs that used the earlier version
-  still open, export, and reproduce exactly as before. 13 constructs stay flagged, each
-  now saying why: two open wording questions (the IPIP scales and the K10), two where
-  the review's proposed wording disagreed with the cited publication and the published
-  wording was kept, two with unresolved item-ordering questions, and three with no
-  reachable source document on file. (spec 0007)
+  still open, export, and reproduce exactly as before. 11 constructs stay flagged, each
+  now saying why: two open wording questions (the IPIP scales and the K10), one where the
+  review's proposed wording disagreed with the cited publication and the published wording
+  was kept, two with unresolved item-ordering questions, and two whose recorded source
+  document no longer resolves. (spec 0007)
 
 ### Added
 - Runs now warn when every item in a construct is reverse-scored. Scores are raw

@@ -16,8 +16,8 @@ loadings computed from mis-flagged items are wrong in a way nothing surfaces.
 Noor Skhiri reviewed all 525 items (returned 2026-08-25), checking wording, reverse
 keying, subscale grouping, and citation for each. This spec applies her review.
 
-Two of her findings raise questions that are the PI's to answer, so they are
-deliberately NOT applied here (see Non-goals).
+Some of her findings are not applied here: two need a PI decision, and several turned
+out to be version differences or gaps in the review sheet we sent her (see Non-goals).
 
 ## Contract
 
@@ -44,7 +44,7 @@ append-only means old versions remain resolvable for runs that already used them
 Metadata-level changes do NOT feed `item_hash` and are therefore applied in place on
 the existing version:
 
-- `verification_status` promoted `needs_verification -> verified` for 81 constructs.
+- `verification_status` promoted `needs_verification -> verified` for 83 constructs.
 - Citation and `source_url` repairs (dead links replaced with the URLs the reviewer
   supplied, DOIs she supplied added).
 - A `review:` provenance block on every construct recording reviewer, review date, and
@@ -91,7 +91,7 @@ construct reproduce exactly as before, because v1 rows are never mutated.
 
 ## Non-goals
 
-13 constructs keep `verification_status: needs_verification`, each with the reason
+11 constructs keep `verification_status: needs_verification`, each with the reason
 recorded in its `review.notes`.
 
 **Two of the reviewer's wording corrections are NOT applied, because each disagrees with
@@ -99,7 +99,9 @@ the publication its own construct cites.** Both were checked against the source:
 
 - `mfq_fairness` item 3: she proposed "treated differently from others"; the published
   MFQ30 reads "treated differently **than** others", which is what the library already
-  had.
+  had. This one is resolved: the MFQ30 is now recorded as the construct's `source_url`
+  (the review sheet shipped without one), all four items check out verbatim against it,
+  and the construct is verified.
 - `team_psychological_safety_scale` item 4: she proposed "It is safe to take a risk **in**
   this team", sourced from a third-party questionnaire (novopsych TPS-7); Edmondson
   (1999), the cited paper and the recorded `source_url`, reads "on this team", which is
@@ -117,10 +119,12 @@ feeds `item_hash` and decides what each `sim_item_N` export column refers to, so
 reordering is a scoring-visible change that needs a decision rather than a silent fix.
 Their reverse-scoring corrections ARE applied.
 
-**Three constructs have no reachable source on record** (`bas_2`, `cage_questionnaire`,
-`mfq_care`; `mfq_fairness` too). The reviewer checked what she could and flagged the
-missing links; "verified verbatim against the original publication" cannot honestly be
-claimed without one, so they stay unverified until a working source is on file.
+**Two constructs have no reachable source on record** (`bas_2`, whose recorded URL 404s,
+and `cage_questionnaire`, whose URL returns 403). "Verified verbatim against the original
+publication" cannot honestly be claimed without one, so they stay unverified until a
+working source is on file. `mfq_care` and `mfq_fairness` were in this group because the
+review sheet shipped with an EMPTY `source_url` for both - our omission, not a missing
+document. The MFQ30 is now recorded for each and their items confirmed verbatim.
 
 **Two findings are left pending an explicit PI decision:**
 
@@ -151,7 +155,7 @@ similarities plus flags; `adjustment_strategy` remains a recorded parameter).
   updates the existing row.
 - `test_sync_still_refuses_item_change_under_same_version` - the append-only guard is
   intact.
-- `test_review_applied_expected_shape` - 21 v2 files, 81 verified, 13
+- `test_review_applied_expected_shape` - 21 v2 files, 83 verified, 11
   needs_verification, 96 reverse flags, and every unverified construct carries a recorded
   reason.
 - `test_superseded_files_keep_their_original_items` - compares every tracked construct

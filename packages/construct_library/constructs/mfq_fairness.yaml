@@ -7,13 +7,15 @@ category: moral-foundations
 description: Concern with justice, rights, and equal treatment (MFQ Fairness/Cheating).
 citation: Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). Mapping the
   moral domain. JPSP, 101(2).
-verification_status: needs_verification
+verification_status: verified
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: pending_pi_decision
-  notes: Reviewer proposed 'treated differently from others'. The published MFQ30 reads 'treated differently
-    than others' - the wording already stored here. Kept as published. No source_url on file yet.
+  outcome: verified
+  notes: 'Reviewer flagged the missing source_url (the sheet shipped without one) and proposed ''treated
+    differently from others''. Source added: the published MFQ30 reads ''treated differently than others'',
+    which is the wording already stored here, so it is kept and all 4 items are confirmed verbatim.'
+source_url: https://moralfoundations.org/wp-content/uploads/files/MFQ30.doc
 items:
 - item_id: fair_1
   text: Justice is the most important requirement for a society.

@@ -52,7 +52,6 @@ PENDING = {
     "k10",
     # Reviewer's correction disagrees with the cited publication (see below).
     "team_psychological_safety_scale",
-    "mfq_fairness",
     # Reviewer reported an item-ORDER problem, which is not applied here. Order
     # feeds item_hash and decides what sim_item_N means in an export, so it is
     # not a cosmetic change to make without a decision.
@@ -62,7 +61,6 @@ PENDING = {
     # publication" cannot honestly be claimed.
     "bas_2",
     "cage_questionnaire",
-    "mfq_care",
 }
 PENDING_NOTE = {
     "k10": (
@@ -75,11 +73,6 @@ PENDING_NOTE = {
         "questionnaire (novopsych TPS-7). The cited source, Edmondson (1999), reads 'It is "
         "safe to take a risk on this team' - the wording already stored here. Kept as "
         "published; the two sources disagree and the citation should decide."
-    ),
-    "mfq_fairness": (
-        "Reviewer proposed 'treated differently from others'. The published MFQ30 reads "
-        "'treated differently than others' - the wording already stored here. Kept as "
-        "published. No source_url on file yet."
     ),
     "rses": (
         "Reviewer maps stored items 1,2,3,6,7,9,10 to source item numbers 7,10,2,9,1,3,6: "
@@ -103,7 +96,6 @@ PENDING_NOTE = {
         "reviewer's wording correction ('ought to' -> 'should') is applied; a working "
         "source link is still needed before this can be called verified."
     ),
-    "mfq_care": "Citation is correct; no source_url on file yet, so wording is unconfirmed.",
 }
 IPIP_NOTE = (
     "Reviewer confirms wording matches the source apart from the leading 'I' that CCR "
@@ -176,6 +168,10 @@ SOURCE_URL_FIX = {
     "dirty_dozen_narcissism": "https://psycnet.apa.org/fulltext/2010-10892-021.pdf",
     "dirty_dozen_psychopathy": "https://psycnet.apa.org/fulltext/2010-10892-021.pdf",
     "lot_r": "https://psycnet.apa.org/fulltext/1995-07978-001.pdf",
+    # The sheet went out with no source_url for these two, so the reviewer had
+    # nothing to check against. Added afterwards and confirmed item by item.
+    "mfq_care": "https://moralfoundations.org/wp-content/uploads/files/MFQ30.doc",
+    "mfq_fairness": "https://moralfoundations.org/wp-content/uploads/files/MFQ30.doc",
     "collectivism_horizontal": "https://psycnet.apa.org/fulltext/1997-38342-009.pdf",
     "individualism_horizontal": "https://psycnet.apa.org/fulltext/1997-38342-009.pdf",
 }
@@ -211,6 +207,14 @@ QUESTIONNAIRE_FIX = {
 REVIEW_NOTE = {
     "lot_r": "The scale's 4 filler items are correctly excluded from this construct; they are "
              "not scored in the source.",
+    "mfq_care": "Reviewer flagged the missing source_url (the sheet shipped without one for this "
+                "construct). Source added and all 4 items confirmed verbatim against the "
+                "published MFQ30. The construct uses a subset of the foundation's items, which "
+                "the reviewer confirmed as correctly grouped.",
+    "mfq_fairness": "Reviewer flagged the missing source_url (the sheet shipped without one) and "
+                    "proposed 'treated differently from others'. Source added: the published "
+                    "MFQ30 reads 'treated differently than others', which is the wording already "
+                    "stored here, so it is kept and all 4 items are confirmed verbatim.",
 }
 
 

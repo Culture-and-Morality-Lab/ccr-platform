@@ -175,8 +175,8 @@ def test_review_applied_expected_shape():
         by_status.setdefault(c["verification_status"], []).append(c)
 
     assert len(by_status["archived"]) == 21, "superseded v1 files"
-    assert len(by_status["verified"]) == 81
-    assert len(by_status["needs_verification"]) == 13
+    assert len(by_status["verified"]) == 83
+    assert len(by_status["needs_verification"]) == 11
 
     live = [c for c in constructs if c["verification_status"] != "archived"]
     assert len({c["construct_id"] for c in live}) == 94, "one live version per construct"
@@ -199,7 +199,6 @@ def test_review_applied_expected_shape():
             # PI decision: restoring the shared K10 stem onto each item
             "k10",
             # reviewer's correction contradicts the cited publication
-            "mfq_fairness",
             "team_psychological_safety_scale",
             # reviewer reported an item-ORDER problem that is not applied
             "cbi_work_related_burnout",
@@ -207,7 +206,6 @@ def test_review_applied_expected_shape():
             # no reachable source on record, so "verified" cannot be claimed
             "bas_2",
             "cage_questionnaire",
-            "mfq_care",
         ]
     )
     for c in by_status["needs_verification"]:
