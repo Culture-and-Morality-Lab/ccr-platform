@@ -1,5 +1,4 @@
-# Superseded by version 2 (spec 0007). Kept so runs that used this
-# version still resolve; never edit a published version in place.
+# Construct: versioned, append-only. Edits create a NEW version (see registries rule).
 construct_id: mfq_fairness
 version: 1
 name: Moral Foundations - Fairness
@@ -8,11 +7,13 @@ category: moral-foundations
 description: Concern with justice, rights, and equal treatment (MFQ Fairness/Cheating).
 citation: Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). Mapping the
   moral domain. JPSP, 101(2).
-verification_status: archived
+verification_status: needs_verification
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: superseded_by_version_2
+  outcome: pending_pi_decision
+  notes: Reviewer proposed 'treated differently from others'. The published MFQ30 reads 'treated differently
+    than others' - the wording already stored here. Kept as published. No source_url on file yet.
 items:
 - item_id: fair_1
   text: Justice is the most important requirement for a society.

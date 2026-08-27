@@ -427,6 +427,26 @@ def run_job(job_id: str) -> None:
                 "the contrasting construct is a genuine opposite of the target.",
             ))
 
+        # Every item reverse-keyed flips what a high score means. v1 records the
+        # flags and does not adjust for them (adjustment_strategy: none), so the
+        # score is a similarity to items that all express the OPPOSITE of the
+        # construct's name. Say so, rather than leaving the results page to claim
+        # a higher score means more of the construct.
+        for c in ([*constructs, opposite] if anchored else constructs):
+            if not c:
+                continue
+            flags = json.loads(c.reverse_flags_json or "[]")
+            if flags and all(flags):
+                warnings.append(W(
+                    "CONSTRUCT_ALL_ITEMS_REVERSED", "warning",
+                    f"Every item in \"{c.name}\" is reverse-scored. Scores are raw "
+                    "similarities with no reverse adjustment applied, so a HIGHER "
+                    "score means the text expresses the opposite of this construct. "
+                    "Interpret the direction accordingly, or reverse the sign yourself "
+                    "downstream.",
+                    construct=c.name,
+                ))
+
         # Export mirrors ccr_wrapper's shape: input columns + per-item
         # similarity columns + overall score, so it drops into existing
         # CCR workflows. Multi-construct runs prefix each construct's columns

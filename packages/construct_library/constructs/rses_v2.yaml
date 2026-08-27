@@ -6,7 +6,7 @@ language: en
 category: Self-esteem
 description: Self-esteem - Rosenberg Self-Esteem Scale (RSES).
 citation: Rosenberg, M. (1965). Society and the adolescent self-image. Princeton University Press.
-verification_status: verified
+verification_status: needs_verification
 source_url: https://socy.umd.edu/about-us/rosenberg-self-esteem-scale
 rights_note: University of Maryland Rosenberg page states the RSES is public domain.
 questionnaire: Rosenberg Self-Esteem Scale (RSES)
@@ -15,7 +15,10 @@ imported_from: lib.xlsx
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: verified
+  outcome: pending_pi_decision
+  notes: 'Reviewer maps stored items 1,2,3,6,7,9,10 to source item numbers 7,10,2,9,1,3,6: the item ORDER
+    does not match the source. Reverse-scoring corrections are applied; the reordering is not, because
+    order feeds item_hash and the sim_item_N export columns. Pending a decision.'
 items:
 - item_id: rses_1
   text: On the whole, I am satisfied with myself.

@@ -7,7 +7,7 @@ category: Burnout
 description: Burnout - Work-related burnout dimension of the Copenhagen Burnout Inventory (CBI).
 citation: 'Kristensen, T. S., Borritz, M., Villadsen, E., & Christensen, K. B. (2005). The Copenhagen
   Burnout Inventory: A new tool for the assessment of burnout. Work & Stress, 19(3), 192–207. https://doi.org/10.1080/02678370500297720'
-verification_status: verified
+verification_status: needs_verification
 source_url: https://emerge.ucsd.edu/r_2qfb6wi4uepyugd/
 rights_note: Research center item page; verify permission for commercial redistribution.
 questionnaire: Copenhagen Burnout Inventory (CBI)
@@ -16,8 +16,10 @@ imported_from: lib.xlsx
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: verified
-  notes: Reviewer notes the source numbers these items 7 to 13.
+  outcome: pending_pi_decision
+  notes: 'Reviewer maps stored items 7,8,9,10,11,12,13 to source item numbers 11,13,12,7,8,9,10: the item
+    ORDER does not match the source. Not applied; order feeds item_hash and the sim_item_N export columns.
+    Pending a decision.'
 items:
 - item_id: cbi_work_related_burnout_7
   text: Is your work emotionally exhausting?

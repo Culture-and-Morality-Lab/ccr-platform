@@ -12,6 +12,7 @@ Contract under test:
 """
 
 import io
+import subprocess
 import time
 
 import pytest
@@ -173,9 +174,9 @@ def test_review_applied_expected_shape():
     for c in constructs:
         by_status.setdefault(c["verification_status"], []).append(c)
 
-    assert len(by_status["archived"]) == 23, "superseded v1 files"
-    assert len(by_status["verified"]) == 88
-    assert len(by_status["needs_verification"]) == 6
+    assert len(by_status["archived"]) == 21, "superseded v1 files"
+    assert len(by_status["verified"]) == 81
+    assert len(by_status["needs_verification"]) == 13
 
     live = [c for c in constructs if c["verification_status"] != "archived"]
     assert len({c["construct_id"] for c in live}) == 94, "one live version per construct"
@@ -185,18 +186,33 @@ def test_review_applied_expected_shape():
     )
     assert reverse == 96, "reverse flags after the review (was 35)"
 
-    # the pending decisions are exactly the ones the spec names
+    # Everything still unverified is unverified for a recorded reason.
     pending = sorted(c["construct_id"] for c in by_status["needs_verification"])
     assert pending == sorted(
         [
+            # PI decision: the "I" prefix CCR adds to IPIP stems
             "ipip_50_item_big_five_factor_markers_agreeableness",
             "ipip_50_item_big_five_factor_markers_conscientiousness",
             "ipip_50_item_big_five_factor_markers_emotional_stability_neuroticism",
             "ipip_50_item_big_five_factor_markers_extraversion",
             "ipip_50_item_big_five_factor_markers_intellect_imagination",
+            # PI decision: restoring the shared K10 stem onto each item
             "k10",
+            # reviewer's correction contradicts the cited publication
+            "mfq_fairness",
+            "team_psychological_safety_scale",
+            # reviewer reported an item-ORDER problem that is not applied
+            "cbi_work_related_burnout",
+            "rses",
+            # no reachable source on record, so "verified" cannot be claimed
+            "bas_2",
+            "cage_questionnaire",
+            "mfq_care",
         ]
     )
+    for c in by_status["needs_verification"]:
+        assert (c.get("review") or {}).get("notes"), \
+            f"{c['construct_id']}: unverified without a recorded reason"
 
 
 def test_every_live_construct_records_who_verified_it():
@@ -210,8 +226,44 @@ def test_every_live_construct_records_who_verified_it():
 
 
 def test_superseded_files_keep_their_original_items():
-    """Append-only means the old version's ITEMS are never rewritten - only its
-    status and review provenance may change."""
+    """Append-only means a published version's ITEMS are never rewritten.
+
+    Compares each tracked construct against the committed version in git rather
+    than against its own v2 - comparing v1 to v2 would pass even if v1's items
+    had been quietly edited, which is the exact failure this guards.
+    """
+    repo = CONSTRUCTS_DIR.parents[2]
+    base = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True
+    )
+    if base.returncode != 0:  # not a git checkout (e.g. a packaged install)
+        pytest.skip("not a git checkout")
+
+    checked = 0
+    for path in sorted(CONSTRUCTS_DIR.glob("*.yaml")):
+        rel = path.relative_to(repo)
+        show = subprocess.run(
+            ["git", "show", f"HEAD:{rel.as_posix()}"], cwd=repo, capture_output=True, text=True
+        )
+        if show.returncode != 0:
+            continue  # new file in this change, nothing committed to compare against
+        committed = yaml.safe_load(show.stdout)
+        current = yaml.safe_load(path.read_text())
+        if committed["version"] != current["version"]:
+            continue
+        assert [i["text"] for i in committed["items"]] == [
+            i["text"] for i in current["items"]
+        ], f"{path.name}: item text changed under an existing version"
+        assert [bool(i.get("reverse_scored")) for i in committed["items"]] == [
+            bool(i.get("reverse_scored")) for i in current["items"]
+        ], f"{path.name}: reverse flags changed under an existing version"
+        assert committed["language"] == current["language"], path.name
+        checked += 1
+    assert checked > 50, f"expected to check most of the library, only saw {checked}"
+
+
+def test_superseded_versions_really_differ_from_their_replacement():
+    """A v2 that matches its v1 item-for-item would be pure version churn."""
     superseded = [
         c for c in load_yaml_constructs() if c["verification_status"] == "archived"
     ]
@@ -220,9 +272,70 @@ def test_superseded_files_keep_their_original_items():
         newer = yaml.safe_load(
             (CONSTRUCTS_DIR / f"{old['construct_id']}_v2.yaml").read_text()
         )
-        assert newer["version"] == 2
-        assert old["version"] == 1
-        # something about the items really did change - that is why v2 exists
+        assert newer["version"] == 2 and old["version"] == 1
         old_items = [(i["text"], bool(i.get("reverse_scored"))) for i in old["items"]]
         new_items = [(i["text"], bool(i.get("reverse_scored"))) for i in newer["items"]]
         assert old_items != new_items, f"{old['construct_id']}: v2 with identical items"
+
+
+def test_all_reversed_construct_warns_about_score_direction(client):
+    """Flipping every item in a construct flips what a high score means; the run
+    must say so rather than leaving the results page to claim otherwise."""
+    listed = client.get("/api/constructs").json()
+    target = next(
+        c for c in listed
+        if c["is_seed"] and c["reverse_scored"] and all(c["reverse_scored"])
+    )
+
+    project = client.post("/api/projects", json={"name": "Reversed", "description": ""}).json()
+    corpus = client.post(
+        f"/api/projects/{project['id']}/corpora",
+        files={"file": ("c.csv", io.BytesIO(CSV.encode()), "application/octet-stream")},
+    ).json()
+    job = client.post(
+        "/api/jobs",
+        json={
+            "project_id": project["id"],
+            "corpus_id": corpus["id"],
+            "construct_ids": [target["id"]],
+            "text_column": "text",
+            "model_name": "fake-deterministic",
+        },
+    ).json()
+    done = wait_for_job(client, job["id"])
+    assert done["status"] == "completed"
+
+    summary = client.get(f"/api/jobs/{done['id']}/results").json()["summary"]
+    codes = [w["code"] for w in summary["warnings"]]
+    assert "CONSTRUCT_ALL_ITEMS_REVERSED" in codes, codes
+    msg = next(
+        w["message"] for w in summary["warnings"]
+        if w["code"] == "CONSTRUCT_ALL_ITEMS_REVERSED"
+    )
+    assert "opposite" in msg.lower()
+
+
+def test_normal_construct_does_not_warn_about_direction(client):
+    listed = client.get("/api/constructs").json()
+    normal = next(
+        c for c in listed if c["is_seed"] and not any(c["reverse_scored"])
+    )
+    project = client.post("/api/projects", json={"name": "Normal", "description": ""}).json()
+    corpus = client.post(
+        f"/api/projects/{project['id']}/corpora",
+        files={"file": ("c.csv", io.BytesIO(CSV.encode()), "application/octet-stream")},
+    ).json()
+    job = client.post(
+        "/api/jobs",
+        json={
+            "project_id": project["id"],
+            "corpus_id": corpus["id"],
+            "construct_ids": [normal["id"]],
+            "text_column": "text",
+            "model_name": "fake-deterministic",
+        },
+    ).json()
+    done = wait_for_job(client, job["id"])
+    summary = client.get(f"/api/jobs/{done['id']}/results").json()["summary"]
+    codes = [w["code"] for w in summary["warnings"]]
+    assert "CONSTRUCT_ALL_ITEMS_REVERSED" not in codes

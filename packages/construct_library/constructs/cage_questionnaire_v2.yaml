@@ -7,7 +7,7 @@ category: Alcohol use risk
 description: Alcohol use risk - CAGE Questionnaire. Screening tool only; not a diagnosis.
 citation: 'Ewing, J. A. (1984). Detecting alcoholism: The CAGE questionnaire. JAMA, 252(14), 1905–1907.
   https://doi.org/10.1001/jama.1984.03350140051025'
-verification_status: verified
+verification_status: needs_verification
 source_url: https://www.hopkinsmedicine.org/-/media/medicine/documents/cage-substance-screening-tool.pdf
 rights_note: Institutional clinical handout; verify permission for redistribution. Screening tool only;
   not a diagnosis.
@@ -17,9 +17,10 @@ imported_from: lib.xlsx
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: verified
-  notes: Citation is correct but the recorded source URL is no longer accessible; a working source link
-    is still needed.
+  outcome: pending_pi_decision
+  notes: Citation is correct but the recorded source URL is no longer accessible. The reviewer's wording
+    correction ('ought to' -> 'should') is applied; a working source link is still needed before this
+    can be called verified.
 items:
 - item_id: cage_questionnaire_1
   text: Have you ever felt you should Cut down on your drinking?

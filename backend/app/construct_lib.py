@@ -93,8 +93,21 @@ def sync_library(db: Session) -> dict:
                 f for f, read in _MUTABLE_FIELDS.items() if getattr(existing, f) != read(c)
             ]
             for f in changed:
-                setattr(existing, f, _MUTABLE_FIELDS[f](c))
-            report["updated" if changed else "unchanged"] += 1
+                new = _MUTABLE_FIELDS[f](c)
+                if f == "verification_status":
+                    # A maintainer can set this from /admin, and YAML wins on the
+                    # next restart. Say so out loud: an RA who un-verifies a
+                    # construct should be able to find out why it came back.
+                    logger.warning(
+                        "construct %s v%s: verification_status %s -> %s (from YAML %s)",
+                        slug, version, existing.verification_status, new, c["_file"],
+                    )
+                setattr(existing, f, new)
+            if changed:
+                report["updated"] += 1
+                report.setdefault("updated_detail", []).append(f"{slug}: {', '.join(changed)}")
+            else:
+                report["unchanged"] += 1
             continue
 
         db.add(

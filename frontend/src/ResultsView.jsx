@@ -65,7 +65,15 @@ export default function ResultsView({ jobId, onBack }) {
           ) : (
             <>
               CCR score = mean cosine similarity between each text and a construct&apos;s scale
-              items. Higher = the text expresses the construct more strongly.
+              items.{" "}
+              {/* A construct whose items are ALL reverse-keyed scores in the
+                  opposite direction, and the backend says so with
+                  CONSTRUCT_ALL_ITEMS_REVERSED. Do not state the direction here
+                  when that warning is present - the amber panel names which
+                  construct is affected. */}
+              {summary.warnings?.some((w) => w.code === "CONSTRUCT_ALL_ITEMS_REVERSED")
+                ? "Score direction depends on how each construct's items are keyed - see the warning below."
+                : "Higher = the text expresses the construct more strongly."}
               {multi &&
                 " All constructs were scored on the same pass over the corpus, so scores are row-aligned and directly comparable."}
             </>

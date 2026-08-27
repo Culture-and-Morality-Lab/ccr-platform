@@ -53,11 +53,13 @@ Configuration: copy `.env.example` to `.env` and fill what you need.
 - Do not upload sensitive or identifiable data to this shared dev instance; anonymous
   storage is ephemeral and the instance may reset.
 - The construct library ships the lab's full collection of 94 constructs. Item wording,
-  reverse-scoring keys, subscale grouping, and citations were reviewed against the
-  source publications in August 2026: 88 constructs are marked verified and carry the
-  reviewer and review date; the remaining 6 are still flagged in the interface pending
-  two open wording decisions (see `docs/specs/0007-construct-library-verification-pass.md`).
-- Tests: `cd backend && CCR_FAKE_EMBEDDINGS=1 python -m pytest -q` (134 tests, no ML
+  reverse-scoring keys, subscale grouping, and citations were reviewed against the source
+  publications in August 2026: 81 constructs are marked verified and carry the reviewer
+  and review date. The other 13 stay flagged in the interface and each records why - an
+  open wording question, a proposed correction that disagreed with the cited paper, an
+  unresolved item-ordering question, or no reachable source document. See
+  `docs/specs/0007-construct-library-verification-pass.md`.
+- Tests: `cd backend && CCR_FAKE_EMBEDDINGS=1 python -m pytest -q` (137 tests, no ML
   downloads needed).
 
 ## License

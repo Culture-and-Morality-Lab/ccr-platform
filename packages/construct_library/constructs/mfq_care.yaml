@@ -7,12 +7,12 @@ category: moral-foundations
 description: Concern with suffering, compassion, and protection of the vulnerable (MFQ Care/Harm).
 citation: Graham, J., Nosek, B. A., Haidt, J., Iyer, R., Koleva, S., & Ditto, P. H. (2011). Mapping the
   moral domain. JPSP, 101(2).
-verification_status: verified
+verification_status: needs_verification
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: verified
-  notes: Citation is correct; no source URL on file yet.
+  outcome: pending_pi_decision
+  notes: Citation is correct; no source_url on file yet, so wording is unconfirmed.
 items:
 - item_id: care_1
   text: Compassion for those who are suffering is the most crucial virtue.

@@ -50,6 +50,19 @@ PENDING = {
     "ipip_50_item_big_five_factor_markers_extraversion",
     "ipip_50_item_big_five_factor_markers_intellect_imagination",
     "k10",
+    # Reviewer's correction disagrees with the cited publication (see below).
+    "team_psychological_safety_scale",
+    "mfq_fairness",
+    # Reviewer reported an item-ORDER problem, which is not applied here. Order
+    # feeds item_hash and decides what sim_item_N means in an export, so it is
+    # not a cosmetic change to make without a decision.
+    "rses",
+    "cbi_work_related_burnout",
+    # No reachable source on record, so "verified verbatim against the original
+    # publication" cannot honestly be claimed.
+    "bas_2",
+    "cage_questionnaire",
+    "mfq_care",
 }
 PENDING_NOTE = {
     "k10": (
@@ -57,6 +70,40 @@ PENDING_NOTE = {
         "source stem 'During the last 30 days, about how often did you feel'. Pending PI "
         "decision (spec 0007)."
     ),
+    "team_psychological_safety_scale": (
+        "Reviewer proposed 'It is safe to take a risk in this team' from a third-party "
+        "questionnaire (novopsych TPS-7). The cited source, Edmondson (1999), reads 'It is "
+        "safe to take a risk on this team' - the wording already stored here. Kept as "
+        "published; the two sources disagree and the citation should decide."
+    ),
+    "mfq_fairness": (
+        "Reviewer proposed 'treated differently from others'. The published MFQ30 reads "
+        "'treated differently than others' - the wording already stored here. Kept as "
+        "published. No source_url on file yet."
+    ),
+    "rses": (
+        "Reviewer maps stored items 1,2,3,6,7,9,10 to source item numbers 7,10,2,9,1,3,6: "
+        "the item ORDER does not match the source. Reverse-scoring corrections are applied; "
+        "the reordering is not, because order feeds item_hash and the sim_item_N export "
+        "columns. Pending a decision."
+    ),
+    "cbi_work_related_burnout": (
+        "Reviewer maps stored items 7,8,9,10,11,12,13 to source item numbers "
+        "11,13,12,7,8,9,10: the item ORDER does not match the source. Not applied; order "
+        "feeds item_hash and the sim_item_N export columns. Pending a decision."
+    ),
+    "bas_2": (
+        "Reviewer could not reach the recorded source URL and checked wording against the "
+        "publisher PDF; her note adds that BAS-2 has no reverse-scored items and is scored "
+        "by averaging all 10. A working source link is still needed before this can be "
+        "called verified."
+    ),
+    "cage_questionnaire": (
+        "Citation is correct but the recorded source URL is no longer accessible. The "
+        "reviewer's wording correction ('ought to' -> 'should') is applied; a working "
+        "source link is still needed before this can be called verified."
+    ),
+    "mfq_care": "Citation is correct; no source_url on file yet, so wording is unconfirmed.",
 }
 IPIP_NOTE = (
     "Reviewer confirms wording matches the source apart from the leading 'I' that CCR "
@@ -77,14 +124,19 @@ WORDING_FIX = {
         'I often do "my own thing."',
     "mfq_2_proportionality_3":
         "I think people who are more hardworking should end up with more money.",
-    "fair_3":
-        "Whether or not some people were treated differently from others.",
     "mspss_significant_other_2":
         "There is a special person with whom I can share joys and sorrows.",
     "shs_2":
         "Compared to most of my peers, I consider myself:",
-    "team_psychological_safety_scale_4":
-        "It is safe to take a risk in this team.",
+    # NOT applied, and deliberately so: two of the reviewer's wording corrections
+    # disagree with the publication each construct cites, so applying them would
+    # move a `verified` item AWAY from its source. Both are checked quotes:
+    #   fair_3  - published MFQ30 reads "treated differently than others"
+    #             (moralfoundations.org MFQ30), not "from others".
+    #   team_psychological_safety_scale_4 - Edmondson (1999), the cited paper and
+    #             the recorded source_url, reads "It is safe to take a risk on this
+    #             team"; "in this team" comes from a third-party questionnaire.
+    # Both constructs are in PENDING with the discrepancy recorded.
 }
 
 # One item moves subscale per the SCS-SF coding key. It is renumbered into the
@@ -116,8 +168,10 @@ SOURCE_URL_FIX = {
         "https://www.dropbox.com/scl/fi/5fw2nbvvswu6jfb/8-item-Grit-4.pdf?rlkey=htfr2ngc17y027uv9ebnj53zm&dl=0",
     "grit_s_perseverance_of_effort":
         "https://www.dropbox.com/scl/fi/5fw2nbvvswu6jfb/8-item-Grit-4.pdf?rlkey=htfr2ngc17y027uv9ebnj53zm&dl=0",
-    "team_psychological_safety_scale":
-        "https://novopsych.com/wp-content/uploads/2025/08/TPS-7-questionnaire.pdf",
+    # team_psychological_safety_scale is deliberately absent: the reviewer's
+    # replacement is a third-party questionnaire whose wording disagrees with the
+    # cited paper, and the recorded Edmondson PDF still resolves and still
+    # contains the scale.
     "dirty_dozen_machiavellianism": "https://psycnet.apa.org/fulltext/2010-10892-021.pdf",
     "dirty_dozen_narcissism": "https://psycnet.apa.org/fulltext/2010-10892-021.pdf",
     "dirty_dozen_psychopathy": "https://psycnet.apa.org/fulltext/2010-10892-021.pdf",
@@ -126,21 +180,25 @@ SOURCE_URL_FIX = {
     "individualism_horizontal": "https://psycnet.apa.org/fulltext/1997-38342-009.pdf",
 }
 
-# Citations the reviewer marked incomplete. Only the DOI she supplied verbatim is
-# added; nothing is looked up or inferred.
+# Citations the reviewer marked incomplete. Every DOI and page range below appears
+# verbatim in her notes; no bibliographic detail is looked up or inferred. The only
+# editorial change is expanding the journal abbreviation "JPSP", which the existing
+# citation already named.
 CITATION_FIX = {
+    # Reviewer supplied the full reference including "49(1), 71-75" and the DOI.
     "satisfaction_with_life":
         "Diener, E., Emmons, R. A., Larsen, R. J., & Griffin, S. (1985). The Satisfaction "
         "with Life Scale. Journal of Personality Assessment, 49(1), 71-75. "
         "https://doi.org/10.1207/s15327752jpa4901_13",
+    # Reviewer supplied the DOI only, so no page range is added here.
     "collectivism_horizontal":
         "Triandis, H. C., & Gelfand, M. J. (1998). Converging measurement of horizontal and "
         "vertical individualism and collectivism. Journal of Personality and Social "
-        "Psychology, 74(1), 118-128. https://doi.org/10.1037/0022-3514.74.1.118",
+        "Psychology, 74(1). https://doi.org/10.1037/0022-3514.74.1.118",
     "individualism_horizontal":
         "Triandis, H. C., & Gelfand, M. J. (1998). Converging measurement of horizontal and "
         "vertical individualism and collectivism. Journal of Personality and Social "
-        "Psychology, 74(1), 118-128. https://doi.org/10.1037/0022-3514.74.1.118",
+        "Psychology, 74(1). https://doi.org/10.1037/0022-3514.74.1.118",
 }
 
 QUESTIONNAIRE_FIX = {
@@ -148,31 +206,39 @@ QUESTIONNAIRE_FIX = {
     "individualism_horizontal": "Horizontal and Vertical Individualism and Collectivism Scale",
 }
 
-# Gaps the reviewer reported without a replacement: recorded, never guessed at.
+# Notes on constructs that DO reach `verified`. Gaps serious enough to hold a
+# construct back live in PENDING_NOTE instead.
 REVIEW_NOTE = {
-    "bas_2": "Reviewer could not reach the recorded source URL; wording checked against the "
-             "publisher PDF. A working source link is still needed.",
-    "cage_questionnaire": "Citation is correct but the recorded source URL is no longer "
-                          "accessible; a working source link is still needed.",
-    "mfq_care": "Citation is correct; no source URL on file yet.",
-    "mfq_fairness": "Citation is correct; no source URL on file yet.",
     "lot_r": "The scale's 4 filler items are correctly excluded from this construct; they are "
              "not scored in the source.",
-    "cbi_work_related_burnout": "Reviewer notes the source numbers these items 7 to 13.",
 }
 
 
 def load_review() -> dict:
-    """Read the reviewer's sheet. Returns {item_id: should_be_reverse_scored}."""
+    """Read the reviewer's sheet. Returns {item_id: should_be_reverse_scored}.
+
+    An unanswered cell is an error, not a False: treating a blank as "not
+    reverse-scored" would silently un-flag a reversed item, which is a scoring
+    change nobody asked for and nothing downstream would surface.
+    """
     ws = openpyxl.load_workbook(REVIEW_XLSX, data_only=True)["Items"]
     hdr = [c.value for c in ws[1]]
     idx = {h: i for i, h in enumerate(hdr) if h}
-    flags = {}
+    flags, bad = {}, []
     for r in ws.iter_rows(min_row=2, values_only=True):
         if not r[0]:
             continue
         item_id = str(r[idx["item_id"]]).strip()
-        flags[item_id] = str(r[idx["REVERSE-SCORED? (Y/N)"]] or "").strip().upper() == "Y"
+        answer = str(r[idx["REVERSE-SCORED? (Y/N)"]] or "").strip().upper()
+        if answer not in ("Y", "N"):
+            bad.append(f"{item_id}: reverse-scored cell is {answer or 'blank'!r}")
+            continue
+        flags[item_id] = answer == "Y"
+    if bad:
+        raise ValueError(
+            f"{len(bad)} item(s) have no usable reverse-scoring answer; resolve them with "
+            "the reviewer before applying:\n  " + "\n  ".join(bad[:20])
+        )
     return flags
 
 
@@ -190,7 +256,7 @@ def main() -> int:
 
     review_flags = load_review()
     files = sorted(CONSTRUCTS.glob("*.yaml"))
-    plan = {"new_version": [], "in_place": [], "unchanged": []}
+    plan = {"new_version": [], "in_place": [], "unchanged": [], "detail": []}
 
     for f in files:
         c = yaml.safe_load(f.read_text())
@@ -205,9 +271,12 @@ def main() -> int:
         for it in items:
             iid = it["item_id"]
             if iid in WORDING_FIX and it["text"] != WORDING_FIX[iid]:
+                plan["detail"].append(f"  {cid}/{iid}: text -> {WORDING_FIX[iid]!r}")
                 it["text"] = WORDING_FIX[iid]
                 changed_items = True
             if iid in review_flags and bool(it.get("reverse_scored", False)) != review_flags[iid]:
+                arrow = "no -> REVERSE" if review_flags[iid] else "REVERSE -> no"
+                plan["detail"].append(f"  {cid}/{iid}: {arrow}")
                 it["reverse_scored"] = review_flags[iid]
                 changed_items = True
 
@@ -278,13 +347,28 @@ def main() -> int:
                      "# Construct: versioned, append-only. Edits create a NEW version "
                      "(see registries rule).\n")
 
+    # A construct that no longer needs a new version must not leave one behind:
+    # a stale v2 would keep winning in the picker (newest version per slug).
+    stale = [
+        p for p in CONSTRUCTS.glob("*_v2.yaml")
+        if yaml.safe_load(p.read_text())["construct_id"] not in plan["new_version"]
+    ]
+    for p in stale:
+        print(f"stale version 2 file (no longer needed): {p.name}")
+        if write:
+            p.unlink()
+
+    print("\n".join(plan["detail"]) if plan["detail"] else "  (no item-level changes)")
     live_total = len(plan["new_version"]) + len(plan["in_place"]) + len(plan["unchanged"])
+    print(f"\nitem-level changes  : {len(plan['detail'])}")
     print(f"new version 2 files : {len(plan['new_version'])}")
     print(f"in-place metadata   : {len(plan['in_place'])}")
     print(f"already current     : {len(plan['unchanged'])}")
     print(f"\nlive constructs     : {live_total}")
     print(f"  verified          : {live_total - len(PENDING)}")
-    print(f"  pending PI        : {len(PENDING)} -> {sorted(PENDING)}")
+    print(f"  needs_verification: {len(PENDING)}")
+    for cid in sorted(PENDING):
+        print(f"      {cid}")
     if not write:
         print("\nDry run. Re-run with --write to apply.")
     return 0

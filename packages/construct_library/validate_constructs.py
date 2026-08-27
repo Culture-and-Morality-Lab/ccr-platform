@@ -59,7 +59,13 @@ def main() -> int:
         seen[key] = f
 
         if all(i.get("reverse_scored") for i in c["items"]):
-            print(f"  WARN {name}: ALL items reverse-scored - aggregate will be blocked under exclude_reversed.")
+            # v1 records reverse flags and does not adjust for them
+            # (adjustment_strategy: none), so a run on this construct scores in
+            # the OPPOSITE direction to its name. Runs say so at scoring time via
+            # CONSTRUCT_ALL_ITEMS_REVERSED; the design doc's exclude_reversed
+            # strategy, which would block the aggregate, is not implemented yet.
+            print(f"  WARN {name}: ALL items reverse-scored - a higher score means the text "
+                  "expresses the OPPOSITE of this construct (no reverse adjustment is applied).")
 
         if not errors or all(name not in e for e in errors):
             print(f"  OK   {name}  v{c['version']}  items={len(c['items'])}  hash={item_hash(c)[:16]}  [{c['verification_status']}]")
