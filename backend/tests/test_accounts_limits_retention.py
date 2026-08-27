@@ -232,6 +232,57 @@ def test_ttl_purge_removes_only_expired_anonymous_projects(client, monkeypatch):
         db.close()
 
 
+def test_ttl_purge_removes_expired_project_that_has_a_corpus_and_run(client, monkeypatch):
+    """The TTL sweep must survive a project with actual child rows.
+
+    The sweep above purges bare projects, which never exercises the delete
+    order: the cascade removes jobs, corpora, then the project, and jobs hold
+    a ForeignKey to corpora. Emitting DELETE FROM corpora first raises
+    ForeignKeyViolation on Postgres (and on SQLite with foreign_keys=ON), so
+    on a real deployment the hourly sweep would throw on the first anonymous
+    project that had ever been run and nothing would ever be purged.
+    """
+    from app.db import SessionLocal
+    from app.models import Corpus, Job, Project
+    from app.retention import purge_expired_anonymous
+
+    monkeypatch.setenv("CCR_ANON_TTL_HOURS", "24")
+    project = client.post("/api/projects", json={"name": "OldAnonWithRun"}).json()
+    corpus = upload(client, project["id"], "c.csv", csv_rows(5)).json()
+    job = wait_for_job(client, run_job(client, project["id"], corpus["id"], any_construct(client)["id"]).json()["id"])
+    assert job["status"] == "completed"
+
+    db = SessionLocal()
+    try:
+        db.get(Project, project["id"]).created_at = "2020-01-01T00:00:00+00:00"
+        db.get(Job, job["id"]).created_at = "2020-01-01T00:00:00+00:00"
+        db.commit()
+
+        assert purge_expired_anonymous(db) == 1
+        assert db.get(Project, project["id"]) is None
+        assert db.get(Corpus, corpus["id"]) is None  # child rows go too, not just the parent
+        assert db.get(Job, job["id"]) is None
+    finally:
+        db.close()
+
+
+def test_sqlite_enforces_foreign_keys():
+    """Guards the pragma in db.py.
+
+    SQLite ignores foreign keys unless foreign_keys=ON, so without this the
+    whole suite silently accepts FK violations that the deployed Postgres
+    rejects, and the two tests above stop proving anything.
+    """
+    from sqlalchemy import text
+
+    from app.db import engine
+
+    if engine.dialect.name != "sqlite":
+        pytest.skip("SQLite-only pragma")
+    with engine.connect() as conn:
+        assert conn.execute(text("PRAGMA foreign_keys")).scalar() == 1
+
+
 # ------------------------------------------------------------ saved-run cap
 def test_saved_run_cap_for_signed_in_users(client, monkeypatch):
     monkeypatch.setenv("CCR_USER_MAX_SAVED_RUNS", "2")

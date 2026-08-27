@@ -58,11 +58,19 @@ else:
     @event.listens_for(engine, "connect")
     def _sqlite_pragmas(dbapi_conn, _record):
         """WAL lets the API read while the job worker writes; busy_timeout
-        absorbs brief lock contention instead of raising immediately."""
+        absorbs brief lock contention instead of raising immediately.
+
+        foreign_keys is OFF by default in SQLite, which silently makes the
+        dev/test backend more permissive than the deployed one: an ordering
+        bug that Postgres rejects with a ForeignKeyViolation passes locally
+        and in CI. Turning it on keeps both backends honest about the same
+        constraints.
+        """
         cur = dbapi_conn.cursor()
         cur.execute("PRAGMA journal_mode=WAL")
         cur.execute("PRAGMA busy_timeout=5000")
         cur.execute("PRAGMA synchronous=NORMAL")
+        cur.execute("PRAGMA foreign_keys=ON")
         cur.close()
 
 

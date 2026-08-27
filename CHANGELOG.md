@@ -31,6 +31,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   texts, with the machine and date they were measured on.
 
 ### Fixed
+- Deleting a project works again on the deployed instances, and expired
+  anonymous projects are actually purged. Both go through one cascade that
+  removed rows in an order the database could reject, so "Delete project"
+  returned a server error and the hourly retention sweep stopped on the first
+  expired project that had ever been run, leaving anonymous projects and runs
+  in place past their 24 hour window. Uploaded files were never affected: an
+  anonymous run's corpus is still deleted the moment the run finishes. Local
+  SQLite installs never hit either bug.
 - PsyEmbedding models now load through the standard sentence-transformers path.
   The lab's four Hugging Face repos were missing the 1_Pooling config their
   modules.json references; the fix was pushed upstream (2026-08-22), the

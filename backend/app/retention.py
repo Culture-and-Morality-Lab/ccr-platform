@@ -55,10 +55,20 @@ def delete_project_cascade(db: Session, project: Project) -> dict:
     for job in jobs:
         storage.delete(job.result_path)
 
+    # Delete child-first, flushing between levels. The flushes are what make
+    # this correct, not the call order: within a single flush SQLAlchemy sorts
+    # DELETEs by mapper dependency, and Job has no ORM relationship to Corpus
+    # (only a raw ForeignKey column), so it is free to emit DELETE FROM corpora
+    # before DELETE FROM jobs and trip jobs_corpus_id_fkey. Postgres enforces
+    # that constraint; SQLite only does with foreign_keys=ON (see db.py). One
+    # transaction still commits the whole cascade, so a failure rolls it all
+    # back rather than stranding a half-deleted project.
     for job in jobs:
         db.delete(job)
+    db.flush()
     for corpus in corpora:
         db.delete(corpus)
+    db.flush()
     db.delete(project)
     db.commit()
     return {"corpora": len(corpora), "runs": len(jobs)}
