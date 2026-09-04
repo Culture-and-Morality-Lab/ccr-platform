@@ -236,7 +236,8 @@ def test_models_endpoint_from_registry(client):
     assert "all-minilm-l6-v2" in ids and "e5-large-v2" in ids and "multilingual-e5-base" in ids
     defaults = [m for m in models if m["default"]]
     assert len(defaults) == 1 and defaults[0]["id"] == "all-minilm-l6-v2"
-    assert client.get("/api/languages").json()[0] == "en"
+    # {code, name} since 2026-09-04: the code is still what the UI posts.
+    assert client.get("/api/languages").json()[0] == {"code": "en", "name": "English"}
 
 
 # --------------------------------------------------- spec 0004: construct library

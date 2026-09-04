@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Changed
+- Languages are shown by name instead of ISO code: the text-language selector,
+  the runs table, the model list, and the language warnings now say "Arabic"
+  rather than "ar". Codes are unchanged everywhere they are recorded (run
+  metadata, the results CSV, construct files), so exports and reproduction
+  scripts are byte-identical to before. Requested by Mohammad Atari.
 - Construct library verified against the source publications. All 525 items across the
   94 constructs were reviewed (wording, reverse-scoring keys, subscale grouping,
   citations); 88 constructs are now marked verified and show who reviewed them and

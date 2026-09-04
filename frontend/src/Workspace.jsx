@@ -22,7 +22,9 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   const [oppositeId, setOppositeId] = useState("");
   const [metric, setMetric] = useState("cosine");
   const [modelName, setModelName] = useState("");
-  const [languages, setLanguages] = useState(["en"]);
+  // [{code, name}] from the API: the code is what we post and store, the name
+  // is what a human reads (PI request 2026-09-04).
+  const [languages, setLanguages] = useState([{ code: "en", name: "English" }]);
   const [language, setLanguage] = useState("en");
   const [uploading, setUploading] = useState(false);
   const [running, setRunning] = useState(false);
@@ -59,6 +61,13 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
     () => api.listJobs(project.id).then(setJobs).catch(() => {}),
     [project.id]
   );
+
+  // Codes are what runs record; this is display only, and an unknown code
+  // renders as itself rather than disappearing.
+  function languageName(code) {
+    if (!code) return "";
+    return languages.find((l) => l.code === code)?.name || code;
+  }
 
   // A deleted construct must also leave any selection that referenced it,
   // otherwise the run form would post an id the backend no longer resolves.
@@ -543,8 +552,8 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
             Text language
             <select value={language} onChange={(e) => setLanguage(e.target.value)}>
               {languages.map((l) => (
-                <option key={l} value={l}>
-                  {l}
+                <option key={l.code} value={l.code}>
+                  {l.name}
                 </option>
               ))}
             </select>
@@ -634,7 +643,7 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
                     <td>{j.corpus_filename}</td>
                     <td>{(j.construct_names?.length ? j.construct_names : [j.construct_name]).join(" + ")}</td>
                     <td className="muted small">{j.model_name}</td>
-                    <td className="muted small">{j.language}</td>
+                    <td className="muted small">{languageName(j.language)}</td>
                     <td>
                       {j.status === "running" ? (
                         <div className="progress-track" title={`${Math.round(j.progress * 100)}%`}>

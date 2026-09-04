@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .languages import display, display_set
+
 MIN_TOKENS_STABLE = 4          # texts below this are flagged TEXT_TOO_SHORT
 DETECT_MIN_TOKENS = 5          # rows shorter than this are skipped for detection
 DETECT_SAMPLE_MAX = 200        # rows sampled for corpus-level detection
@@ -117,7 +119,7 @@ def detect_corpus_language(texts: list[str], selected: str) -> tuple[LanguageRes
             warning(
                 "LANGUAGE_UNCERTAIN",
                 "info",
-                f"Detected language is uncertain (top candidate '{top_lang}' at "
+                f"Detected language is uncertain (top candidate {display(top_lang)} at "
                 f"{confidence:.0%} of sampled rows); interpret language checks with care.",
             )
         )
@@ -126,8 +128,8 @@ def detect_corpus_language(texts: list[str], selected: str) -> tuple[LanguageRes
             warning(
                 "LANGUAGE_MISMATCH",
                 "warning",
-                f"You selected '{selected}', but the corpus appears to be '{top_lang}' "
-                f"({confidence:.0%} of {len(detectable)} sampled rows).",
+                f"You selected {display(selected)}, but the corpus appears to be "
+                f"{display(top_lang)} ({confidence:.0%} of {len(detectable)} sampled rows).",
                 detected_language=top_lang,
                 selected_language=selected,
             )
@@ -139,12 +141,12 @@ def model_language_warning(selected: str, model_id: str, supported: frozenset[st
                            language_set_name: str | None) -> dict | None:
     if not supported or selected.lower() in supported:
         return None
-    label = f"the '{language_set_name}' language set" if language_set_name else \
-        f"{sorted(supported)}"
+    label = display_set(language_set_name) if language_set_name else \
+        ", ".join(display(c) for c in sorted(supported))
     return warning(
         "MODEL_LANGUAGE_UNSUPPORTED",
         "warning",
-        f"The selected model supports {label}, but you selected '{selected}'. "
+        f"The selected model supports {label}, but you selected {display(selected)}. "
         "Switch to a multilingual model or proceed with caution.",
         selected_language=selected,
         model_id=model_id,

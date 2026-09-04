@@ -25,7 +25,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from . import admin as admin_module
-from . import auth, auth_google, retention, storage
+from . import auth, auth_google, languages as lang_names, retention, storage
 from . import item_generation
 from . import jobs as jobs_module
 from . import registry
@@ -250,7 +250,14 @@ def list_models():
             "id": m.id,
             "label": m.display_name,
             "default": m.default,
-            "languages": (m.language_set_name or ", ".join(sorted(m.supported_languages)) or "unspecified"),
+            # Display string: named sets keep their registry name, explicit
+            # lists are rendered as language NAMES rather than codes.
+            "languages": (
+                lang_names.display_set(m.language_set_name)
+                if m.language_set_name
+                else ", ".join(lang_names.display(c) for c in sorted(m.supported_languages))
+                or "unspecified"
+            ),
             "speed_tier": m.speed_tier,
             "quality_tier": m.quality_tier,
             "warnings": list(m.user_warnings),
@@ -261,7 +268,10 @@ def list_models():
 
 @app.get("/api/languages")
 def list_languages():
-    return SELECTABLE_LANGUAGES
+    """Selectable languages as {code, name}. The code stays the value the UI
+    posts and every record stores; the name is only what a human reads (PI
+    request 2026-09-04)."""
+    return [{"code": c, "name": lang_names.display(c)} for c in SELECTABLE_LANGUAGES]
 
 
 # ------------------------------------------------------------------ accounts
