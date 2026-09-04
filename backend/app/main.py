@@ -396,8 +396,31 @@ def _initial_role(db: Session, email: str, invite_token: str | None = None) -> s
     return "external"
 
 
+def _adopt_anonymous_work(db: Session, request: Request, user_id: str) -> dict:
+    """Move this browser's anonymous projects and constructs onto the account.
+
+    Anonymous work is scoped to a session id (spec 0009), so signing in would
+    otherwise strand whatever the visitor just built - and the UI promises the
+    opposite ("sign in to keep it"). Adoption also preserves the
+    anonymous-then-sign-in continuity that _require_project_access used to get
+    by leaving the whole anonymous bucket open to everyone.
+    """
+    owner = auth.owner_key(request, None)
+    if owner == auth.ANON_PREFIX:  # no session cookie: nothing of theirs exists
+        return {"projects": 0, "constructs": 0}
+    projects = db.query(Project).filter(Project.owner_user_id == owner).all()
+    constructs = db.query(Construct).filter(Construct.owner_user_id == owner).all()
+    for row in (*projects, *constructs):
+        row.owner_user_id = user_id
+    if projects or constructs:
+        db.commit()
+    return {"projects": len(projects), "constructs": len(constructs)}
+
+
 @app.post("/api/auth/register", status_code=201)
-def register(body: RegisterIn, response: Response, db: Session = Depends(get_db)):
+def register(
+    body: RegisterIn, request: Request, response: Response, db: Session = Depends(get_db)
+):
     email = body.email.strip().lower()
     if not auth.valid_email(email):
         raise HTTPException(400, "Please enter a valid email address.")
@@ -424,20 +447,24 @@ def register(body: RegisterIn, response: Response, db: Session = Depends(get_db)
     )
     db.add(user)
     db.commit()
+    adopted = _adopt_anonymous_work(db, request, user.id)
     _set_session_cookie(response, user)
-    return {"signed_in": True, "name": user.name, "email": user.email}
+    return {"signed_in": True, "name": user.name, "email": user.email, "adopted": adopted}
 
 
 @app.post("/api/auth/login")
-def login(body: LoginIn, response: Response, db: Session = Depends(get_db)):
+def login(
+    body: LoginIn, request: Request, response: Response, db: Session = Depends(get_db)
+):
     email = body.email.strip().lower()
     user = db.query(User).filter_by(email=email).first()
     if user is not None and not user.password_hash:
         raise HTTPException(401, "This account uses Google sign-in - use the Google button.")
     if user is None or not auth.verify_password(body.password, user.password_hash):
         raise HTTPException(401, "Incorrect email or password.")
+    adopted = _adopt_anonymous_work(db, request, user.id)
     _set_session_cookie(response, user)
-    return {"signed_in": True, "name": user.name, "email": user.email}
+    return {"signed_in": True, "name": user.name, "email": user.email, "adopted": adopted}
 
 
 @app.get("/api/auth/google/login")
@@ -501,28 +528,28 @@ def logout(response: Response):
 
 
 # --------------------------------------------------------------- projects
-def _visible_owners(user: dict | None) -> tuple[str, ...]:
-    """Who a viewer may see projects for. Signed-in users see ONLY their own
-    projects; anonymous viewers see the shared anonymous bucket
-    (owner_user_id == ""). A signed-in user must never see other people's work,
-    including the anonymous demo projects. (Signed-in users used to also get the
-    anonymous bucket, which surfaced everyone's anonymous projects to any
-    signed-in account - the privacy leak this fixes.)"""
-    return (user["id"],) if user else ("",)
+def _require_project_access(request: Request, project: Project, user: dict | None) -> None:
+    """Every project is gated to its owner, signed-in or anonymous.
 
-
-def _require_project_access(project: Project, user: dict | None) -> None:
-    # Owned projects are gated to their owner. Anonymous projects (owner "")
-    # stay open by design: they have no identity to gate by, and a visitor who
-    # starts anonymously then signs in mid-session must keep working on the
-    # project they just created. They simply never appear in a signed-in user's
-    # project LIST (see _visible_owners) - that listing leak is what was fixed.
-    if project.owner_user_id and (user is None or project.owner_user_id != user["id"]):
+    Anonymous visitors now carry a session id (spec 0009), so "anonymous" is no
+    longer one shared bucket that anyone may open. Legacy rows with a bare ""
+    owner predate that id and belong to no reachable session; they stay
+    readable so a visit already in flight is not broken mid-session, and the
+    TTL sweep removes them.
+    """
+    owner = project.owner_user_id
+    if not owner:
+        return  # legacy pre-session anonymous row; purged by TTL
+    if owner != auth.owner_key(request, user):
         raise HTTPException(403, "This project belongs to another account.")
 
 
 @app.get("/api/projects", response_model=list[ProjectOut])
-def list_projects(db: Session = Depends(get_db), user: dict | None = Depends(auth.get_current_user)):
+def list_projects(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
     """Projects ordered by last activity (latest run, else creation) - the
     project a researcher wants is almost always the one they last worked on."""
     from sqlalchemy import func
@@ -535,7 +562,7 @@ def list_projects(db: Session = Depends(get_db), user: dict | None = Depends(aut
         .group_by(Job.project_id)
         .all()
     }
-    rows = db.query(Project).filter(Project.owner_user_id.in_(_visible_owners(user))).all()
+    rows = db.query(Project).filter(Project.owner_user_id == auth.owner_key(request, user)).all()
     out = []
     for p in rows:
         last, count = activity.get(p.id, (None, 0))
@@ -557,13 +584,20 @@ def list_projects(db: Session = Depends(get_db), user: dict | None = Depends(aut
 @app.post("/api/projects", response_model=ProjectOut, status_code=201)
 def create_project(
     body: ProjectCreate,
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     user: dict | None = Depends(auth.get_current_user),
 ):
     project = Project(
         name=body.name.strip(),
         description=body.description.strip(),
-        owner_user_id=user["id"] if user else "",  # "" = anonymous (TTL purge applies)
+        # Signed in: the user id. Anonymous: "anon:<session id>", minting the
+        # session cookie on this first write (spec 0009). The TTL purge applies
+        # to anonymous rows either way.
+        owner_user_id=(
+            user["id"] if user else auth.ensure_anon_owner(request, response)
+        ),
     )
     db.add(project)
     db.commit()
@@ -582,13 +616,14 @@ def create_project(
 def patch_project(
     project_id: str,
     body: ProjectPatch,
+    request: Request,
     db: Session = Depends(get_db),
     user: dict | None = Depends(auth.get_current_user),
 ):
     """Archive/unarchive - reversible, no data loss. Archived projects collapse
     into the sidebar's Archived section and keep all datasets and runs."""
     project = _get_or_404(db, Project, project_id)
-    _require_project_access(project, user)
+    _require_project_access(request, project, user)
     if body.archived is not None:
         project.archived = bool(body.archived)
     db.commit()
@@ -606,6 +641,7 @@ def patch_project(
 @app.delete("/api/projects/{project_id}", status_code=204)
 def delete_project(
     project_id: str,
+    request: Request,
     db: Session = Depends(get_db),
     user: dict | None = Depends(auth.get_current_user),
 ):
@@ -615,7 +651,7 @@ def delete_project(
     import logging
 
     project = _get_or_404(db, Project, project_id)
-    _require_project_access(project, user)
+    _require_project_access(request, project, user)
     counts = retention.delete_project_cascade(db, project)
     logging.getLogger("ccr.projects").info(
         "project deleted: id=%s name=%r corpora=%d runs=%d",
@@ -654,11 +690,12 @@ def list_corpora(project_id: str, db: Session = Depends(get_db)):
 async def upload_corpus(
     project_id: str,
     file: UploadFile,
+    request: Request,
     db: Session = Depends(get_db),
     user: dict | None = Depends(auth.get_current_user),
 ):
     project = _get_or_404(db, Project, project_id)
-    _require_project_access(project, user)
+    _require_project_access(request, project, user)
 
     suffix = Path(file.filename or "upload.csv").suffix.lower()
     if suffix not in ALLOWED_SUFFIXES:
@@ -751,26 +788,31 @@ def _latest_seed_versions(rows: list[Construct]) -> list[Construct]:
     return [c for c in rows if not (c.is_seed and c.construct_slug) or id(c) in keep]
 
 
-def _construct_visible_to(user: dict | None):
+def _construct_visible_to(request: Request, user: dict | None):
     """Rows a viewer may see: every seed, plus custom constructs they own.
 
-    Same rule as _visible_owners for projects - a signed-in user sees ONLY
-    their own custom constructs, an anonymous viewer sees the shared anonymous
-    bucket (owner_user_id == ""). Before spec 0008 Construct had no owner at
-    all, so every custom construct anyone typed was listed to everyone.
+    Same rule as projects - ownership is the viewer's owner_key, which is their
+    user id when signed in and "anon:<session id>" otherwise (spec 0009). A
+    visitor with no session cookie owns nothing and sees only the library.
+    Before spec 0008 Construct had no owner at all and every custom construct
+    anyone typed was listed to everyone.
     """
-    owner = user["id"] if user else ""
-    return or_(Construct.is_seed.is_(True), Construct.owner_user_id == owner)
+    return or_(
+        Construct.is_seed.is_(True),
+        Construct.owner_user_id == auth.owner_key(request, user),
+    )
 
 
 @app.get("/api/constructs", response_model=list[ConstructOut])
 def list_constructs(
-    db: Session = Depends(get_db), user: dict | None = Depends(auth.get_current_user)
+    request: Request,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
 ):
     rows = (
         db.query(Construct)
         .filter(Construct.hidden.is_(False))
-        .filter(_construct_visible_to(user))
+        .filter(_construct_visible_to(request, user))
         .order_by(Construct.is_seed.desc(), Construct.name)
         .all()
     )
@@ -825,9 +867,24 @@ def delete_construct(
 @app.post("/api/constructs", response_model=ConstructOut, status_code=201)
 def create_construct(
     body: ConstructCreate,
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     user: dict | None = Depends(auth.get_current_user),
 ):
+    # Construct creation was the one unbounded, ungated, permanent write path
+    # in the anonymous tier (spec 0009). Cap it per day the way runs are
+    # capped. Like the run counter this is a signed cookie, so it stops casual
+    # over-creation rather than a determined script; the TTL sweep is what
+    # actually bounds storage.
+    if user is None:
+        cap = auth.anon_max_constructs_per_day()
+        if auth.constructs_used_today(request) >= cap:
+            raise HTTPException(
+                429,
+                f"You can create {cap} custom constructs a day without an account. "
+                "Sign in (top right) to lift this - accounts are free.",
+            )
     items = [i.strip() for i in body.items if i.strip()]
     if not items:
         raise HTTPException(400, "Construct needs at least one non-empty item.")
@@ -846,10 +903,21 @@ def create_construct(
         # AI-generated drafts carry provenance (model, prompt version, date);
         # the label persists even after the researcher edits items.
         generation_json=json.dumps(body.generation.model_dump()) if body.generation else "",
-        owner_user_id=user["id"] if user else "",  # "" = anonymous (spec 0008)
+        owner_user_id=(
+            user["id"] if user else auth.ensure_anon_owner(request, response)
+        ),
     )
     db.add(construct)
     db.commit()
+    if user is None:
+        response.set_cookie(
+            auth.CONSTRUCTS_COOKIE_NAME,
+            auth.construct_counter_token(auth.constructs_used_today(request) + 1),
+            httponly=True,
+            samesite="lax",
+            secure=auth.cookies_secure(),
+            max_age=24 * 3600,
+        )
     return _construct_out(construct)
 
 
@@ -945,7 +1013,7 @@ def create_job(
     user: dict | None = Depends(auth.get_current_user),
 ):
     project = _get_or_404(db, Project, body.project_id)
-    _require_project_access(project, user)
+    _require_project_access(request, project, user)
     corpus = _get_or_404(db, Corpus, body.corpus_id)
 
     # One run may score several constructs against the same corpus (the corpus

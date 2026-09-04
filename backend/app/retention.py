@@ -20,11 +20,12 @@ import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from . import auth, storage
 from .db import DATA_DIR, SessionLocal
-from .models import Corpus, Job, Project
+from .models import Construct, Corpus, Job, Project
 
 logger = logging.getLogger("ccr.retention")
 
@@ -82,7 +83,11 @@ def purge_expired_anonymous(db: Session) -> int:
     cutoff = (datetime.now(timezone.utc) - timedelta(hours=ttl)).isoformat(timespec="seconds")
 
     purged = 0
-    candidates = db.query(Project).filter(Project.owner_user_id == "").all()
+    candidates = (
+        db.query(Project)
+        .filter(auth.anonymous_owner_clause(Project.owner_user_id))
+        .all()
+    )
     for project in candidates:
         latest_job = (
             db.query(Job.created_at)
@@ -101,11 +106,68 @@ def purge_expired_anonymous(db: Session) -> int:
     return purged
 
 
+def purge_expired_anonymous_constructs(db: Session) -> int:
+    """Delete anonymous custom constructs older than the TTL.
+
+    Custom constructs were the one anonymous artifact with no lifecycle at all:
+    corpora go the moment a run finishes and projects expire on this TTL, but a
+    construct anyone typed stayed in the database and in the picker forever, so
+    a public instance accumulated them without bound (spec 0009).
+
+    Constructs are not owned by a project, so this is a separate sweep. A
+    construct a run still references is left alone: Job.construct_id is a
+    foreign key and the run's metadata is its reproducibility record. Run this
+    AFTER the project sweep, which removes the anonymous runs that were holding
+    most of them.
+    """
+    ttl = auth.anon_ttl_hours()
+    if ttl <= 0:
+        return 0
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=ttl)).isoformat(timespec="seconds")
+
+    expired = (
+        db.query(Construct)
+        .filter(Construct.is_seed.is_(False))
+        .filter(auth.anonymous_owner_clause(Construct.owner_user_id))
+        .filter(Construct.created_at < cutoff)
+        .all()
+    )
+    purged = 0
+    for construct in expired:
+        still_used = (
+            db.query(Job.id)
+            .filter(
+                or_(
+                    Job.construct_id == construct.id,
+                    Job.opposite_construct_id == construct.id,
+                    Job.construct_ids_json.contains(construct.id),
+                )
+            )
+            .first()
+        )
+        if still_used:
+            continue
+        db.delete(construct)
+        purged += 1
+    if purged:
+        db.commit()
+        logger.info("purged %d expired anonymous construct(s) (ttl=%dh)", purged, ttl)
+    return purged
+
+
+def purge_expired_anonymous_all(db: Session) -> dict:
+    """Both anonymous sweeps, in the order that lets constructs actually go:
+    projects first (which removes the runs referencing them), constructs after."""
+    projects = purge_expired_anonymous(db)
+    constructs = purge_expired_anonymous_constructs(db)
+    return {"projects": projects, "constructs": constructs}
+
+
 def _loop(interval_seconds: int) -> None:
     while not _stop.wait(interval_seconds):
         db = SessionLocal()
         try:
-            purge_expired_anonymous(db)
+            purge_expired_anonymous_all(db)
         except Exception:
             logger.exception("anonymous purge failed; will retry next cycle")
         finally:

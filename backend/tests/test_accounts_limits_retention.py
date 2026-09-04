@@ -213,10 +213,14 @@ def test_ttl_purge_removes_only_expired_anonymous_projects(client, monkeypatch):
     from app.retention import purge_expired_anonymous
 
     monkeypatch.setenv("CCR_ANON_TTL_HOURS", "24")
-    old_anon = client.post("/api/projects", json={"name": "OldAnon"}).json()
-    fresh_anon = client.post("/api/projects", json={"name": "FreshAnon"}).json()
+    # Sign in FIRST: registering adopts this browser's anonymous work into the
+    # account (spec 0009), so anonymous projects made before it would stop
+    # being anonymous and would never be TTL candidates.
     register(client, "owner@test.edu")
     owned = client.post("/api/projects", json={"name": "OwnedOld"}).json()
+    client.post("/api/auth/logout")
+    old_anon = client.post("/api/projects", json={"name": "OldAnon"}).json()
+    fresh_anon = client.post("/api/projects", json={"name": "FreshAnon"}).json()
 
     db = SessionLocal()
     try:

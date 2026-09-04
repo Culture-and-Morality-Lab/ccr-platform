@@ -164,6 +164,23 @@ score, breaking cross-checks) and auto-negating reverse-scored items (kept as v1
 recorded, not applied - paper footnote 27 is a later option). Revisit: lab validation may fix
 one metric, or promote reverse-item negation.
 
+## 2026-09-04 - Anonymous identity is a session cookie; gate persistence, not creation (spec 0009)
+Anonymous visitors get a signed session-id cookie and own their rows as "anon:<id>", so one
+owner_user_id column carries both signed-in and anonymous ownership and the shared-anonymous
+bucket is retired for projects and constructs at once. Signing in ADOPTS that session's rows
+into the account: without it, scoping anonymous work to a session would strand it at sign-in,
+and it also replaces the reason 049074a deliberately left anonymous projects open to everyone.
+Custom constructs now expire on the same TTL as anonymous projects - they were the only
+anonymous artifact with no lifecycle, which is what actually filled the public picker, not the
+visibility bug. Rejected: requiring an account to CREATE a construct. Trying CCR against a
+construct that is not in the library is the most valuable thing a visiting researcher can do,
+and once constructs are ephemeral the wall buys nothing; the product gates persistence
+instead ("saved to this browser, sign in to keep it"), which asks at the point value is
+already demonstrated. The daily creation cap is a signed cookie like the run counter, so it
+bounds casual over-creation, not a determined script - the TTL sweep is the real storage
+bound. Note for future work: anything that treats owner_user_id == "" as "anonymous" must use
+auth.is_anonymous_owner / anonymous_owner_clause, or anonymous data silently stops expiring.
+
 ## 2026-09-04 - Custom constructs are owner-scoped; deletion is soft when a run used it (spec 0008)
 Construct gains owner_user_id, mirroring Project. Visibility follows the same rule as
 _visible_owners: seeds are public, a signed-in user sees only their own custom constructs,

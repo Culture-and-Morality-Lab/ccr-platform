@@ -6,6 +6,10 @@ import ResultsView from "./ResultsView.jsx";
 export default function Workspace({ project, auth, onAuthRefresh, onProjectChanged, onProjectDeleted }) {
   const [corpora, setCorpora] = useState([]);
   const [constructs, setConstructs] = useState([]);
+  // Set after an ANONYMOUS visitor saves a construct: their work is scoped to
+  // this browser session and expires with it, so say so at the moment it is
+  // saved rather than letting them discover it later.
+  const [savedAnonConstruct, setSavedAnonConstruct] = useState("");
   const [models, setModels] = useState([]);
   const [jobs, setJobs] = useState([]);
 
@@ -502,9 +506,25 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
               setConstructs(list);
               toggleConstruct(created.id);
               setConstructFormTab(null);
+              if (auth && !auth.signed_in) setSavedAnonConstruct(created.name);
             }}
             onError={setError}
           />
+        )}
+        {savedAnonConstruct && (
+          <p className="hint keep-notice">
+            <strong>{savedAnonConstruct}</strong> is saved to this browser only, and is
+            removed automatically after 24 hours. Sign in (top right) to keep it - your
+            constructs and projects from this session move to your account, and accounts
+            are free.{" "}
+            <button
+              type="button"
+              className="linklike"
+              onMouseDown={() => setSavedAnonConstruct("")}
+            >
+              Dismiss
+            </button>
+          </p>
         )}
       </div>
 

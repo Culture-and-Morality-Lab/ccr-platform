@@ -35,6 +35,13 @@ from fastapi import Request
 
 COOKIE_NAME = "ccr_session"
 RUNS_COOKIE_NAME = "ccr_runs"
+ANON_COOKIE_NAME = "ccr_anon"
+CONSTRUCTS_COOKIE_NAME = "ccr_constructs"
+# Anonymous owners are stored as "anon:<session id>" in owner_user_id, so one
+# column carries both signed-in and anonymous ownership (spec 0009). Rows with a
+# bare "" predate the anonymous session id and belong to nobody reachable; the
+# TTL sweep removes them.
+ANON_PREFIX = "anon:"
 _SECRET = (os.environ.get("CCR_SESSION_SECRET") or secrets.token_hex(32)).encode()
 
 # Headroom for 200 rows of long documents (200 x 8 KB transcripts ~ 1.6 MB sat
@@ -43,6 +50,7 @@ _SECRET = (os.environ.get("CCR_SESSION_SECRET") or secrets.token_hex(32)).encode
 ANON_MAX_BYTES_DEFAULT = 5 * 1024 * 1024
 ANON_MAX_ROWS_DEFAULT = 200  # PI decision 2026-07-14 (was 500)
 ANON_MAX_RUNS_PER_DAY_DEFAULT = 3
+ANON_MAX_CONSTRUCTS_PER_DAY_DEFAULT = 5
 USER_MAX_SAVED_RUNS_DEFAULT = 15
 ANON_TTL_HOURS_DEFAULT = 0  # 0 = purge disabled (local dev); deployments set 24
 
@@ -61,6 +69,12 @@ def anon_max_rows() -> int:
 
 def anon_max_runs_per_day() -> int:
     return int(os.environ.get("CCR_ANON_MAX_RUNS_PER_DAY", ANON_MAX_RUNS_PER_DAY_DEFAULT))
+
+
+def anon_max_constructs_per_day() -> int:
+    return int(
+        os.environ.get("CCR_ANON_MAX_CONSTRUCTS_PER_DAY", ANON_MAX_CONSTRUCTS_PER_DAY_DEFAULT)
+    )
 
 
 def user_max_saved_runs() -> int:
@@ -265,3 +279,80 @@ def runs_used_today(request: Request) -> int:
 
 def run_counter_token(count: int) -> str:
     return sign_payload({"d": _today(), "n": int(count)})
+
+
+# ------------------------------------ anonymous constructs: daily create cap
+def constructs_used_today(request: Request) -> int:
+    data = verify_payload(request.cookies.get(CONSTRUCTS_COOKIE_NAME))
+    if not data or data.get("d") != _today():
+        return 0
+    try:
+        return max(0, int(data.get("n", 0)))
+    except (TypeError, ValueError):
+        return 0
+
+
+def construct_counter_token(count: int) -> str:
+    return sign_payload({"d": _today(), "n": int(count)})
+
+
+# ---------------------------------------------- anonymous session identity
+def anon_session_id(request: Request) -> str:
+    """Stable id for one anonymous visitor, from a signed cookie.
+
+    Returns "" when the visitor has no cookie yet: they have created nothing,
+    so there is nothing of theirs to scope to.
+    """
+    data = verify_payload(request.cookies.get(ANON_COOKIE_NAME))
+    return str((data or {}).get("sid", "")) if data else ""
+
+
+def owner_key(request: Request, user: dict | None) -> str:
+    """The owner_user_id value that identifies this viewer's own rows.
+
+    Signed in: the user id. Anonymous: "anon:<session id>". A visitor with no
+    session cookie gets the bare prefix, which matches no stored row - so they
+    see the library and nothing else, and in particular none of the legacy ""
+    rows created before anonymous sessions existed.
+    """
+    if user:
+        return user["id"]
+    return ANON_PREFIX + anon_session_id(request)
+
+
+def is_anonymous_owner(owner: str) -> bool:
+    """True for both anonymous shapes: legacy "" and "anon:<id>"."""
+    return owner == "" or owner.startswith(ANON_PREFIX)
+
+
+def anonymous_owner_clause(column):
+    """SQL filter matching rows owned by ANY anonymous visitor.
+
+    Two shapes exist: "anon:<session id>" since spec 0009, and a bare "" from
+    before it. Retention and the admin counters must catch both or anonymous
+    data stops expiring.
+    """
+    from sqlalchemy import or_
+
+    return or_(column == "", column.startswith(ANON_PREFIX))
+
+
+def set_anon_session_cookie(response, sid: str) -> None:
+    response.set_cookie(
+        ANON_COOKIE_NAME,
+        sign_payload({"sid": sid}),
+        httponly=True,
+        samesite="lax",
+        secure=cookies_secure(),
+        max_age=30 * 24 * 3600,  # outlives the data TTL; the sweep owns deletion
+    )
+
+
+def ensure_anon_owner(request: Request, response) -> str:
+    """Owner key for an anonymous visitor who is about to CREATE something,
+    minting the session cookie on first write."""
+    sid = anon_session_id(request)
+    if not sid:
+        sid = secrets.token_hex(16)
+        set_anon_session_cookie(response, sid)
+    return ANON_PREFIX + sid

@@ -66,12 +66,103 @@ def test_signed_in_user_does_not_see_other_peoples_custom_constructs(client):
     assert mine not in anon and theirs not in anon
 
 
-def test_signed_in_user_does_not_see_anonymous_constructs(client):
-    """Anonymous constructs are the shared demo bucket; signing in must not
-    surface them (this is what the reporter actually saw)."""
-    anon_construct = make_construct(client, "Left behind by a visitor")
+def test_signed_in_user_does_not_see_another_visitors_anonymous_constructs(client):
+    """What the reporter actually saw: a stranger's anonymous construct showing
+    up in their signed-in picker. A SEPARATE client is a separate browser, so
+    its anonymous session is a different one (spec 0009)."""
+    with TestClient(app) as stranger:
+        theirs = make_construct(stranger, "Left behind by a visitor")
+
     register(client, "s0008-fresh@test.edu")
-    assert anon_construct not in listed_ids(client)
+    assert theirs not in listed_ids(client)
+    client.post("/api/auth/logout")
+    # ...and not to a different anonymous visitor either
+    assert theirs not in listed_ids(client)
+
+
+def test_signing_in_adopts_this_browsers_anonymous_constructs(client):
+    """The other half of scoping: your OWN anonymous work has to follow you
+    into the account, or "sign in to keep it" would be a lie."""
+    mine = make_construct(client, "Drafted before signing up")
+    register(client, "s0009-adopter@test.edu")
+    assert mine in listed_ids(client), "anonymous work must transfer on sign-in"
+
+
+def test_anonymous_construct_creation_is_capped_per_day(client):
+    """Construct creation was the one unbounded anonymous write path."""
+    from app import auth
+
+    cap = auth.anon_max_constructs_per_day()
+    for i in range(cap):
+        assert (
+            client.post(
+                "/api/constructs",
+                json={"name": f"Capped {i}", "description": "", "reference": "",
+                      "items": ["An item."]},
+            ).status_code
+            == 201
+        )
+    refused = client.post(
+        "/api/constructs",
+        json={"name": "One too many", "description": "", "reference": "",
+              "items": ["An item."]},
+    )
+    assert refused.status_code == 429
+    assert "sign in" in refused.json()["detail"].lower()
+
+
+def test_expired_anonymous_constructs_are_purged(client, monkeypatch):
+    """Constructs had no lifecycle at all: they outlived the projects and runs
+    that used them, forever, which is what filled the public picker."""
+    from app.db import SessionLocal
+    from app.models import Construct
+    from app.retention import purge_expired_anonymous_constructs
+
+    monkeypatch.setenv("CCR_ANON_TTL_HOURS", "24")
+    old = make_construct(client, "Stale anonymous draft")
+    fresh = make_construct(client, "Made just now")
+
+    db = SessionLocal()
+    try:
+        db.get(Construct, old).created_at = "2020-01-01T00:00:00+00:00"
+        db.commit()
+        assert purge_expired_anonymous_constructs(db) == 1
+        assert db.get(Construct, old) is None
+        assert db.get(Construct, fresh) is not None
+    finally:
+        db.close()
+
+
+def test_purge_keeps_a_construct_a_run_still_references(client, monkeypatch):
+    """A run's construct row backs a foreign key and its reproducibility
+    record, so the TTL sweep must not take it."""
+    from app.db import SessionLocal
+    from app.models import Construct
+    from app.retention import purge_expired_anonymous_constructs
+
+    monkeypatch.setenv("CCR_ANON_TTL_HOURS", "24")
+    project = client.post("/api/projects", json={"name": "P", "description": ""}).json()
+    corpus = client.post(
+        f"/api/projects/{project['id']}/corpora",
+        files={"file": ("c.csv", io.BytesIO(CSV), "text/csv")},
+    ).json()
+    cid = make_construct(client, "Used then aged")
+    job = client.post(
+        "/api/jobs",
+        json={"project_id": project["id"], "corpus_id": corpus["id"],
+              "construct_ids": [cid], "text_column": "text",
+              "model_name": "fake-deterministic"},
+    )
+    assert job.status_code == 201, job.text
+
+    db = SessionLocal()
+    try:
+        db.get(Construct, cid).created_at = "2020-01-01T00:00:00+00:00"
+        db.commit()
+        assert purge_expired_anonymous_constructs(db) == 0
+        assert db.get(Construct, cid) is not None
+    finally:
+        db.close()
 
 
 def test_seeds_stay_visible_to_everyone(client):

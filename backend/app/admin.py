@@ -89,7 +89,9 @@ def overview(db: Session = Depends(get_db), _admin: dict = Depends(require_admin
         "users": db.query(User).count(),
         "users_by_role": users_by_role,
         "projects": db.query(Project).count(),
-        "anonymous_projects": db.query(Project).filter_by(owner_user_id="").count(),
+        "anonymous_projects": db.query(Project)
+        .filter(auth.anonymous_owner_clause(Project.owner_user_id))
+        .count(),
         "corpora": db.query(Corpus).count(),
         "runs_total": db.query(Job).count(),
         "runs_by_status": runs_by_status,
@@ -113,7 +115,7 @@ def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_adm
     saved = dict(
         db.query(Project.owner_user_id, func.count(Job.id))
         .join(Job, Job.project_id == Project.id)
-        .filter(Project.owner_user_id != "")
+        .filter(~auth.anonymous_owner_clause(Project.owner_user_id))
         .group_by(Project.owner_user_id)
         .all()
     )

@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-from . import registry, warnings_engine
+from . import auth, registry, warnings_engine
 from .ccr import FAKE_MODEL_NAME, get_backend, run_ccr, run_ccr_anchored
 from .construct_lib import construct_snapshot
 from .db import DATA_DIR, SessionLocal
@@ -302,7 +302,9 @@ def run_job(job_id: str) -> None:
         text_prefix = model_cfg.text_prefix if (model_cfg and model_cfg.requires_prefix) else ""
 
         project = db.get(Project, job.project_id)
-        is_anonymous = not (project and project.owner_user_id)
+        # Anonymous owners are "" (legacy) or "anon:<session id>" (spec 0009);
+        # getting this wrong would stop deleting anonymous uploads after a run.
+        is_anonymous = not project or auth.is_anonymous_owner(project.owner_user_id or "")
 
         # Corpus-embedding cache: the CCR workflow is many constructs against
         # the SAME corpus, and ~97% of a run is embedding the documents. Corpora

@@ -20,6 +20,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   (spec 0007)
 
 ### Added
+- Anonymous work is now private to the browser that made it, and is adopted into
+  your account when you sign in. Anonymous visitors previously shared one bucket,
+  so they saw each other's projects and custom constructs; each visitor now has
+  their own session. Signing in moves that session's projects and constructs to
+  the account, so nothing is lost by starting without one. (spec 0009)
+- Custom constructs made without an account are removed after 24 hours, like
+  anonymous projects. They previously had no expiry at all: uploads are deleted
+  as soon as a run finishes and projects expire daily, but a custom construct
+  stayed in the picker permanently, which is what filled up the public site. A
+  construct a saved run used is kept, so that run still works. (spec 0009)
+- Anonymous visitors can create 5 custom constructs a day (configurable via
+  CCR_ANON_MAX_CONSTRUCTS_PER_DAY); signing in lifts the limit. Saving a
+  construct without an account now says it is browser-only and offers sign-in.
+  (spec 0009)
 - Delete a custom construct, from a confirmation dialog in the picker that names
   the construct. A construct already used by a run is hidden rather than removed,
   so that run, its results, and its reproduction script keep working; one that

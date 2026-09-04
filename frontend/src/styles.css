@@ -761,3 +761,15 @@ details[open] > summary::before { transform: rotate(90deg); }
   .construct-results summary::before { transition: none; }
   button.primary:active, button.ghost:active, a.ghost:active { transform: none; }
 }
+
+/* Anonymous "sign in to keep it" notice after saving a custom construct.
+   Deliberately a hint, not a warning: the work succeeded, this is only about
+   how long it lasts. */
+.keep-notice {
+  margin-top: 12px; padding: 10px 12px; border-radius: 8px;
+  background: var(--accent-soft); border: 1px solid var(--border);
+}
+.linklike {
+  border: 0; background: none; padding: 0; cursor: pointer;
+  color: var(--brand); text-decoration: underline; font: inherit;
+}
