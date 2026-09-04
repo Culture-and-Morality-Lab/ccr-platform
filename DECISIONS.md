@@ -164,6 +164,21 @@ score, breaking cross-checks) and auto-negating reverse-scored items (kept as v1
 recorded, not applied - paper footnote 27 is a later option). Revisit: lab validation may fix
 one metric, or promote reverse-item negation.
 
+## 2026-09-04 - Custom constructs are owner-scoped; deletion is soft when a run used it (spec 0008)
+Construct gains owner_user_id, mirroring Project. Visibility follows the same rule as
+_visible_owners: seeds are public, a signed-in user sees only their own custom constructs,
+and anonymous ones stay in the shared anonymous bucket. Anonymous constructs are NOT
+scoped per visitor because there is no anonymous identity to scope by - the run-counter
+cookie carries only a date and a count - and inventing one here would also have to cover
+projects; tracked in ROADMAP instead. Delete removes the row when nothing references it,
+but sets `hidden` when a run does: Job.construct_id is a foreign key and the run's metadata
+snapshot is the reproducibility record, so the row has to survive. The endpoint returns
+which of the two happened rather than reporting a deletion that did not occur, and answers
+404 (not 403) for another account's construct so the API does not confirm it exists.
+Rejected: hard-deleting the referencing runs (destroys a researcher's results to tidy a
+list) and refusing the delete outright (there is no run-delete endpoint, so it would strand
+the construct forever).
+
 ## 2026-08-26 - Construct library: corrections ship as new versions; non-hash metadata re-syncs
 The 2026-08-25 library review (spec 0007) changed items in 23 constructs and status/citations
 in the rest. Split by the item hash: anything the hash covers (item text, order, reverse flags)

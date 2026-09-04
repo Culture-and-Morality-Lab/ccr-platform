@@ -21,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from . import admin as admin_module
@@ -750,14 +751,83 @@ def _latest_seed_versions(rows: list[Construct]) -> list[Construct]:
     return [c for c in rows if not (c.is_seed and c.construct_slug) or id(c) in keep]
 
 
+def _construct_visible_to(user: dict | None):
+    """Rows a viewer may see: every seed, plus custom constructs they own.
+
+    Same rule as _visible_owners for projects - a signed-in user sees ONLY
+    their own custom constructs, an anonymous viewer sees the shared anonymous
+    bucket (owner_user_id == ""). Before spec 0008 Construct had no owner at
+    all, so every custom construct anyone typed was listed to everyone.
+    """
+    owner = user["id"] if user else ""
+    return or_(Construct.is_seed.is_(True), Construct.owner_user_id == owner)
+
+
 @app.get("/api/constructs", response_model=list[ConstructOut])
-def list_constructs(db: Session = Depends(get_db)):
-    rows = db.query(Construct).order_by(Construct.is_seed.desc(), Construct.name).all()
+def list_constructs(
+    db: Session = Depends(get_db), user: dict | None = Depends(auth.get_current_user)
+):
+    rows = (
+        db.query(Construct)
+        .filter(Construct.hidden.is_(False))
+        .filter(_construct_visible_to(user))
+        .order_by(Construct.is_seed.desc(), Construct.name)
+        .all()
+    )
     return [_construct_out(c) for c in _latest_seed_versions(rows)]
 
 
+@app.delete("/api/constructs/{construct_id}", status_code=200)
+def delete_construct(
+    construct_id: str,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
+    """Delete a custom construct the caller owns.
+
+    A construct still referenced by a run is HIDDEN rather than deleted:
+    Job.construct_id is a foreign key, and a past run has to keep resolving
+    (its metadata snapshot is the reproducibility record). The response says
+    which happened so the UI does not claim a deletion that did not occur.
+    """
+    construct = db.get(Construct, construct_id)
+    if construct is None or construct.hidden:
+        raise HTTPException(404, "Construct not found.")
+    if construct.is_seed:
+        raise HTTPException(403, "Library constructs cannot be deleted.")
+
+    owner = user["id"] if user else ""
+    if construct.owner_user_id != owner:
+        # Do not disclose that someone else's construct exists.
+        raise HTTPException(404, "Construct not found.")
+
+    used = (
+        db.query(Job)
+        .filter(
+            or_(
+                Job.construct_id == construct_id,
+                Job.opposite_construct_id == construct_id,
+                Job.construct_ids_json.contains(construct_id),
+            )
+        )
+        .count()
+    )
+    if used:
+        construct.hidden = True
+        db.commit()
+        return {"deleted": False, "hidden": True, "used_by_runs": used}
+
+    db.delete(construct)
+    db.commit()
+    return {"deleted": True, "hidden": False, "used_by_runs": 0}
+
+
 @app.post("/api/constructs", response_model=ConstructOut, status_code=201)
-def create_construct(body: ConstructCreate, db: Session = Depends(get_db)):
+def create_construct(
+    body: ConstructCreate,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
     items = [i.strip() for i in body.items if i.strip()]
     if not items:
         raise HTTPException(400, "Construct needs at least one non-empty item.")
@@ -776,6 +846,7 @@ def create_construct(body: ConstructCreate, db: Session = Depends(get_db)):
         # AI-generated drafts carry provenance (model, prompt version, date);
         # the label persists even after the researcher edits items.
         generation_json=json.dumps(body.generation.model_dump()) if body.generation else "",
+        owner_user_id=user["id"] if user else "",  # "" = anonymous (spec 0008)
     )
     db.add(construct)
     db.commit()

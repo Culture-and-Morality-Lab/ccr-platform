@@ -46,6 +46,8 @@ export const api = {
 
   listConstructs: () => request("/api/constructs"),
   createConstruct: (body) => request("/api/constructs", json("POST", body)),
+  deleteConstruct: (id) =>
+    request(`/api/constructs/${id}`, { method: "DELETE" }),
   generateConstructItems: (body) =>
     request("/api/constructs/generate-items", json("POST", body)),
   parseConstructFile: (file) => {

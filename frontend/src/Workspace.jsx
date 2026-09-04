@@ -56,6 +56,14 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
     [project.id]
   );
 
+  // A deleted construct must also leave any selection that referenced it,
+  // otherwise the run form would post an id the backend no longer resolves.
+  function handleConstructDeleted(id) {
+    setConstructs((cur) => cur.filter((c) => c.id !== id));
+    setConstructIds((cur) => cur.filter((x) => x !== id));
+    setOppositeId((cur) => (cur === id ? "" : cur));
+  }
+
   useEffect(() => {
     api.listCorpora(project.id).then(setCorpora).catch((e) => setError(e.message));
     api.listConstructs().then(setConstructs).catch((e) => setError(e.message));
@@ -331,6 +339,7 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
               constructs={constructs}
               selectedIds={constructIds}
               onToggle={toggleConstruct}
+              onDeleted={handleConstructDeleted}
             />
           </div>
           <button
@@ -427,6 +436,7 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
                   constructs={constructs.filter((c) => c.id !== constructIds[0])}
                   selectedIds={oppositeId ? [oppositeId] : []}
                   onToggle={(id) => setOppositeId((cur) => (cur === id ? "" : id))}
+                  onDeleted={handleConstructDeleted}
                 />
                 {oppositeConstruct && (
                   <details className="construct-selected" open>

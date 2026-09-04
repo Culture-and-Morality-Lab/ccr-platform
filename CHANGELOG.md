@@ -20,6 +20,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   (spec 0007)
 
 ### Added
+- Delete a custom construct, from a confirmation dialog in the picker that names
+  the construct. A construct already used by a run is hidden rather than removed,
+  so that run, its results, and its reproduction script keep working; one that
+  has never been used is deleted outright. Library constructs cannot be deleted.
+  (spec 0008)
 - Runs now warn when every item in a construct is reverse-scored. Scores are raw
   similarities with no reverse adjustment, so for such a construct a higher score means
   the text expresses the OPPOSITE of the construct's name. The results page previously
@@ -31,6 +36,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   texts, with the machine and date they were measured on.
 
 ### Fixed
+- Custom constructs are private to the person who created them. A construct
+  anyone typed on the public site was listed to every other visitor, including
+  under a heading that read "My custom constructs", because constructs had no
+  owner at all. Signed-in users now see the library plus only their own; the
+  anonymous bucket stays shared, as anonymous projects already do. Constructs
+  that already exist become anonymous on upgrade, so they leave every signed-in
+  user's picker immediately. Reported by a PhD student on the public site.
+  (spec 0008)
 - Deleting a project works again on the deployed instances, and expired
   anonymous projects are actually purged. Both go through one cascade that
   removed rows in an order the database could reject, so "Delete project"

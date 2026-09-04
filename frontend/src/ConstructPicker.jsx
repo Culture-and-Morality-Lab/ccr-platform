@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { api } from "./api.js";
+
 // Searchable, grouped construct picker. A flat dropdown stops working past
 // ~15 options; the library is at 99 and growing. Researchers either know the
 // scale ("GAD-7") or the family ("empathy"), so search matches name, category,
@@ -30,7 +32,10 @@ export function rememberRecent(id) {
 // Multi-construct runs: `selectedIds` is the ordered selection, `onToggle(id)`
 // adds/removes one. Picking closes the panel (same feel as the old
 // single-select); the Workspace shows the selection as removable chips.
-export default function ConstructPicker({ constructs, selectedIds, onToggle }) {
+export default function ConstructPicker({ constructs, selectedIds, onToggle, onDeleted }) {
+  // Construct pending deletion, held while the confirmation dialog is open.
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -204,6 +209,23 @@ export default function ConstructPicker({ constructs, selectedIds, onToggle }) {
                             : ""}
                         {isSelected ? " · click to remove" : ""}
                       </span>
+                      {!c.is_seed && onDeleted && (
+                        <button
+                          type="button"
+                          className="picker-delete"
+                          title={`Delete "${c.name}"`}
+                          aria-label={`Delete ${c.name}`}
+                          onMouseDown={(e) => {
+                            // stop the row's own onMouseDown from selecting it
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDeleteError("");
+                            setConfirmDelete(c);
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -211,6 +233,55 @@ export default function ConstructPicker({ constructs, selectedIds, onToggle }) {
             ))}
           </div>
         </>
+      )}
+      {confirmDelete && (
+        <div
+          className="modal-backdrop"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setConfirmDelete(null);
+          }}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delete construct"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <h3>Delete this construct?</h3>
+            <p>
+              <strong>{confirmDelete.name}</strong> ({confirmDelete.items.length} item
+              {confirmDelete.items.length === 1 ? "" : "s"}) will be removed from your
+              construct list. This cannot be undone.
+            </p>
+            <p className="small muted">
+              Runs that already used it keep working, and their saved results and
+              reproduction scripts are unaffected.
+            </p>
+            {deleteError && <p className="error">{deleteError}</p>}
+            <div className="modal-actions">
+              <button type="button" onMouseDown={() => setConfirmDelete(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="danger"
+                onMouseDown={async () => {
+                  try {
+                    const res = await api.deleteConstruct(confirmDelete.id);
+                    setConfirmDelete(null);
+                    onDeleted(confirmDelete.id, res);
+                  } catch (err) {
+                    setDeleteError(err.message);
+                  }
+                }}
+              >
+                Delete construct
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

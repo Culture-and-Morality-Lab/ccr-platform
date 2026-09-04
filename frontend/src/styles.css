@@ -446,6 +446,16 @@ button.danger-solid:disabled { background: #c9ccd1; }
 .picker-name { min-width: 0; }
 .picker-meta { flex-shrink: 0; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 .picker-empty { padding: 12px; margin: 0; }
+/* Delete control on a custom construct row. Reserved space (opacity, not
+   display) so rows do not reflow on hover; always visible to keyboard focus. */
+.picker-delete {
+  flex-shrink: 0; border: 0; background: none; cursor: pointer;
+  color: var(--muted); font-size: 15px; line-height: 1;
+  padding: 0 2px; opacity: 0; transition: opacity 0.12s, color 0.12s;
+}
+.picker-option:hover .picker-delete, .picker-delete:focus-visible { opacity: 1; }
+.picker-delete:hover, .picker-delete:focus-visible { color: var(--err); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
 
 /* ---------- modal ---------- */
 .modal-backdrop {

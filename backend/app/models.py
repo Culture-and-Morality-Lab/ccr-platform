@@ -144,6 +144,15 @@ class Construct(Base):
     # even after the researcher edits items (the seed was AI; item_hash covers
     # as-generated vs edited).
     generation_json: Mapped[str] = mapped_column(Text, default="")
+    # Owner of a CUSTOM construct; "" = anonymous, mirroring Project.owner_user_id.
+    # Seeds keep "" and are identified by is_seed, so they stay visible to all.
+    # A custom construct is listed only to its owner (spec 0008) - before this
+    # column existed every custom construct was global.
+    owner_user_id: Mapped[str] = mapped_column(String(32), default="")
+    # Soft delete. Job.construct_id is a FK and run metadata must stay
+    # reproducible, so a construct still referenced by a run is hidden rather
+    # than removed; unreferenced ones are deleted outright (spec 0008).
+    hidden: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[str] = mapped_column(String(32), default=_now)
 
 

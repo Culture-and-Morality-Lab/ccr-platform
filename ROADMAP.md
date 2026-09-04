@@ -63,6 +63,11 @@ order. Detailed specs for the numbered features live in the sections below.
       committed), cage_questionnaire uses a token-style USPSTF file URL, and
       mfq_care/mfq_fairness point at a third-party mirror of the cited paper.
       All four want a stable replacement.
+- [ ] Anonymous session identity: anonymous visitors still share one bucket, so
+      they see each other's projects and custom constructs on a public
+      instance. Both would be fixed by a signed anonymous session id (the
+      run-counter cookie carries only a date and a count). Signed-in users are
+      already private (spec 0008, 049074a).
 - [ ] Verify Dr. Chen's maintainer pre-assignment exists on /admin and that
       she can sign in.
 - [ ] Self-service password reset (currently admin-only; tied to the planned
