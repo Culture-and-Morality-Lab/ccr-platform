@@ -38,6 +38,10 @@ class ExampleCorpus:
     citation: str
     source_url: str
     preprocessing: str
+    # The corpus's OWN licence, which is not the platform's. A researcher has to
+    # know the terms they are working under before they analyse someone else's
+    # data, so it is shown wherever the corpus is described.
+    license: str = ""
     # First in the list and selected on load. NOT a claim that it is 'the'
     # corpus: the PI's ask was for CAMEL to be available and ready to use.
     preselected: bool = False
@@ -127,6 +131,7 @@ EXAMPLES: list[ExampleCorpus] = [
             "Median 25 words, mean 69. Runs in seconds on any model. "
             "Best for a first look at how CCR works."
         ),
+        license="CC BY-NC 4.0 (Creative Commons Attribution-NonCommercial 4.0). Free for non-commercial research with attribution; see the dataset page for the full terms.",
         preselected=True,
         logo="camel_logo.png",
     ),
@@ -160,6 +165,7 @@ EXAMPLES: list[ExampleCorpus] = [
             "considerably longer on the large models; pick MiniLM unless you have a "
             "reason not to."
         ),
+        license="CC BY-NC 4.0 (Creative Commons Attribution-NonCommercial 4.0). Free for non-commercial research with attribution; see the dataset page for the full terms.",
         logo="camel_logo.png",
     ),
 ]

@@ -26,6 +26,9 @@ def test_every_catalogued_example_is_attributable_and_well_formed():
     assert example_corpora.EXAMPLES, "no examples catalogued"
     for ex in example_corpora.EXAMPLES:
         assert ex.citation and ex.source_url, f"{ex.id}: examples must be attributable"
+        # The repo is MIT; the data in it is not. An example whose terms are
+        # unrecorded is one a researcher could use without knowing the terms.
+        assert ex.license, f"{ex.id}: an example corpus must record its licence"
         assert ex.text_column and ex.n_rows > 0, f"{ex.id}: incomplete entry"
         assert bool(ex.filename) != bool(ex.storage_key), (
             f"{ex.id}: set exactly one of filename (bundled) or storage_key (in the bucket)"
@@ -123,6 +126,7 @@ def test_anonymous_visitor_can_load_and_run_the_example(client):
     # attribution has to reach the run record, not just the screen
     meta = client.get(f"/api/jobs/{job_id}/metadata").json()
     assert "CAMEL" in meta["corpus_source"]["citation"]
+    assert "CC BY-NC" in meta["corpus_source"]["license"], "terms travel with the results"
     assert meta["corpus_source"]["example_id"] == "camel_sample"
     assert "huggingface.co" in meta["corpus_source"]["source_url"]
 

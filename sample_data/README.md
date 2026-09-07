@@ -39,6 +39,10 @@ corpus offered in Step 1 so visitors can run CCR without their own data
 (spec 0010). 999 texts drawn proportionally by source platform from the CAMEL
 corpus with a fixed seed; rebuild with `scripts/build_camel_sample.py`.
 
+Licence: CC BY-NC 4.0 (Creative Commons Attribution-NonCommercial 4.0). This file is
+NOT covered by the repository's MIT licence: it is a slice of the CAMEL corpus and keeps
+the corpus's own terms.
+
 Cite as: Zewail, A., Setia, A., Mohammadsadegh, R., Seker, F., Hajian, A.,
 Sosa, H., Morhayim, L., Reddy, S., & Atari, M. (2026). The Cultural and Moral
 Expressions in Language (CAMEL) corpus [Preprint].

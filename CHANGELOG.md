@@ -35,6 +35,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   (spec 0007)
 
 ### Added
+- Example corpora now state their licence, in the info dialog and in the run
+  metadata alongside the citation. The CAMEL corpus is CC BY-NC 4.0, which the
+  repository's MIT licence does not cover, and the README and sample_data notes
+  now say so for the bundled sample.
 - Sample data built into Step 1: under the upload row, "Use sample data" opens
   the lab's CAMEL corpus (Cultural and Moral Expressions in Language) in two
   sizes. The 999-text sample loads with one click, with the right text column

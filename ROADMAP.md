@@ -31,10 +31,11 @@ order. Detailed specs for the numbered features live in the sections below.
       999-text sample is the default (seconds to run) and the full 57,174-text
       corpus is offered beside it, served from R2 under examples/. Citation and
       provenance travel into run metadata. CCR_MAX_ROWS raised to 100,000.
-- [ ] Make the CAMEL dataset public on Hugging Face, or drop the link: the
-      guide and the corpus card point at
-      Culture-and-Morality-Lab/CAMEL_Dataset, which returns 401 for anyone
-      outside the lab.
+- [x] CAMEL dataset link: no action needed (checked 2026-09-07). The dataset
+      is public and GATED, not private: the page opens for anyone (HTTP 200)
+      and only file downloads ask for a sign-in and acceptance of the terms,
+      which is normal for a research dataset. The earlier "401 for everyone"
+      reading came from testing the file URL, not the page.
 - [ ] Dark mode for the app - /guide and /product already have it; the React
       app doesn't.
 - [ ] Decide the default model with the PI: MiniLM (CCR reference) vs. a

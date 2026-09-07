@@ -63,6 +63,12 @@ Configuration: copy `.env.example` to `.env` and fill what you need.
 
 ## License
 
-MIT (see `LICENSE`). The code is the lab's to reuse and build on; the questionnaire
-items in the construct library belong to their original authors, and each construct
-records its citation, source, and any redistribution caveat in `rights_note`.
+MIT (see `LICENSE`) covers the CODE. Data shipped alongside it does not inherit that
+licence:
+
+- the questionnaire items in the construct library belong to their original authors, and
+  each construct records its citation, source, and any redistribution caveat in
+  `rights_note`;
+- `sample_data/camel_sample.csv` is a slice of the CAMEL corpus (Zewail et al., 2026) and
+  is **CC BY-NC 4.0**, not MIT. Non-commercial use with attribution; the citation and
+  licence travel in the run metadata of any analysis run on it.

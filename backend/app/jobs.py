@@ -121,6 +121,7 @@ def _example_corpus_source(corpus) -> dict:
         "example_id": example.id,
         "name": example.name,
         "citation": example.citation,
+        "license": example.license,
         "source_url": example.source_url,
         "preprocessing": example.preprocessing,
     }

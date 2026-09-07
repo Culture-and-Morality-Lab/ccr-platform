@@ -499,6 +499,11 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
               <p className="small">
                 <b>Preprocessing:</b> {aboutExample.preprocessing}
               </p>
+              {aboutExample.license && (
+                <p className="small">
+                  <b>Licence:</b> {aboutExample.license}
+                </p>
+              )}
               <p className="small">
                 <b>Cite as:</b> {aboutExample.citation}
               </p>
