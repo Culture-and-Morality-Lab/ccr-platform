@@ -42,6 +42,9 @@ CONSTRUCTS_COOKIE_NAME = "ccr_constructs"
 # bare "" predate the anonymous session id and belong to nobody reachable; the
 # TTL sweep removes them.
 ANON_PREFIX = "anon:"
+# owner_user_id is String(32) on both Project and Construct; every owner key
+# (a user id, or ANON_PREFIX + session id) has to fit inside it.
+OWNER_KEY_MAX = 32
 _SECRET = (os.environ.get("CCR_SESSION_SECRET") or secrets.token_hex(32)).encode()
 
 # Headroom for 200 rows of long documents (200 x 8 KB transcripts ~ 1.6 MB sat
@@ -353,6 +356,14 @@ def ensure_anon_owner(request: Request, response) -> str:
     minting the session cookie on first write."""
     sid = anon_session_id(request)
     if not sid:
-        sid = secrets.token_hex(16)
+        # 13 bytes, not 16: the owner key is ANON_PREFIX + sid and it has to fit
+        # Project.owner_user_id / Construct.owner_user_id, which are String(32).
+        # SQLite ignores VARCHAR limits, Postgres does not - a 37-character key
+        # silently passed every local test and 500'd on both deployments.
+        sid = secrets.token_hex(13)
         set_anon_session_cookie(response, sid)
-    return ANON_PREFIX + sid
+    owner = ANON_PREFIX + sid
+    # Belt and braces: SQLite (dev, tests) ignores VARCHAR limits and Postgres
+    # (deployed) does not, so an overlong key is invisible until production.
+    assert len(owner) <= OWNER_KEY_MAX, f"owner key {len(owner)} > {OWNER_KEY_MAX}"
+    return owner

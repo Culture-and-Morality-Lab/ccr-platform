@@ -82,6 +82,20 @@ The cap is a signed cookie, so like the run counter it stops casual
 over-creation rather than a determined script. The TTL sweep is what actually
 bounds storage.
 
+## Post-release defect (2026-09-07)
+
+The owner key ANON_PREFIX + a 16-byte session id is 37 characters, and both
+owner_user_id columns are String(32). SQLite ignores VARCHAR limits so the full
+suite passed; PostgreSQL enforces them, so every anonymous project and construct
+creation returned 500 on both deployments for three days. Signed-in users were
+unaffected (a user id is exactly 32 characters), which hid it.
+
+Fixed by shortening the session id to 13 bytes (104 bits, key length 31) rather
+than widening the column: a type change is not additive, so auto_migrate_sqlite
+would not apply it and the deployed databases would need hand-run DDL. Guarded
+by a runtime assertion in ensure_anon_owner and a test that reads the column
+width from the model and checks the keys the app actually mints.
+
 ## Deviations (filled after implementation)
 
 Two existing tests changed because adoption is new behaviour, not because they

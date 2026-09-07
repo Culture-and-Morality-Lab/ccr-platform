@@ -66,6 +66,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   texts, with the machine and date they were measured on.
 
 ### Fixed
+- Creating a project or a custom construct without signing in works again. Since
+  2026-09-04 both deployments returned a server error for anonymous visitors:
+  the new anonymous session owner key was 37 characters and the database column
+  holds 32. Signed-in users were unaffected, which is why it went unnoticed.
+  Local SQLite installs never hit it either, because SQLite ignores column
+  length limits and PostgreSQL enforces them.
 - Custom constructs are private to the person who created them. A construct
   anyone typed on the public site was listed to every other visitor, including
   under a heading that read "My custom constructs", because constructs had no

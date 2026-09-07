@@ -242,3 +242,40 @@ def test_construct_used_by_a_run_is_hidden_not_deleted(client):
     # the run and its reproducibility record still resolve
     assert client.get(f"/api/jobs/{job_id}").status_code == 200
     assert client.get(f"/api/jobs/{job_id}/metadata").status_code == 200
+
+
+def test_owner_keys_fit_the_owner_column(client):
+    """Regression: an anonymous owner key overflowed owner_user_id.
+
+    ANON_PREFIX + a 16-byte session id is 37 characters and the column is
+    String(32). SQLite ignores VARCHAR limits so the whole suite passed, while
+    Postgres rejected every anonymous write and both deployments returned 500
+    on project and construct creation for three days.
+
+    Read the width from the model so this cannot drift, and check the real key
+    the app mints rather than a hand-written string.
+    """
+    from app import auth
+    from app.models import Construct, Project
+
+    for model in (Project, Construct):
+        width = model.__table__.c.owner_user_id.type.length
+        assert width == auth.OWNER_KEY_MAX, (
+            f"{model.__name__}.owner_user_id is String({width}) but auth assumes "
+            f"{auth.OWNER_KEY_MAX}"
+        )
+
+    # the key an anonymous visitor actually gets, via a real request
+    client.post("/api/auth/logout")
+    client.post("/api/projects", json={"name": "width check", "description": ""})
+    from app.db import SessionLocal
+
+    db = SessionLocal()
+    try:
+        keys = {p.owner_user_id for p in db.query(Project).all()}
+        keys |= {c.owner_user_id for c in db.query(Construct).all()}
+    finally:
+        db.close()
+    assert any(k.startswith(auth.ANON_PREFIX) for k in keys), "expected an anonymous owner"
+    for key in keys:
+        assert len(key) <= auth.OWNER_KEY_MAX, f"owner key {key!r} is {len(key)} chars"
