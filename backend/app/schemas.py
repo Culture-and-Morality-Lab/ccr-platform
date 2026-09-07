@@ -44,6 +44,9 @@ class CorpusOut(BaseModel):
     parse_info: dict = {}
     preview: list[dict] | None = None
     file_available: bool = True  # False = raw file gone (re-upload to run again)
+    # Set when the corpus was loaded from a bundled example (example_corpora.py),
+    # so the UI can select the project's copy instead of copying it again.
+    example_id: str = ""
     created_at: str
 
 

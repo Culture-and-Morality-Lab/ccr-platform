@@ -42,7 +42,8 @@ class ExampleCorpus:
     # corpus: the PI's ask was for CAMEL to be available and ready to use.
     preselected: bool = False
     storage_key: str = ""
-    # Shown on the card so a researcher can judge fit before running.
+    # One line under the name in the sample-data list, so a researcher can judge
+    # fit before running. The row already shows the count and language.
     detail: str = ""
 
     @property
@@ -115,7 +116,7 @@ EXAMPLES: list[ExampleCorpus] = [
             "source_platform columns kept. Text is otherwise verbatim."
         ),
         detail=(
-            "999 texts - median 25 words, mean 69. Runs in seconds on any model. "
+            "Median 25 words, mean 69. Runs in seconds on any model. "
             "Best for a first look at how CCR works."
         ),
         preselected=True,
@@ -146,8 +147,8 @@ EXAMPLES: list[ExampleCorpus] = [
             "as published: all 64 columns, text verbatim, no sampling."
         ),
         detail=(
-            "57,174 texts - median 26 words, up to 1,770. Expect a few minutes on MiniLM "
-            "and considerably longer on the large models; pick MiniLM unless you have a "
+            "Median 26 words, up to 1,770. Expect a few minutes on MiniLM and "
+            "considerably longer on the large models; pick MiniLM unless you have a "
             "reason not to."
         ),
     ),

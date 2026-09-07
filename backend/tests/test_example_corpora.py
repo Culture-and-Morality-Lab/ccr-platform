@@ -94,6 +94,11 @@ def test_anonymous_visitor_can_load_and_run_the_example(client):
     corpus = resp.json()
     assert corpus["n_rows"] == 999
     assert corpus["suggested_text_column"] == "text", "picker should land on the right column"
+    # The UI recognises the project's copy of an example by this field, so a
+    # second click selects it instead of copying the corpus again.
+    assert corpus["example_id"] == "camel_sample"
+    listed = client.get(f"/api/projects/{project['id']}/corpora").json()
+    assert next(c for c in listed if c["id"] == corpus["id"])["example_id"] == "camel_sample"
 
     seed = next(c for c in client.get("/api/constructs").json() if c["is_seed"])
     job = client.post(

@@ -691,6 +691,7 @@ def list_corpora(project_id: str, db: Session = Depends(get_db)):
             suggested_text_column=c.suggested_text_column or None,
             parse_info=json.loads(c.parse_info_json or "{}"),
             file_available=bool(c.path) and storage.exists(c.path),
+            example_id=c.example_id or "",
             created_at=c.created_at,
         )
         for c in rows
@@ -793,6 +794,7 @@ def add_example_corpus(
         preview=preview,
         parse_info=parse_info,
         file_available=True,
+        example_id=example.id,
         created_at=corpus.created_at,
     )
 

@@ -85,6 +85,22 @@ The entry that loads first is `preselected`, not `default`: the PI asked for
 CAMEL to be "available and ready-to-use", which is a starting point rather than
 a claim that this is THE corpus, and nothing is badged as a default.
 
+## Presentation (revised again, 2026-09-07)
+
+The dropdown row still sat above the upload control and still read as the
+first thing to do. The PI's framing was the reverse: a small "use sample data"
+entry point, from which a visitor sees the two available sizes and can read
+about the data if they want to.
+
+Now the upload row comes first. Under it, one muted line ("No data of your own?
+Use sample data") expands into a two-row list: name, size, language, a one-line
+fit note, About, Use. About opens the provenance dialog, which carries its own
+Use button so a reader can decide from there. The panel closes once a corpus is
+loaded, and the selects above show it. Picking a size already loaded in the
+project selects that copy instead of copying the corpus again; the API supports
+this by returning `example_id` on corpus rows. Nothing is preselected, since a
+list needs no default; `preselected` now only fixes the order.
+
 ## Non-goals
 
 - Serving the full 57k corpus from the platform. It stays on Hugging Face,

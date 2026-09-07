@@ -25,19 +25,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   (spec 0007)
 
 ### Added
-- Example corpus built into Step 1: the CAMEL corpus sample (999 texts from the
-  lab's Cultural and Moral Expressions in Language corpus) can be loaded with one
-  click, with the right text column selected for you, so you can run CCR without
-  uploading anything. Its citation and source link are shown on the card and
-  written into the run metadata of any analysis you run on it, so attribution
-  travels with your results. The full 57,174-text corpus, annotated for 25
-  cultural and moral constructs, is linked on Hugging Face; the platform ships a
-  sample because it runs in seconds. The complete 57,174-text corpus, with the
-  annotations for all 25 constructs, is offered in the same dropdown for real
-  analyses, and an info button shows the text column, preprocessing and citation
-  for whichever is selected. A corpus larger than the instance's row limit is
-  shown as unavailable with the reason, instead of failing after you pick it.
-  Corpus by Zewail et al. (2026). (spec 0010)
+- Sample data built into Step 1: under the upload row, "Use sample data" opens
+  the lab's CAMEL corpus (Cultural and Moral Expressions in Language) in two
+  sizes. The 999-text sample loads with one click, with the right text column
+  selected for you, so you can run CCR without uploading anything and see a
+  result in seconds. The complete 57,174-text corpus, annotated for 25 cultural
+  and moral constructs, sits beside it for real analyses, labelled with its
+  cost. "About" on either shows the description, text column, preprocessing,
+  citation and source link, and the citation is written into the run metadata
+  of any analysis you run on it, so attribution travels with your results.
+  Picking a size you already loaded selects that copy rather than loading it
+  again. A corpus larger than the instance's row limit is shown as unavailable
+  with the reason, instead of failing after you pick it. Corpus by Zewail et
+  al. (2026). (spec 0010)
 - Anonymous work is now private to the browser that made it, and is adopted into
   your account when you sign in. Anonymous visitors previously shared one bucket,
   so they saw each other's projects and custom constructs; each visitor now has
