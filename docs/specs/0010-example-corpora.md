@@ -45,6 +45,14 @@ visitor. Measured against the live bucket: 7.0s fetch, 0.7s parse of 57,174 x 64
 1.6s copy. `storage.delete()` refuses the `examples/` prefix outright, because
 every user copy derives from one master and retention runs unattended.
 
+The server-side copy is an optimisation, not a requirement: R2 CopyObject is
+not available on every bucket (the lab's account answers NoSuchKey for an
+object `head_object` resolves in the same session, while the dev account copies
+it fine), so the code falls back to uploading the local copy it already
+downloaded to parse. Each deployment needs its own upload of the master file -
+dev and prod are different Cloudflare accounts, so `examples/camel_full.csv`
+exists once per account.
+
 ## What ships bundled, and why the sample is the default
 
 CAMEL is 57,174 texts. The platform ships a **999-text sample**, because the

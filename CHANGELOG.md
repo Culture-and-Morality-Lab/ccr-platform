@@ -78,6 +78,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   texts, with the machine and date they were measured on.
 
 ### Fixed
+- The full CAMEL corpus now loads on the lab's deployment. Copying it into a
+  project used a server-side storage copy, which that account's object storage
+  does not support; it now falls back to uploading the copy the server already
+  has, which works on any S3-compatible backend.
 - Creating a project or a custom construct without signing in works again. Since
   2026-09-04 both deployments returned a server error for anonymous visitors:
   the new anonymous session owner key was 37 characters and the database column

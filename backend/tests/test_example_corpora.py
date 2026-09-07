@@ -146,3 +146,33 @@ def test_shared_example_masters_cannot_be_deleted():
             storage.delete(locator)
     # a normal user corpus is untouched by the guard
     assert storage._is_example_locator("s3://corpora/abc.csv") is False
+
+
+def test_user_copy_falls_back_when_server_side_copy_is_unavailable(tmp_path, monkeypatch):
+    """R2 CopyObject is not available on every bucket: it can answer NoSuchKey
+    for an object head_object resolves moments earlier, and the lab's account
+    does exactly that while another account copies fine. The file is already
+    local (it was downloaded to parse), so the upload path has to take over
+    rather than the request failing."""
+    from app import storage
+
+    src = tmp_path / "corpus.csv"
+    src.write_bytes(b"text\nhello\n")
+    uploaded = {}
+
+    class FakeS3:
+        def copy_object(self, **kw):
+            raise RuntimeError("NoSuchKey")
+
+        def put_object(self, Bucket, Key, Body):
+            uploaded[Key] = Body
+
+    monkeypatch.setattr(storage, "backend", lambda: "s3")
+    monkeypatch.setattr(storage, "_s3", lambda: FakeS3())
+    monkeypatch.setattr(storage, "_bucket", lambda: "test-bucket")
+
+    locator = storage.copy_within_storage("examples/big.csv", "corpora", "abc.csv", src)
+
+    assert locator == "s3://corpora/abc.csv"
+    assert uploaded["corpora/abc.csv"] == b"text\nhello\n", "the local copy was uploaded"
+    assert not src.exists(), "the temp file is cleaned up either way"

@@ -21,11 +21,14 @@ cheap to recompute, and read with numpy - a cache does not need durability.
 
 from __future__ import annotations
 
+import logging
 import os
 import tempfile
 from pathlib import Path
 
 from .db import DATA_DIR
+
+logger = logging.getLogger("ccr.storage")
 
 S3_PREFIX = "s3://"
 # Shared master copies of large example corpora (example_corpora.py). Nothing
@@ -191,15 +194,26 @@ def fetch_example_to_local(storage_key: str, dest: Path) -> Path:
 def copy_within_storage(storage_key: str, category: str, name: str, local_path: Path) -> str:
     """Make a user's copy of an example corpus.
 
-    On S3/R2 this is a server-side copy, so a 38 MB corpus is not read back out
-    through the application for every visitor who selects it. The local temp
-    file (already downloaded for parsing) is cleaned up either way.
+    Prefers a server-side copy, so a 38 MB corpus is not read back out through
+    the application for every visitor who selects it. But CopyObject is not
+    universally available: on some R2 buckets it answers NoSuchKey for an
+    object head_object resolves in the same session, and support differs
+    between accounts. Since the caller has already downloaded the file to parse
+    it, falling back to uploading that local copy costs one upload and works on
+    any S3-compatible backend. Either way the temp file is cleaned up.
     """
     if backend() != "s3":
         return move_local_into_storage(category, name, local_path)
     key = f"{category}/{name}"
-    _s3().copy_object(
-        Bucket=_bucket(), Key=key, CopySource={"Bucket": _bucket(), "Key": storage_key}
-    )
+    try:
+        _s3().copy_object(
+            Bucket=_bucket(), Key=key, CopySource={"Bucket": _bucket(), "Key": storage_key}
+        )
+    except Exception as exc:
+        logger.warning(
+            "server-side copy of %s unavailable (%s); uploading the local copy instead",
+            storage_key, type(exc).__name__,
+        )
+        return move_local_into_storage(category, name, local_path)
     Path(local_path).unlink(missing_ok=True)
     return f"{S3_PREFIX}{key}"
