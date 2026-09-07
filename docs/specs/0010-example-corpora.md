@@ -26,7 +26,26 @@ file as the scores.
 Step 1 offers the example above the upload control, with the citation and a
 link to the full dataset visible, and selects the declared text column on load.
 
-## What ships, and why it is a sample
+## Update 2026-09-07: the full corpus is offered too
+
+`CCR_MAX_ROWS` is raised to 100,000 (the code default all along; the three docs
+that stated 20,000 and 50,000 are corrected), so the 57,174-row corpus is now
+ingestible. Both are offered: the 999-text sample stays the DEFAULT because it
+finishes in seconds, and the full corpus sits beside it for real analyses,
+labelled with its cost.
+
+The full corpus lives in object storage under `examples/`, not in the repo: 38 MB
+would ride in the Docker image and the Space repo on every deploy. It is NOT
+fetched from Hugging Face at runtime, because that dataset returns 401 - fetching
+it would mean shipping lab credentials in a public app.
+
+Selection downloads the master once to parse, then makes the user's copy with a
+server-side `copy_object`, so 38 MB does not travel back out through the app per
+visitor. Measured against the live bucket: 7.0s fetch, 0.7s parse of 57,174 x 64,
+1.6s copy. `storage.delete()` refuses the `examples/` prefix outright, because
+every user copy derives from one master and retention runs unattended.
+
+## What ships bundled, and why the sample is the default
 
 CAMEL is 57,174 texts. The platform ships a **999-text sample**, because the
 full corpus cannot be the bundled default:

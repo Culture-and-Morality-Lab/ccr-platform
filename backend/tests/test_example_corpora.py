@@ -20,17 +20,35 @@ def client():
         yield c
 
 
-def test_every_catalogued_example_exists_and_parses():
-    """A catalogue entry whose file is missing or whose declared text column is
-    wrong would 404 or land the picker on the wrong column at runtime."""
+def test_every_catalogued_example_is_attributable_and_well_formed():
+    """A catalogue entry with the wrong text column or row count would land the
+    picker on the wrong column, or state a size the corpus does not have."""
     assert example_corpora.EXAMPLES, "no examples catalogued"
     for ex in example_corpora.EXAMPLES:
+        assert ex.citation and ex.source_url, f"{ex.id}: examples must be attributable"
+        assert ex.text_column and ex.n_rows > 0, f"{ex.id}: incomplete entry"
+        assert bool(ex.filename) != bool(ex.storage_key), (
+            f"{ex.id}: set exactly one of filename (bundled) or storage_key (in the bucket)"
+        )
+
+
+def test_bundled_examples_parse_and_match_their_declared_shape():
+    """Only the bundled ones can be checked offline; storage-backed corpora are
+    verified at upload time by scripts/upload_example_corpus.py."""
+    bundled = [e for e in example_corpora.EXAMPLES if e.bundled]
+    assert bundled, "expected at least one bundled example"
+    for ex in bundled:
         assert ex.path.exists(), f"{ex.id}: {ex.path} missing"
         df, _ = load_corpus(str(ex.path))
         assert ex.text_column in df.columns, f"{ex.id}: no '{ex.text_column}' column"
         assert len(df) == ex.n_rows, f"{ex.id}: declares {ex.n_rows} rows, file has {len(df)}"
         assert df[ex.text_column].astype(str).str.strip().str.len().gt(0).all()
-        assert ex.citation and ex.source_url, f"{ex.id}: examples must be attributable"
+
+
+def test_storage_location_is_not_exposed_to_clients():
+    """The bucket key is internal; the API should not hand it out."""
+    for row in example_corpora.listed():
+        assert "storage_key" not in row
 
 
 def test_exactly_one_default_example():
@@ -97,3 +115,15 @@ def test_unknown_example_is_404(client):
         json={"example_id": "nope"},
     )
     assert resp.status_code == 404
+
+
+def test_shared_example_masters_cannot_be_deleted():
+    """Every visitor's copy is made from one master object. Retention runs
+    unattended, so deleting a master has to be impossible, not just unlikely."""
+    from app import storage
+
+    for locator in ("s3://examples/camel_full.csv", "examples/camel_full.csv"):
+        with pytest.raises(ValueError, match="refusing to delete"):
+            storage.delete(locator)
+    # a normal user corpus is untouched by the guard
+    assert storage._is_example_locator("s3://corpora/abc.csv") is False

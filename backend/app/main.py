@@ -726,13 +726,13 @@ def add_example_corpus(
     _require_project_access(request, project, user)
 
     example = example_corpora.get(body.example_id)
-    if example is None or not example.path.exists():
+    if example is None or not example.available():
         raise HTTPException(404, "That example corpus is not available on this instance.")
 
     corpus = Corpus(
         id=uuid.uuid4().hex,
         project_id=project_id,
-        filename=example.filename,
+        filename=example.filename or f"{example.id}.csv",
         path="",
         n_rows=0,
         columns_json="[]",
@@ -741,7 +741,24 @@ def add_example_corpus(
     tmp_dir = DATA_DIR / "tmp"
     tmp_dir.mkdir(exist_ok=True)
     tmp = tmp_dir / f"{corpus.id}.csv"
-    tmp.write_bytes(example.path.read_bytes())
+
+    if example.bundled:
+        tmp.write_bytes(example.path.read_bytes())
+    else:
+        # Large examples live in the bucket under examples/. Pull one local copy
+        # to parse (the ingest path needs a real file), then let storage make the
+        # user's copy - server-side where the backend supports it, so 38 MB does
+        # not travel back out through the app.
+        try:
+            source = storage.fetch_example_to_local(example.storage_key, tmp)
+        except FileNotFoundError:
+            raise HTTPException(
+                404,
+                "That example corpus is not loaded on this instance yet. "
+                "An admin can add it with scripts/upload_example_corpus.py.",
+            ) from None
+        if source != tmp:
+            tmp = source
 
     try:
         df, parse_info = load_corpus(str(tmp))
@@ -749,7 +766,12 @@ def add_example_corpus(
         tmp.unlink(missing_ok=True)
         raise HTTPException(400, str(exc)) from exc
 
-    corpus.path = storage.move_local_into_storage("corpora", f"{corpus.id}.csv", tmp)
+    if example.bundled:
+        corpus.path = storage.move_local_into_storage("corpora", f"{corpus.id}.csv", tmp)
+    else:
+        corpus.path = storage.copy_within_storage(
+            example.storage_key, "corpora", f"{corpus.id}.csv", tmp
+        )
     corpus.n_rows = int(len(df))
     corpus.columns_json = json.dumps(list(df.columns))
     corpus.parse_info_json = json.dumps(parse_info)

@@ -60,7 +60,7 @@ below, then paste them into the Space in section 7.
 | `CCR_COOKIE_SECURE` | Variable | `1` |
 | `CCR_ANON_TTL_HOURS` | Variable | `24` |
 | `ADMIN_EMAILS` | Variable | Comma-separated admin emails (confirm with PI) |
-| `CCR_MAX_ROWS` | Variable | `50000` (matches the dev instance) |
+| `CCR_MAX_ROWS` | Variable | `100000` (matches the dev instance and the code default) |
 
 Hugging Face keeps Variables and Secrets in two separate stores. A name defined
 in BOTH puts the Space into CONFIG_ERROR before it builds. Put each name in one

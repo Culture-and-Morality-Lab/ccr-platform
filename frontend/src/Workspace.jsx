@@ -304,21 +304,38 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
                 <div className="grow">
                   <div className="example-name">
                     {ex.name}
+                    {ex.default && <span className="badge-default">Default</span>}
                     <span className="small muted">
                       {" "}
                       · {ex.n_rows.toLocaleString()} texts · {languageName(ex.language)}
                     </span>
                   </div>
-                  <p className="small muted example-desc">{ex.description}</p>
-                  <p className="small muted example-cite">
-                    {ex.citation}{" "}
-                    <a href={ex.source_url} target="_blank" rel="noreferrer">
-                      Full dataset
-                    </a>
-                  </p>
+                  {ex.detail && <p className="small muted example-desc">{ex.detail}</p>}
+                  <details className="example-more">
+                    <summary className="small">About this dataset</summary>
+                    <p className="small">{ex.description}</p>
+                    <p className="small">
+                      <b>Text column:</b> {ex.text_column} · <b>Language:</b>{" "}
+                      {languageName(ex.language)} · <b>Texts:</b>{" "}
+                      {ex.n_rows.toLocaleString()}
+                    </p>
+                    <p className="small">
+                      <b>Preprocessing:</b> {ex.preprocessing}
+                    </p>
+                    <p className="small example-cite">
+                      <b>Cite as:</b> {ex.citation}
+                    </p>
+                    <p className="small">
+                      Recorded in the run metadata of anything you analyse with it.{" "}
+                      <a href={ex.source_url} target="_blank" rel="noreferrer">
+                        Dataset page
+                      </a>
+                    </p>
+                  </details>
                 </div>
                 <button
                   type="button"
+                  className={ex.default ? "primary" : ""}
                   onClick={() => useExample(ex)}
                   disabled={!!loadingExample}
                 >

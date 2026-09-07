@@ -208,18 +208,20 @@ after that they stay warm.</p>
 <h2 id="samples">0. Sample datasets</h2>
 <p><b>Nothing to upload?</b> Step 1 of the workspace offers the <b>CAMEL corpus sample</b>
 as a built-in dataset: click <i>Use this corpus</i> and go straight to picking a construct.
-It is 999 texts drawn from the Cultural and Moral Expressions in Language corpus, keeping
-the platform mix of the full corpus (Reddit, Twitter, IMDB, news, Wikipedia and others).
-The full corpus is 57,174 texts annotated for 25 cultural and moral constructs and lives on
-<a href="https://huggingface.co/datasets/Culture-and-Morality-Lab/CAMEL_Dataset"
-   target="_blank" rel="noreferrer">Hugging Face</a>; the platform ships a sample because the
-full corpus is larger than the per-run row ceiling. If you publish results from it, cite:</p>
+Two versions are offered. The <b>sample</b> (999 texts, the default) keeps the platform mix
+of the full corpus and finishes in seconds, which is the fastest way to see how CCR works.
+The <b>full corpus</b> is all 57,174 texts with the lab's annotations for 25 cultural and
+moral constructs included, so CCR scores can be compared against human ratings; expect a few
+minutes on MiniLM and considerably longer on the large models. Each card has an
+<i>About this dataset</i> panel with the text column, preprocessing and citation. If you
+publish results from either, cite:</p>
 <p class="cite">Zewail, A., Setia, A., Mohammadsadegh, R., Seker, F., Hajian, A., Sosa, H.,
 Morhayim, L., Reddy, S., &amp; Atari, M. (2026). The Cultural and Moral Expressions in
 Language (CAMEL) corpus [Preprint].</p>
 <p>Usernames were removed by the corpus authors. The citation and this note are also written
 into the run metadata of any analysis you run on it, so the attribution travels with your
-results.</p>
+results. The corpus is also published on Hugging Face at
+<code>Culture-and-Morality-Lab/CAMEL_Dataset</code>, which currently requires lab access.</p>
 <p>The files below are instead one-per-behavior test fixtures. To test something, download
 the file named for it and follow its scenario. Unless stated otherwise, select language
 <b>English</b> and model <b>MiniLM</b>.</p>

@@ -28,6 +28,9 @@ from pathlib import Path
 from .db import DATA_DIR
 
 S3_PREFIX = "s3://"
+# Shared master copies of large example corpora (example_corpora.py). Nothing
+# else writes here and delete() refuses this prefix.
+EXAMPLES_PREFIX = "examples/"
 
 _client = None  # injectable for tests
 
@@ -119,6 +122,27 @@ def open_stream(locator: str):
 
 # ------------------------------------------------------------------ delete
 def delete(locator: str) -> None:
+    """Delete a stored file.
+
+    Refuses anything under the examples/ prefix: those are shared master copies
+    that every visitor's corpus is made from, and each user's copy lives under
+    corpora/. Deleting one would break the feature for everyone, silently, and
+    retention runs unattended.
+    """
+    if _is_example_locator(locator):
+        raise ValueError(
+            f"refusing to delete shared example corpus {locator!r}; "
+            "user copies live under corpora/"
+        )
+    return _delete(locator)
+
+
+def _is_example_locator(locator: str) -> bool:
+    key = locator[len(S3_PREFIX):] if is_s3(locator) else locator
+    return key.startswith(EXAMPLES_PREFIX) or f"/{EXAMPLES_PREFIX}" in key
+
+
+def _delete(locator: str) -> None:
     if not locator:
         return
     if is_s3(locator):
@@ -138,3 +162,44 @@ def move_local_into_storage(category: str, name: str, local_path: Path) -> str:
     if is_s3(locator) or (src.exists() and str(src.resolve()) != str(Path(locator).resolve())):
         src.unlink(missing_ok=True)
     return locator
+
+
+# ------------------------------------------------ bundled example corpora
+# Example corpora too large for the repo live under this prefix. Nothing else
+# writes here and retention never sweeps it, so deleting a user's copy can
+# never take the master with it.
+
+
+def fetch_example_to_local(storage_key: str, dest: Path) -> Path:
+    """Download an example corpus to `dest`, or return its local path.
+
+    Raises FileNotFoundError when the object has not been uploaded to this
+    instance yet, so the API can say so instead of failing at parse time.
+    """
+    if backend() != "s3":
+        local = DATA_DIR / storage_key
+        if not local.exists():
+            raise FileNotFoundError(storage_key)
+        return local
+    try:
+        _s3().download_file(_bucket(), storage_key, str(dest))
+    except Exception as exc:  # missing object, or no bucket access
+        raise FileNotFoundError(storage_key) from exc
+    return dest
+
+
+def copy_within_storage(storage_key: str, category: str, name: str, local_path: Path) -> str:
+    """Make a user's copy of an example corpus.
+
+    On S3/R2 this is a server-side copy, so a 38 MB corpus is not read back out
+    through the application for every visitor who selects it. The local temp
+    file (already downloaded for parsing) is cleaned up either way.
+    """
+    if backend() != "s3":
+        return move_local_into_storage(category, name, local_path)
+    key = f"{category}/{name}"
+    _s3().copy_object(
+        Bucket=_bucket(), Key=key, CopySource={"Bucket": _bucket(), "Key": storage_key}
+    )
+    Path(local_path).unlink(missing_ok=True)
+    return f"{S3_PREFIX}{key}"

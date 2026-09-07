@@ -32,7 +32,7 @@ Variables (non-sensitive tuning - visible in settings, safe to edit):
 | ---------------------- | --------------------------------------------------- |
 | CCR_APP_URL            | https://psychologicaltextanalysis.com               |
 | CCR_COOKIE_SECURE      | 1                                                   |
-| CCR_MAX_ROWS           | 20000 (global row ceiling; code default is 100000)  |
+| CCR_MAX_ROWS           | 100000 (global row ceiling; same as the code default) |
 | CCR_MAX_UPLOAD_BYTES   | optional; code default is 52428800 (50 MB)          |
 | CCR_ANON_MAX_BYTES     | optional; code default is 5242880 (5 MB)            |
 
@@ -48,7 +48,7 @@ that runs out first. Measured on the cpu-basic Space shape (2 vCPU / 16 GB):
 upload + parse peaks at roughly 5x file size, so even a 50 MB corpus costs
 about 250 MB of the 16 GB available. The byte ceiling (`CCR_MAX_UPLOAD_BYTES`,
 default 50 MB) is an abuse/OOM backstop that should not fire on a legitimate
-corpus: at `CCR_MAX_ROWS=20000` it only binds above ~2.6 KB per row, which is
+corpus: at `CCR_MAX_ROWS=100000` it only binds above ~520 bytes per row, which is
 already past every model's token window. Anonymous uploads use the lower of
 that and `CCR_ANON_MAX_BYTES` (5 MB), sized as a pre-parse shield so an
 unauthenticated request cannot make the server parse a large file only to
@@ -62,7 +62,7 @@ re-measure on the actual host - these are derated estimates, not Space-measured)
 | MiniLM L6 v2  | ~1.2 s/1k     | ~2.1 s/1k     | ~8.4 s/1k      |
 | E5 Large v2   | ~7.5 s/1k     | ~27 s/1k      | ~123 s/1k      |
 
-At `CCR_MAX_ROWS=20000` that is ~25 s to ~3 min for MiniLM, but up to ~40 min
+At `CCR_MAX_ROWS=100000` that is ~2 to ~15 min for MiniLM, but several hours
 for E5 Large on long documents. Jobs that long are also *fragile*: a Space
 restart marks any running job failed (`recover_orphaned_jobs`), so worst-case
 job duration - not row count alone - is the number to keep in view.
