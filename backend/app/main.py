@@ -700,7 +700,7 @@ def list_corpora(project_id: str, db: Session = Depends(get_db)):
 @app.get("/api/example-corpora")
 def list_example_corpora():
     """Bundled corpora a visitor can analyse without uploading anything."""
-    return example_corpora.listed()
+    return example_corpora.listed(corpus_max_rows())
 
 
 @app.post(

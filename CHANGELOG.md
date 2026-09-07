@@ -33,9 +33,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   travels with your results. The full 57,174-text corpus, annotated for 25
   cultural and moral constructs, is linked on Hugging Face; the platform ships a
   sample because it runs in seconds. The complete 57,174-text corpus, with the
-  annotations for all 25 constructs, is offered alongside it for real analyses.
-  Each corpus has an "About this dataset" panel showing the text column,
-  preprocessing and citation. Corpus by Zewail et al. (2026). (spec 0010)
+  annotations for all 25 constructs, is offered in the same dropdown for real
+  analyses, and an info button shows the text column, preprocessing and citation
+  for whichever is selected. A corpus larger than the instance's row limit is
+  shown as unavailable with the reason, instead of failing after you pick it.
+  Corpus by Zewail et al. (2026). (spec 0010)
 - Anonymous work is now private to the browser that made it, and is adopted into
   your account when you sign in. Anonymous visitors previously shared one bucket,
   so they saw each other's projects and custom constructs; each visitor now has

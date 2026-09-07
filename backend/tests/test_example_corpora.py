@@ -51,10 +51,24 @@ def test_storage_location_is_not_exposed_to_clients():
         assert "storage_key" not in row
 
 
-def test_exactly_one_default_example():
-    defaults = [e for e in example_corpora.EXAMPLES if e.default]
-    assert len(defaults) == 1 and defaults[0].id == "camel_sample"
-    assert example_corpora.listed()[0]["id"] == "camel_sample", "default is listed first"
+def test_exactly_one_preselected_example_and_it_is_listed_first():
+    picked = [e for e in example_corpora.EXAMPLES if e.preselected]
+    assert len(picked) == 1 and picked[0].id == "camel_sample"
+    assert example_corpora.listed()[0]["id"] == "camel_sample"
+
+
+def test_a_corpus_larger_than_the_row_ceiling_is_listed_but_not_usable():
+    """Offering a corpus this instance would refuse at ingest is a dead end.
+    It stays visible with the reason, and becomes usable when the deployment
+    raises CCR_MAX_ROWS - no code change needed."""
+    rows = {r["id"]: r for r in example_corpora.listed(50_000)}
+    assert rows["camel_sample"]["usable"] is True
+    assert rows["camel_full"]["usable"] is False
+    assert "50,000" in rows["camel_full"]["blocked_reason"]
+
+    raised = {r["id"]: r for r in example_corpora.listed(100_000)}
+    assert raised["camel_full"]["usable"] is True
+    assert raised["camel_full"]["blocked_reason"] == ""
 
 
 def test_endpoint_lists_examples(client):

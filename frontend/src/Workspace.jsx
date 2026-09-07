@@ -7,7 +7,10 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   const [corpora, setCorpora] = useState([]);
   const [constructs, setConstructs] = useState([]);
   const [examples, setExamples] = useState([]);
+  const [exampleId, setExampleId] = useState("");
+  const [showExampleInfo, setShowExampleInfo] = useState(false);
   const [loadingExample, setLoadingExample] = useState("");
+  const selectedExample = examples.find((e) => e.id === exampleId) || null;
   // Set after an ANONYMOUS visitor saves a construct: their work is scoped to
   // this browser session and expires with it, so say so at the moment it is
   // saved rather than letting them discover it later.
@@ -97,7 +100,16 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   useEffect(() => {
     api.listCorpora(project.id).then(setCorpora).catch((e) => setError(e.message));
     api.listConstructs().then(setConstructs).catch((e) => setError(e.message));
-    api.exampleCorpora().then(setExamples).catch(() => {});
+    api
+      .exampleCorpora()
+      .then((rows) => {
+        setExamples(rows);
+        // The preselected entry is a starting point, not a claim that this is
+        // THE corpus; the list is ordered so it lands first.
+        const first = rows.find((r) => r.preselected) || rows[0];
+        if (first) setExampleId(first.id);
+      })
+      .catch(() => {});
     api
       .models()
       .then((m) => {
@@ -296,53 +308,81 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
         </p>
         {examples.length > 0 && (
           <div className="examples">
-            <div className="small muted examples-label">
-              No data of your own? Start from an example corpus:
-            </div>
-            {examples.map((ex) => (
-              <div key={ex.id} className="example-card">
-                <div className="grow">
-                  <div className="example-name">
-                    {ex.name}
-                    {ex.default && <span className="badge-default">Default</span>}
-                    <span className="small muted">
-                      {" "}
-                      · {ex.n_rows.toLocaleString()} texts · {languageName(ex.language)}
-                    </span>
-                  </div>
-                  {ex.detail && <p className="small muted example-desc">{ex.detail}</p>}
-                  <details className="example-more">
-                    <summary className="small">About this dataset</summary>
-                    <p className="small">{ex.description}</p>
-                    <p className="small">
-                      <b>Text column:</b> {ex.text_column} · <b>Language:</b>{" "}
-                      {languageName(ex.language)} · <b>Texts:</b>{" "}
-                      {ex.n_rows.toLocaleString()}
-                    </p>
-                    <p className="small">
-                      <b>Preprocessing:</b> {ex.preprocessing}
-                    </p>
-                    <p className="small example-cite">
-                      <b>Cite as:</b> {ex.citation}
-                    </p>
-                    <p className="small">
-                      Recorded in the run metadata of anything you analyse with it.{" "}
-                      <a href={ex.source_url} target="_blank" rel="noreferrer">
-                        Dataset page
-                      </a>
-                    </p>
-                  </details>
-                </div>
-                <button
-                  type="button"
-                  className={ex.default ? "primary" : ""}
-                  onClick={() => useExample(ex)}
+            <label className="field examples-pick">
+              Or use a ready-to-use corpus
+              <div className="row examples-row">
+                <select
+                  value={exampleId}
+                  onChange={(e) => setExampleId(e.target.value)}
                   disabled={!!loadingExample}
                 >
-                  {loadingExample === ex.id ? "Loading…" : "Use this corpus"}
+                  {examples.map((ex) => (
+                    <option key={ex.id} value={ex.id} disabled={!ex.usable}>
+                      {ex.name} · {ex.n_rows.toLocaleString()} texts
+                      {ex.usable ? "" : " · unavailable here"}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label="About this corpus"
+                  title="About this corpus"
+                  onClick={() => setShowExampleInfo(true)}
+                >
+                  i
+                </button>
+                <button
+                  type="button"
+                  onClick={() => selectedExample && useExample(selectedExample)}
+                  disabled={!!loadingExample || !selectedExample?.usable}
+                >
+                  {loadingExample ? "Loading…" : "Use this corpus"}
                 </button>
               </div>
-            ))}
+            </label>
+            {selectedExample && !selectedExample.usable && (
+              <p className="small muted examples-blocked">
+                {selectedExample.blocked_reason}
+              </p>
+            )}
+          </div>
+        )}
+        {showExampleInfo && selectedExample && (
+          <div className="modal-backdrop" onMouseDown={() => setShowExampleInfo(false)}>
+            <div
+              className="modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`About ${selectedExample.name}`}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <h3>{selectedExample.name}</h3>
+              <p>{selectedExample.description}</p>
+              <p className="small">
+                <b>Texts:</b> {selectedExample.n_rows.toLocaleString()} ·{" "}
+                <b>Text column:</b> {selectedExample.text_column} ·{" "}
+                <b>Language:</b> {languageName(selectedExample.language)}
+              </p>
+              <p className="small">
+                <b>Preprocessing:</b> {selectedExample.preprocessing}
+              </p>
+              <p className="small">
+                <b>Cite as:</b> {selectedExample.citation}
+              </p>
+              <p className="small muted">
+                This citation is written into the run metadata of anything you analyse
+                with it, so the attribution travels with your results.{" "}
+                <a href={selectedExample.source_url} target="_blank" rel="noreferrer">
+                  Dataset page
+                </a>
+              </p>
+              <div className="modal-actions">
+                <button type="button" onClick={() => setShowExampleInfo(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         )}
         <div className="row">

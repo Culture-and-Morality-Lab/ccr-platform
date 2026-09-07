@@ -38,7 +38,9 @@ class ExampleCorpus:
     citation: str
     source_url: str
     preprocessing: str
-    default: bool = False
+    # First in the list and selected on load. NOT a claim that it is 'the'
+    # corpus: the PI's ask was for CAMEL to be available and ready to use.
+    preselected: bool = False
     storage_key: str = ""
     # Shown on the card so a researcher can judge fit before running.
     detail: str = ""
@@ -57,10 +59,29 @@ class ExampleCorpus:
         and a missing object surfaces as a clear 404 on selection instead."""
         return self.path.exists() if self.bundled else True
 
-    def public(self) -> dict:
+    def blocked_reason(self, row_ceiling: int) -> str:
+        """Why this instance cannot run this corpus, or "" if it can.
+
+        A corpus larger than CCR_MAX_ROWS is refused at ingest, so offering it
+        as a working option produces a dead end. Saying so up front, and why,
+        beats an error after the click - and it corrects itself the moment the
+        deployment raises the limit.
+        """
+        if not self.available():
+            return "Not loaded on this instance."
+        if row_ceiling and self.n_rows > row_ceiling:
+            return (
+                f"Too large for this instance: {self.n_rows:,} texts against a "
+                f"{row_ceiling:,}-row limit."
+            )
+        return ""
+
+    def public(self, row_ceiling: int = 0) -> dict:
         data = asdict(self)
-        data["available"] = self.available()
         data["bundled"] = self.bundled
+        blocked = self.blocked_reason(row_ceiling)
+        data["usable"] = not blocked
+        data["blocked_reason"] = blocked
         data.pop("storage_key", None)  # internal location, not the user's business
         return data
 
@@ -97,7 +118,7 @@ EXAMPLES: list[ExampleCorpus] = [
             "999 texts - median 25 words, mean 69. Runs in seconds on any model. "
             "Best for a first look at how CCR works."
         ),
-        default=True,
+        preselected=True,
     ),
     ExampleCorpus(
         id="camel_full",
@@ -139,6 +160,15 @@ def get(example_id: str) -> ExampleCorpus | None:
     return BY_ID.get(example_id)
 
 
-def listed() -> list[dict]:
-    """Available examples, the default first."""
-    return [e.public() for e in sorted(EXAMPLES, key=lambda e: not e.default) if e.available()]
+def listed(row_ceiling: int = 0) -> list[dict]:
+    """Examples this instance has, preselected one first.
+
+    Entries too large for the row ceiling are still listed but marked unusable
+    with a reason, rather than hidden: a corpus quietly vanishing is harder to
+    explain than one that says why it is unavailable.
+    """
+    return [
+        e.public(row_ceiling)
+        for e in sorted(EXAMPLES, key=lambda e: not e.preselected)
+        if e.available()
+    ]

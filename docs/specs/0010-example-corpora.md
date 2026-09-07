@@ -69,6 +69,22 @@ stranger can push into the server; this is a file we ship at a size we chose,
 and letting a visitor try the platform without their own data is the point of
 the feature. The per-day run cap still applies.
 
+## Presentation (revised 2026-09-07)
+
+The first cut rendered every example as an expanded card, which took most of
+Step 1 and pushed the upload control below the fold - the wrong hierarchy, since
+most researchers bring their own data. It also presented CAMEL twice, as two
+"corpora", when it is one dataset in two sizes.
+
+Now: one labelled row holding a dropdown, an info button and the action. Sizes
+are options in that dropdown, so CAMEL reads as one dataset. Provenance
+(description, text column, preprocessing, citation, dataset link) moved into a
+modal behind the info button, where it is available without occupying the step.
+
+The entry that loads first is `preselected`, not `default`: the PI asked for
+CAMEL to be "available and ready-to-use", which is a starting point rather than
+a claim that this is THE corpus, and nothing is badged as a default.
+
 ## Non-goals
 
 - Serving the full 57k corpus from the platform. It stays on Hugging Face,
