@@ -12,8 +12,10 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   // path, and the lab's corpus is the quiet alternative under it.
   const [showExamples, setShowExamples] = useState(false);
   const [aboutExampleId, setAboutExampleId] = useState("");
+  const [pickedExampleId, setPickedExampleId] = useState("");
   const [loadingExample, setLoadingExample] = useState("");
   const aboutExample = examples.find((e) => e.id === aboutExampleId) || null;
+  const pickedExample = examples.find((e) => e.id === pickedExampleId) || null;
   // Set after an ANONYMOUS visitor saves a construct: their work is scoped to
   // this browser session and expires with it, so say so at the moment it is
   // saved rather than letting them discover it later.
@@ -132,7 +134,16 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
     api.listConstructs().then(setConstructs).catch((e) => setError(e.message));
     // Shown in the backend's order (the quick sample first). Nothing is
     // preselected: the panel is a list, and the reader picks.
-    api.exampleCorpora().then(setExamples).catch(() => {});
+    api
+      .exampleCorpora()
+      .then((rows) => {
+        setExamples(rows);
+        // Land on the entry marked preselected (the small sample): a starting
+        // point, not a claim that it is THE corpus.
+        const first = rows.find((r) => r.preselected) || rows[0];
+        if (first) setPickedExampleId(first.id);
+      })
+      .catch(() => {});
     api
       .models()
       .then((m) => {
@@ -397,8 +408,10 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
           </p>
         )}
         {/* Sample data (spec 0010): one quiet line under the upload row that
-            opens a short list. Provenance sits behind About, so the step never
-            grows into a page of dataset text. */}
+            opens a picker. Choosing which corpus is a dropdown, not a list of
+            cards, so adding datasets later costs one row rather than a screen;
+            provenance and the dataset mark sit behind the info button, so the
+            step never grows into a page of dataset text. */}
         {examples.length > 0 && (
           <div className="samples">
             <p className="small muted samples-lead">
@@ -414,46 +427,47 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
                 <span className="samples-chevron" aria-hidden="true" />
               </button>
             </p>
-            {showExamples && (
-              <ul className="samples-list" id="sample-data-panel">
-                {examples.map((ex) => {
-                  const busy = loadingExample === ex.id;
-                  return (
-                    <li key={ex.id} className="sample-row">
-                      <div className="sample-text">
-                        <div className="sample-name">
-                          {ex.name}
-                          <span className="small muted sample-meta">
-                            {" "}
-                            · {ex.n_rows.toLocaleString()} texts · {languageName(ex.language)}
-                          </span>
-                        </div>
-                        {ex.detail && <div className="small muted">{ex.detail}</div>}
-                        {!ex.usable && (
-                          <div className="small muted">⚠ {ex.blocked_reason}</div>
-                        )}
-                      </div>
-                      <div className="sample-actions">
-                        <button
-                          type="button"
-                          className="linkish"
-                          onClick={() => setAboutExampleId(ex.id)}
-                        >
-                          About
-                        </button>
-                        <button
-                          type="button"
-                          className="ghost sample-use"
-                          onClick={() => useExample(ex)}
-                          disabled={!!loadingExample || !ex.usable}
-                        >
-                          {busy ? "Loading…" : "Use"}
-                        </button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+            {showExamples && pickedExample && (
+              <div className="samples-picker" id="sample-data-panel">
+                <div className="samples-row">
+                  <select
+                    aria-label="Sample dataset"
+                    value={pickedExampleId}
+                    onChange={(e) => setPickedExampleId(e.target.value)}
+                    disabled={!!loadingExample}
+                  >
+                    {examples.map((ex) => (
+                      <option key={ex.id} value={ex.id} disabled={!ex.usable}>
+                        {ex.name} · {ex.n_rows.toLocaleString()} texts
+                        {ex.usable ? "" : " · unavailable here"}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="ghost info-button"
+                    aria-label={`About ${pickedExample.name}`}
+                    title="About this dataset"
+                    onClick={() => setAboutExampleId(pickedExample.id)}
+                  >
+                    i
+                  </button>
+                  <button
+                    type="button"
+                    className="ghost sample-use"
+                    onClick={() => useExample(pickedExample)}
+                    disabled={!!loadingExample || !pickedExample.usable}
+                  >
+                    {loadingExample ? "Loading…" : "Use"}
+                  </button>
+                </div>
+                {pickedExample.detail && (
+                  <p className="small muted samples-detail">{pickedExample.detail}</p>
+                )}
+                {!pickedExample.usable && (
+                  <p className="small muted samples-detail">⚠ {pickedExample.blocked_reason}</p>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -466,7 +480,17 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
               aria-label={`About ${aboutExample.name}`}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              <h3>{aboutExample.name}</h3>
+              <div className="modal-head">
+                {aboutExample.logo_url && (
+                  <img
+                    className="corpus-logo"
+                    src={aboutExample.logo_url}
+                    alt=""
+                    aria-hidden="true"
+                  />
+                )}
+                <h3>{aboutExample.name}</h3>
+              </div>
               <p className="small muted">
                 {aboutExample.n_rows.toLocaleString()} texts · Text column:{" "}
                 {aboutExample.text_column} · {languageName(aboutExample.language)}

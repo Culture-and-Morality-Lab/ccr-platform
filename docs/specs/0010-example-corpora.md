@@ -101,6 +101,19 @@ project selects that copy instead of copying the corpus again; the API supports
 this by returning `example_id` on corpus rows. Nothing is preselected, since a
 list needs no default; `preselected` now only fixes the order.
 
+## Presentation, final shape (2026-09-07)
+
+Step 1 shows one quiet line, "No data of your own? Use sample data", which opens
+a picker: a dropdown naming each corpus and its size, a circular info button,
+and Use. Which corpus to run is a *choice*, so it is a dropdown rather than a
+stack of cards - adding a dataset later costs one more option instead of another
+block of the step. The selected entry's one-line summary sits under the row;
+everything else (description, text column, preprocessing, citation, dataset mark,
+link) lives in the info dialog.
+
+An entry the instance cannot run is disabled in the dropdown and labelled
+"unavailable here", with the reason under the row.
+
 ## Non-goals
 
 - Serving the full 57k corpus from the platform. It stays on Hugging Face,
