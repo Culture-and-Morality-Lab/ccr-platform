@@ -47,6 +47,12 @@ class CorpusOut(BaseModel):
     created_at: str
 
 
+class ExampleCorpusIn(BaseModel):
+    """Pick a bundled corpus by id (see example_corpora.py)."""
+
+    example_id: str
+
+
 class ConstructGeneration(BaseModel):
     """Provenance for constructs saved from an AI-generated draft (echoed back
     by the frontend from the generate-items response; informational, not a

@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-from . import auth, registry, warnings_engine
+from . import auth, example_corpora, registry, warnings_engine
 from .ccr import FAKE_MODEL_NAME, get_backend, run_ccr, run_ccr_anchored
 from .construct_lib import construct_snapshot
 from .db import DATA_DIR, SessionLocal
@@ -110,6 +110,20 @@ def _set(db, job: Job, **kw):
     for k, v in kw.items():
         setattr(job, k, v)
     db.commit()
+
+
+def _example_corpus_source(corpus) -> dict:
+    """Provenance block for a run on a bundled corpus (example_corpora.py)."""
+    example = example_corpora.get(corpus.example_id)
+    if example is None:  # entry retired since the run was created
+        return {"example_id": corpus.example_id}
+    return {
+        "example_id": example.id,
+        "name": example.name,
+        "citation": example.citation,
+        "source_url": example.source_url,
+        "preprocessing": example.preprocessing,
+    }
 
 
 def job_construct_ids(job: Job) -> list[str]:
@@ -511,6 +525,14 @@ def run_job(job_id: str) -> None:
                 else MULTI_OUTPUT_SCHEMA_VERSION if multi else OUTPUT_SCHEMA_VERSION
             ),
             "corpus_file": corpus.filename,
+            # Bundled example corpora carry their citation into the run record,
+            # so a researcher publishing these results has the attribution in
+            # the same file as the scores rather than having to remember it.
+            **(
+                {"corpus_source": _example_corpus_source(corpus)}
+                if getattr(corpus, "example_id", "")
+                else {}
+            ),
             "corpus_parse_info": parse_info,
             "text_column": job.text_column,
             "language": lang_result.as_metadata(),

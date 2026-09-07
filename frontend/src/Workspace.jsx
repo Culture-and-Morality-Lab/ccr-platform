@@ -6,6 +6,8 @@ import ResultsView from "./ResultsView.jsx";
 export default function Workspace({ project, auth, onAuthRefresh, onProjectChanged, onProjectDeleted }) {
   const [corpora, setCorpora] = useState([]);
   const [constructs, setConstructs] = useState([]);
+  const [examples, setExamples] = useState([]);
+  const [loadingExample, setLoadingExample] = useState("");
   // Set after an ANONYMOUS visitor saves a construct: their work is scoped to
   // this browser session and expires with it, so say so at the moment it is
   // saved rather than letting them discover it later.
@@ -62,6 +64,21 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
     [project.id]
   );
 
+  async function useExample(example) {
+    setLoadingExample(example.id);
+    setError("");
+    try {
+      const corpus = await api.addExampleCorpus(project.id, example.id);
+      setCorpora((cur) => [corpus, ...cur]);
+      setCorpusId(corpus.id);
+      if (corpus.suggested_text_column) setTextColumn(corpus.suggested_text_column);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoadingExample("");
+    }
+  }
+
   // Codes are what runs record; this is display only, and an unknown code
   // renders as itself rather than disappearing.
   function languageName(code) {
@@ -80,6 +97,7 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   useEffect(() => {
     api.listCorpora(project.id).then(setCorpora).catch((e) => setError(e.message));
     api.listConstructs().then(setConstructs).catch((e) => setError(e.message));
+    api.exampleCorpora().then(setExamples).catch(() => {});
     api
       .models()
       .then((m) => {
@@ -276,6 +294,40 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
             </>
           )}
         </p>
+        {examples.length > 0 && (
+          <div className="examples">
+            <div className="small muted examples-label">
+              No data of your own? Start from an example corpus:
+            </div>
+            {examples.map((ex) => (
+              <div key={ex.id} className="example-card">
+                <div className="grow">
+                  <div className="example-name">
+                    {ex.name}
+                    <span className="small muted">
+                      {" "}
+                      · {ex.n_rows.toLocaleString()} texts · {languageName(ex.language)}
+                    </span>
+                  </div>
+                  <p className="small muted example-desc">{ex.description}</p>
+                  <p className="small muted example-cite">
+                    {ex.citation}{" "}
+                    <a href={ex.source_url} target="_blank" rel="noreferrer">
+                      Full dataset
+                    </a>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => useExample(ex)}
+                  disabled={!!loadingExample}
+                >
+                  {loadingExample === ex.id ? "Loading…" : "Use this corpus"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="row">
           <div className="grow">
             <label className="field">

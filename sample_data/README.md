@@ -31,3 +31,15 @@ Notes:
 - Warnings are computed per run and stored in that run's results. To see different
   warnings, start a new run with the relevant selection; old result pages do not update.
 - All texts are synthetic, written for this kit. No real participant data anywhere.
+
+## camel_sample.csv - the built-in example corpus
+
+Unlike every other file here, this one is not a behavior fixture: it is the
+corpus offered in Step 1 so visitors can run CCR without their own data
+(spec 0010). 999 texts drawn proportionally by source platform from the CAMEL
+corpus with a fixed seed; rebuild with `scripts/build_camel_sample.py`.
+
+Cite as: Zewail, A., Setia, A., Mohammadsadegh, R., Seker, F., Hajian, A.,
+Sosa, H., Morhayim, L., Reddy, S., & Atari, M. (2026). The Cultural and Moral
+Expressions in Language (CAMEL) corpus [Preprint].
+Full corpus: https://huggingface.co/datasets/Culture-and-Morality-Lab/CAMEL_Dataset

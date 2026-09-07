@@ -25,7 +25,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from . import admin as admin_module
-from . import auth, auth_google, languages as lang_names, retention, storage
+from . import auth, auth_google, example_corpora, languages as lang_names, retention, storage
 from . import item_generation
 from . import jobs as jobs_module
 from . import registry
@@ -64,6 +64,7 @@ from .schemas import (
     ConstructGeneration,
     ConstructOut,
     CorpusOut,
+    ExampleCorpusIn,
     GenerateItemsIn,
     GenerateItemsOut,
     JobCreate,
@@ -694,6 +695,84 @@ def list_corpora(project_id: str, db: Session = Depends(get_db)):
         )
         for c in rows
     ]
+
+
+@app.get("/api/example-corpora")
+def list_example_corpora():
+    """Bundled corpora a visitor can analyse without uploading anything."""
+    return example_corpora.listed()
+
+
+@app.post(
+    "/api/projects/{project_id}/corpora/from-example",
+    response_model=CorpusOut,
+    status_code=201,
+)
+def add_example_corpus(
+    project_id: str,
+    body: ExampleCorpusIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: dict | None = Depends(auth.get_current_user),
+):
+    """Copy a bundled example corpus into a project.
+
+    Deliberately NOT subject to the anonymous upload caps. Those exist to bound
+    what a stranger can push into the server; this is a file we ship, at a size
+    we chose, and letting an anonymous visitor try the platform without their
+    own data is the entire point of it. The per-day run cap still applies.
+    """
+    project = _get_or_404(db, Project, project_id)
+    _require_project_access(request, project, user)
+
+    example = example_corpora.get(body.example_id)
+    if example is None or not example.path.exists():
+        raise HTTPException(404, "That example corpus is not available on this instance.")
+
+    corpus = Corpus(
+        id=uuid.uuid4().hex,
+        project_id=project_id,
+        filename=example.filename,
+        path="",
+        n_rows=0,
+        columns_json="[]",
+        example_id=example.id,
+    )
+    tmp_dir = DATA_DIR / "tmp"
+    tmp_dir.mkdir(exist_ok=True)
+    tmp = tmp_dir / f"{corpus.id}.csv"
+    tmp.write_bytes(example.path.read_bytes())
+
+    try:
+        df, parse_info = load_corpus(str(tmp))
+    except IngestError as exc:
+        tmp.unlink(missing_ok=True)
+        raise HTTPException(400, str(exc)) from exc
+
+    corpus.path = storage.move_local_into_storage("corpora", f"{corpus.id}.csv", tmp)
+    corpus.n_rows = int(len(df))
+    corpus.columns_json = json.dumps(list(df.columns))
+    corpus.parse_info_json = json.dumps(parse_info)
+    # The example declares its text column, so the picker lands on it directly.
+    corpus.suggested_text_column = (
+        example.text_column if example.text_column in df.columns else suggest_text_column(df) or ""
+    )
+    db.add(corpus)
+    db.commit()
+
+    preview = json.loads(df.head(5).to_json(orient="records", force_ascii=False))
+    return CorpusOut(
+        id=corpus.id,
+        project_id=project_id,
+        filename=corpus.filename,
+        n_rows=corpus.n_rows,
+        columns=json.loads(corpus.columns_json),
+        suggested_text_column=corpus.suggested_text_column,
+        preview=preview,
+        parse_info=parse_info,
+        file_available=True,
+        created_at=corpus.created_at,
+    )
 
 
 @app.post("/api/projects/{project_id}/corpora", response_model=CorpusOut, status_code=201)

@@ -6,6 +6,7 @@
 <link rel="icon" type="image/svg+xml" href="/ccr-logo.svg">
 <title>CCR Platform - Testing Guide</title>
 <style>
+.cite{margin:8px 0;padding:8px 12px;border-left:3px solid #ccc;font-size:14px;line-height:1.5}
   :root {
     --bg: #ffffff; --fg: #1a1a1a; --muted: #666; --border: #ddd;
     --accent: #26736f; --card: #f7f7f8; --amber-bg: #fff7e0; --amber-border: #e0b84d;
@@ -205,9 +206,23 @@ after that they stay warm.</p>
 </div>
 
 <h2 id="samples">0. Sample datasets</h2>
-<p>One file per platform behavior. To test something, download the file named for it and
-follow its scenario below. Unless stated otherwise, select language <b>English</b> and
-model <b>MiniLM</b>.</p>
+<p><b>Nothing to upload?</b> Step 1 of the workspace offers the <b>CAMEL corpus sample</b>
+as a built-in dataset: click <i>Use this corpus</i> and go straight to picking a construct.
+It is 999 texts drawn from the Cultural and Moral Expressions in Language corpus, keeping
+the platform mix of the full corpus (Reddit, Twitter, IMDB, news, Wikipedia and others).
+The full corpus is 57,174 texts annotated for 25 cultural and moral constructs and lives on
+<a href="https://huggingface.co/datasets/Culture-and-Morality-Lab/CAMEL_Dataset"
+   target="_blank" rel="noreferrer">Hugging Face</a>; the platform ships a sample because the
+full corpus is larger than the per-run row ceiling. If you publish results from it, cite:</p>
+<p class="cite">Zewail, A., Setia, A., Mohammadsadegh, R., Seker, F., Hajian, A., Sosa, H.,
+Morhayim, L., Reddy, S., &amp; Atari, M. (2026). The Cultural and Moral Expressions in
+Language (CAMEL) corpus [Preprint].</p>
+<p>Usernames were removed by the corpus authors. The citation and this note are also written
+into the run metadata of any analysis you run on it, so the attribution travels with your
+results.</p>
+<p>The files below are instead one-per-behavior test fixtures. To test something, download
+the file named for it and follow its scenario. Unless stated otherwise, select language
+<b>English</b> and model <b>MiniLM</b>.</p>
 <div class="tablewrap">
 <table>
   <tr><th>File</th><th>Demonstrates</th></tr>
@@ -240,6 +255,10 @@ model <b>MiniLM</b>.</p>
 </ol>
 
 <h2 id="uploads">2. Upload paths (Step 1 card)</h2>
+<p><b>Or skip the upload entirely:</b> Step 1 lists the CAMEL corpus sample as a built-in
+dataset. Clicking <i>Use this corpus</i> loads 999 texts and selects the right text column
+for you, which is the fastest way to see a real result. See
+<a href="#samples">Sample datasets</a> for the citation and provenance.</p>
 <div class="tablewrap">
 <table>
   <tr><th>Upload</th><th>Expect</th></tr>

@@ -38,6 +38,10 @@ export const api = {
   logout: () => request("/api/auth/logout", { method: "POST" }),
 
   listCorpora: (projectId) => request(`/api/projects/${projectId}/corpora`),
+  exampleCorpora: () => request("/api/example-corpora"),
+  addExampleCorpus: (projectId, exampleId) =>
+    request(`/api/projects/${projectId}/corpora/from-example`,
+      json("POST", { example_id: exampleId })),
   uploadCorpus: (projectId, file) => {
     const form = new FormData();
     form.append("file", file);

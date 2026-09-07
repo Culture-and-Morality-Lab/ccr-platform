@@ -773,3 +773,19 @@ details[open] > summary::before { transform: rotate(90deg); }
   border: 0; background: none; padding: 0; cursor: pointer;
   color: var(--brand); text-decoration: underline; font: inherit;
 }
+
+/* ---------- example corpora (Step 1) ---------- */
+.examples { margin: 0 0 16px; }
+.examples-label { margin-bottom: 8px; }
+.example-card {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--accent-soft);
+}
+.example-card + .example-card { margin-top: 8px; }
+.example-card button { flex-shrink: 0; }
+.example-name { font-weight: 600; font-size: 14px; }
+.example-desc { margin: 4px 0 0; line-height: 1.5; }
+/* Citation is small but never hidden: results run on this corpus have to be
+   attributable, and the run metadata records the same string. */
+.example-cite { margin: 6px 0 0; line-height: 1.45; opacity: 0.85; }

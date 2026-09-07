@@ -117,6 +117,10 @@ class Corpus(Base):
     columns_json: Mapped[str] = mapped_column(Text)  # list[str]
     parse_info_json: Mapped[str] = mapped_column(Text, default="{}")  # how the file was parsed
     suggested_text_column: Mapped[str] = mapped_column(String(200), default="")
+    # Set when the corpus came from a bundled example rather than an upload
+    # (example_corpora.py). Carries the citation into run metadata so results
+    # produced on someone else's corpus keep their attribution.
+    example_id: Mapped[str] = mapped_column(String(64), default="")
     created_at: Mapped[str] = mapped_column(String(32), default=_now)
 
 

@@ -27,6 +27,10 @@ order. Detailed specs for the numbered features live in the sections below.
       the spec 2026-07-31; matches feature 1 (optional, warn about
       truncation without it, chunk-embedding vs chunk-similarity averaging
       still an open question for him).
+- [x] CAMEL as the built-in example corpus: DONE 2026-09-06 (spec 0010). A
+      999-text sample ships in Step 1 with citation and provenance in run
+      metadata; the full 57k corpus stays on Hugging Face (it exceeds
+      CCR_MAX_ROWS and is 38 MB).
 - [ ] Dark mode for the app - /guide and /product already have it; the React
       app doesn't.
 - [ ] Decide the default model with the PI: MiniLM (CCR reference) vs. a
