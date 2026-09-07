@@ -164,6 +164,23 @@ score, breaking cross-checks) and auto-negating reverse-scored items (kept as v1
 recorded, not applied - paper footnote 27 is a later option). Revisit: lab validation may fix
 one metric, or promote reverse-item negation.
 
+## 2026-09-07 - IPIP wording stands; K10 retired rather than rewritten (PI)
+The IPIP items carry a leading "I" where the source prints bare stems, the subject being
+supplied by the scale's instruction header. Investigated before asking: the platform does
+not do this - import_from_xlsx.py only strips whitespace, and the items arrived with the "I"
+in the commit that first created the library, from lib.xlsx. So this is a transcription
+convention in the lab's own spreadsheet, not a CCR behaviour. PI: keep as is. The five IPIP
+constructs are verified with that provenance recorded on each.
+
+K10 is withdrawn. Its items are fragments under a shared header, and CCR embeds item text
+directly, so "worthless?" as an embedding target does not represent the construct. Options
+were to restore the stem (making the item non-verbatim against the printed page but faithful
+to what respondents were asked) or to drop the scale; the PI chose to drop it. Archived, not
+deleted, because constructs are append-only and any run that used it must still resolve and
+reproduce - so it leaves the picker while its history stays intact. Note the asymmetry this
+leaves: IPIP items were reattached to their stem by whoever built lib.xlsx and K10's were
+not, which is why only one of the two needed a decision.
+
 ## 2026-09-04 - Anonymous identity is a session cookie; gate persistence, not creation (spec 0009)
 Anonymous visitors get a signed session-id cookie and own their rows as "anon:<id>", so one
 owner_user_id column carries both signed-in and anonymous ownership and the shared-anonymous

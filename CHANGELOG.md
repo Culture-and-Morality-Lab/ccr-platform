@@ -5,6 +5,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Changed
+- Every construct in the library now carries a verification decision. The two
+  wording questions left open by the August review were settled: the IPIP Big
+  Five scales keep the leading "I" on their items (that wording came from the
+  lab's own questionnaire spreadsheet, not from the platform), and the K10 was
+  withdrawn rather than rewritten. 93 constructs are live and verified.
+- The K10 is no longer offered. Its items are stored as bare fragments
+  ("nervous?", "worthless?") because the scale prints them under a shared
+  header, and CCR embeds item text directly, so a one-word item does not carry
+  the construct. It is archived rather than deleted: runs that used it still
+  open, export, and reproduce exactly as before.
 - Languages are shown by name instead of ISO code: the text-language selector,
   the runs table, the model list, and the language warnings now say "Arabic"
   rather than "ar". Codes are unchanged everywhere they are recorded (run

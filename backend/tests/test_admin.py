@@ -308,13 +308,44 @@ def _make_role(client, email, role):
     client.post("/api/auth/login", json={"email": email, "password": "password123"})
 
 
+def _needs_verification_construct(name="Queue fixture"):
+    """Put one construct in the verification queue and return its id.
+
+    The library itself is fully verified as of 2026-09-07, and staying that way
+    is the goal - so this test owns its subject instead of borrowing whichever
+    scale happened to be unverified.
+    """
+    from app.db import SessionLocal
+    from app.models import Construct
+
+    db = SessionLocal()
+    try:
+        row = Construct(
+            name=name,
+            description="",
+            reference="",
+            items_json='["An item."]',
+            reverse_flags_json="[false]",
+            is_seed=True,
+            construct_slug=name.lower().replace(" ", "_"),
+            version=1,
+            item_hash="f" * 64,
+            verification_status="needs_verification",
+        )
+        db.add(row)
+        db.commit()
+        return row.id
+    finally:
+        db.close()
+
+
 def test_verification_is_the_maintainers_job(client):
     """PI decision 2026-07-22: maintainers verify; PI/admin see the queue
     read-only (the trail then names the responsible RA)."""
+    target_id = _needs_verification_construct()
     sign_in_as(client, ADMIN_EMAIL, "Admin")
     queue = client.get("/api/admin/constructs?status=needs_verification").json()
-    assert len(queue) > 0
-    target = queue[0]
+    target = next(c for c in queue if c["id"] == target_id)
 
     # env admin: queue visible, verification action refused
     resp = client.post(

@@ -42,6 +42,10 @@ class ExampleCorpus:
     # corpus: the PI's ask was for CAMEL to be available and ready to use.
     preselected: bool = False
     storage_key: str = ""
+    # Optional mark for the dataset, served from sample_data/ at /samples.
+    # Shown in the info dialog, where it identifies THIS dataset - not in the
+    # picker row, which lists several and would imply they share a source.
+    logo: str = ""
     # One line under the name in the sample-data list, so a researcher can judge
     # fit before running. The row already shows the count and language.
     detail: str = ""
@@ -80,6 +84,10 @@ class ExampleCorpus:
     def public(self, row_ceiling: int = 0) -> dict:
         data = asdict(self)
         data["bundled"] = self.bundled
+        data["logo_url"] = (
+            f"/samples/{self.logo}" if self.logo and (SAMPLES_DIR / self.logo).exists() else ""
+        )
+        data.pop("logo", None)
         blocked = self.blocked_reason(row_ceiling)
         data["usable"] = not blocked
         data["blocked_reason"] = blocked
@@ -120,6 +128,7 @@ EXAMPLES: list[ExampleCorpus] = [
             "Best for a first look at how CCR works."
         ),
         preselected=True,
+        logo="camel_logo.png",
     ),
     ExampleCorpus(
         id="camel_full",
@@ -151,6 +160,7 @@ EXAMPLES: list[ExampleCorpus] = [
             "considerably longer on the large models; pick MiniLM unless you have a "
             "reason not to."
         ),
+        logo="camel_logo.png",
     ),
 ]
 

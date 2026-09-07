@@ -174,35 +174,33 @@ def test_review_applied_expected_shape():
     for c in constructs:
         by_status.setdefault(c["verification_status"], []).append(c)
 
-    assert len(by_status["archived"]) == 23, "superseded v1 files"
-    assert len(by_status["verified"]) == 88
-    assert len(by_status["needs_verification"]) == 6
+    # 23 superseded v1 files, plus the K10 retired by the PI on 2026-09-07.
+    assert len(by_status["archived"]) == 24
+    assert len(by_status["verified"]) == 93
+    assert not by_status.get("needs_verification"), (
+        "both open wording questions were settled on 2026-09-07, so every live "
+        "construct should now carry a verification decision"
+    )
 
     live = [c for c in constructs if c["verification_status"] != "archived"]
-    assert len({c["construct_id"] for c in live}) == 94, "one live version per construct"
+    assert len({c["construct_id"] for c in live}) == 93, "one live version per construct"
 
     reverse = sum(
         1 for c in live for i in c["items"] if i.get("reverse_scored")
     )
     assert reverse == 96, "reverse flags after the review (was 35)"
 
-    # Everything still unverified is unverified for a recorded reason.
-    pending = sorted(c["construct_id"] for c in by_status["needs_verification"])
-    assert pending == sorted(
-        [
-            # PI decision: the "I" prefix CCR adds to IPIP stems
-            "ipip_50_item_big_five_factor_markers_agreeableness",
-            "ipip_50_item_big_five_factor_markers_conscientiousness",
-            "ipip_50_item_big_five_factor_markers_emotional_stability_neuroticism",
-            "ipip_50_item_big_five_factor_markers_extraversion",
-            "ipip_50_item_big_five_factor_markers_intellect_imagination",
-            # PI decision: restoring the shared K10 stem onto each item
-            "k10",
-        ]
-    )
-    for c in by_status["needs_verification"]:
-        assert (c.get("review") or {}).get("notes"), \
-            f"{c['construct_id']}: unverified without a recorded reason"
+    # The PI's two decisions, each recorded on the construct itself.
+    ipip = [c for c in live if c["construct_id"].startswith("ipip_50_item_big_five")]
+    assert len(ipip) == 5
+    for c in ipip:
+        assert c["verification_status"] == "verified"
+        # the leading "I" came from the lab's spreadsheet, not from the platform
+        assert "lib.xlsx" in (c.get("review") or {}).get("notes", ""), c["construct_id"]
+
+    k10 = next(c for c in constructs if c["construct_id"] == "k10")
+    assert k10["verification_status"] == "archived", "K10 is retired, not deleted"
+    assert (k10.get("review") or {}).get("notes"), "a retired scale needs a recorded reason"
 
 
 def test_every_live_construct_records_who_verified_it():
@@ -260,18 +258,27 @@ def test_superseded_files_keep_their_original_items():
 
 def test_superseded_versions_really_differ_from_their_replacement():
     """A v2 that matches its v1 item-for-item would be pure version churn."""
-    superseded = [
+    archived = [
         c for c in load_yaml_constructs() if c["verification_status"] == "archived"
     ]
-    assert superseded
-    for old in superseded:
-        newer = yaml.safe_load(
-            (CONSTRUCTS_DIR / f"{old['construct_id']}_v2.yaml").read_text()
-        )
+    assert archived
+    superseded = []
+    for old in archived:
+        replacement = CONSTRUCTS_DIR / f"{old['construct_id']}_v2.yaml"
+        if not replacement.exists():
+            # Archived with no successor = RETIRED, not superseded (the PI
+            # withdrew K10 rather than rewriting it). It owes a reason, not a v2.
+            assert (old.get("review") or {}).get("notes"), (
+                f"{old['construct_id']}: retired without a recorded reason"
+            )
+            continue
+        superseded.append(old)
+        newer = yaml.safe_load(replacement.read_text())
         assert newer["version"] == 2 and old["version"] == 1
         old_items = [(i["text"], bool(i.get("reverse_scored"))) for i in old["items"]]
         new_items = [(i["text"], bool(i.get("reverse_scored"))) for i in newer["items"]]
         assert old_items != new_items, f"{old['construct_id']}: v2 with identical items"
+    assert superseded, "expected at least one genuinely superseded construct"
 
 
 def test_all_reversed_construct_warns_about_score_direction(client):

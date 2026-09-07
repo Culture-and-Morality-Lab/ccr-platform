@@ -62,9 +62,9 @@ order. Detailed specs for the numbered features live in the sections below.
 - [x] Construct library verification pass: DONE 2026-08-27 (spec 0007). Noor's
       review of all 525 items applied, and her follow-up answers resolved every
       open question except the two PI decisions; 88 of 94 constructs verified.
-- [ ] Construct library: 6 constructs still unverified, all waiting on the PI:
-      the IPIP "I" prefix (50 items, 5 constructs) and restoring the K10 stem
-      (10 items). Everything else from the review is resolved.
+- [x] Construct library: DONE 2026-09-07. Both open wording questions settled
+      with the PI - the IPIP "I" stays (it came from lib.xlsx, not from the
+      platform) and the K10 is retired. All 93 live constructs are verified.
 - [ ] Durable source links: the Grit-S entries point at personal Dropbox URLs,
       dirty_dozen_* traded a working ResearchGate link for a paywalled PsycNET
       one (the reviewer's link carried a session token that could not be

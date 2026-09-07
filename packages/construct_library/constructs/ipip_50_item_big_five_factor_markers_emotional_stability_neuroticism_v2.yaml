@@ -11,7 +11,7 @@ citation: Goldberg, L. R. (1992). The development of markers for the Big-Five fa
   public-domain, personality inventory measuring the lower-level facets of several five-factor models.
   In I. Mervielde, I. J. Deary, F. De Fruyt, & F. Ostendorf (Eds.), Personality psychology in Europe (Vol.
   7, pp. 7–28). Tilburg University Press.
-verification_status: needs_verification
+verification_status: verified
 source_url: https://ipip.ori.org/new_ipip-50-item-scale.htm
 rights_note: IPIP states that its items are public domain; use the exact IPIP scale name and citation.
 questionnaire: IPIP 50-item Big-Five Factor Markers
@@ -20,8 +20,14 @@ imported_from: lib.xlsx
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: pending_pi_decision
-  notes: Reviewer confirms wording matches the source apart from the leading 'I' that CCR adds to IPIP
+  outcome: verified
+  notes: >-
+    Reviewer flagged that these items carry a leading "I" while the IPIP source prints bare
+    stems ("Feel little concern for others"), the subject being supplied by the scale's
+    instruction header. The wording came in from the lab's own questionnaire spreadsheet
+    (imported_from: lib.xlsx), not from the platform - the importer only strips whitespace.
+    Confirmed with the PI 2026-09-07: keep as is. Reverse-scoring corrections from the review
+    are applied.
     item stems; whether to keep that prefix is pending a PI decision (spec 0007). Reverse-scoring corrections
     from the review are applied.
 items:

@@ -813,3 +813,9 @@ button.sample-use {
   min-height: 32px; min-width: 64px; padding: 0 14px; font-size: 13px; background: var(--card);
 }
 .modal-wide { max-width: 560px; }
+
+/* Dataset mark in the corpus info dialog. Decorative (alt=""): the name is
+   right beside it, so a screen reader announcing the logo would just repeat. */
+.modal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.modal-head h3 { margin: 0; }
+.corpus-logo { height: 34px; width: auto; flex-shrink: 0; }

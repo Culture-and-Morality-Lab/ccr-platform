@@ -9,7 +9,7 @@ description: Psychological distress - Kessler Psychological Distress Scale (K10)
 citation: Kessler, R. C., Andrews, G., Colpe, L. J., Hiripi, E., Mroczek, D. K., Normand, S.-L. T., Walters,
   E. E., & Zaslavsky, A. M. (2002). Short screening scales to monitor population prevalences and trends
   in non-specific psychological distress. Psychological Medicine, 32(6), 959–976. https://doi.org/10.1017/S0033291702006074
-verification_status: needs_verification
+verification_status: archived
 source_url: https://www.tac.vic.gov.au/files-to-move/media/upload/k10_english.pdf
 rights_note: Publicly posted government PDF; verify permission for redistribution. Screening tool only;
   not a diagnosis.
@@ -19,8 +19,13 @@ imported_from: lib.xlsx
 review:
   reviewer: Noor Skhiri
   date: '2026-08-25'
-  outcome: pending_pi_decision
-  notes: Items are stored as bare fragments; reviewer flags that each should carry the source stem 'During
+  outcome: retired_by_pi
+  notes: >-
+    Retired 2026-09-07 by PI decision. The K10 prints its items as fragments under a shared
+    header ("During the last 30 days, about how often did you feel..."), so the items stored
+    here are bare words such as "nervous?" and "worthless?". CCR embeds item text directly, and
+    a one-word fragment does not carry the construct, so the scale was withdrawn rather than
+    rewritten. Archived, not deleted: runs that used it still resolve and reproduce.
     the last 30 days, about how often did you feel'. Pending PI decision (spec 0007).
 items:
 - item_id: k10_1
