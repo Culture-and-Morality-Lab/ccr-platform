@@ -8,9 +8,11 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   const [constructs, setConstructs] = useState([]);
   const [examples, setExamples] = useState([]);
   // Step 1's "Use sample data" panel (spec 0010) and the About dialog for one
-  // of its entries. Both start closed: uploading your own data is the primary
-  // path, and the lab's corpus is the quiet alternative under it.
-  const [showExamples, setShowExamples] = useState(false);
+  // of its entries. The panel starts OPEN: collapsed, the only visible words
+  // were "Use sample data", so someone looking for CAMEL by name found
+  // nothing - the PI and a lab member both reported not finding it
+  // (2026-09-08). It is one row tall, so showing it costs almost no space.
+  const [showExamples, setShowExamples] = useState(true);
   const [aboutExampleId, setAboutExampleId] = useState("");
   const [pickedExampleId, setPickedExampleId] = useState("");
   const [loadingExample, setLoadingExample] = useState("");
@@ -822,7 +824,7 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
         <div className="card">
           <h3>Runs</h3>
           <div className="table-wrap">
-            <table className="docs">
+            <table className="docs runs-table">
               <thead>
                 <tr>
                   <th>Started</th>
@@ -837,14 +839,16 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
               <tbody>
                 {jobs.map((j) => (
                   <tr key={j.id}>
-                    <td className="muted">
+                    {/* data-label drives the stacked layout on phones, where the
+                        header row is hidden and each cell carries its own name. */}
+                    <td className="muted" data-label="Started">
                       {(j.started_at || j.created_at).replace("T", " ").slice(0, 16)}
                     </td>
-                    <td>{j.corpus_filename}</td>
-                    <td>{(j.construct_names?.length ? j.construct_names : [j.construct_name]).join(" + ")}</td>
-                    <td className="muted small">{j.model_name}</td>
-                    <td className="muted small">{languageName(j.language)}</td>
-                    <td>
+                    <td data-label="Corpus">{j.corpus_filename}</td>
+                    <td data-label="Construct">{(j.construct_names?.length ? j.construct_names : [j.construct_name]).join(" + ")}</td>
+                    <td className="muted small" data-label="Model">{j.model_name}</td>
+                    <td className="muted small" data-label="Language">{languageName(j.language)}</td>
+                    <td data-label="Status">
                       {j.status === "running" ? (
                         <div className="progress-track" title={`${Math.round(j.progress * 100)}%`}>
                           <div
@@ -861,7 +865,7 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
                         </div>
                       )}
                     </td>
-                    <td>
+                    <td data-label="">
                       {j.status === "completed" && (
                         <button className="linkish" onClick={() => setViewJobId(j.id)}>
                           View results

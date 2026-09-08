@@ -619,7 +619,40 @@ button.danger-solid:disabled { background: #c9ccd1; }
 }
 @media (max-width: 700px) {
   .welcome-steps { grid-template-columns: 1fr; }
-}
+  /* Runs table on a phone: every column after Construct fell off the right
+     edge, so Status and View results - the two things you open the table for -
+     needed a sideways scroll (reported 2026-09-08). Each run becomes a stacked
+     card: no horizontal scroll and nothing dropped. Cells label themselves from
+     data-label, because the header row cannot apply once rows are blocks.
+
+     Scoped to .runs-table, NOT every .docs table: the results tables have no
+     data-label attributes and would stack with blank labels.
+     Two things measured rather than guessed: the base rules are `table.docs td`,
+     which outranks a bare `.docs td`; and the 820px block above sets
+     `table.docs { min-width: 520px }` to force these tables to scroll, which
+     kept the row 520px wide inside a 328px wrapper until it is reset here. */
+  table.docs.runs-table { min-width: 0; width: 100%; max-width: 100%; }
+  table.docs.runs-table thead { display: none; }
+  table.docs.runs-table,
+  table.docs.runs-table tbody,
+  table.docs.runs-table tr,
+  table.docs.runs-table td { display: block; }
+  table.docs.runs-table tr {
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 10px 12px; margin-bottom: 10px; max-width: 100%;
+  }
+  table.docs.runs-table tbody tr:hover td { background: none; }
+  table.docs.runs-table td {
+    padding: 3px 0; border-bottom: 0; text-align: left;
+    max-width: 100%; overflow-wrap: anywhere;
+  }
+  table.docs.runs-table td::before {
+    content: attr(data-label); display: inline-block; min-width: 88px;
+    color: var(--muted); font-size: 11.5px; text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  table.docs.runs-table td[data-label=""] { padding-top: 8px; }
+  table.docs.runs-table td[data-label=""]::before { content: none; }
 
 /* ------------------------------------------- multi-construct runs */
 .construct-selected {
