@@ -7,12 +7,10 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
   const [corpora, setCorpora] = useState([]);
   const [constructs, setConstructs] = useState([]);
   const [examples, setExamples] = useState([]);
-  // Step 1's "Use sample data" panel (spec 0010) and the About dialog for one
-  // of its entries. The panel starts OPEN: collapsed, the only visible words
-  // were "Use sample data", so someone looking for CAMEL by name found
-  // nothing - the PI and a lab member both reported not finding it
-  // (2026-09-08). It is one row tall, so showing it costs almost no space.
-  const [showExamples, setShowExamples] = useState(true);
+  // About dialog for one of the sample corpora. The picker itself is always
+  // visible (see the Step 1 markup): collapsed behind a toggle, the corpus was
+  // never named on screen and neither the PI nor a lab member could find CAMEL
+  // (2026-09-08).
   const [aboutExampleId, setAboutExampleId] = useState("");
   const [pickedExampleId, setPickedExampleId] = useState("");
   const [loadingExample, setLoadingExample] = useState("");
@@ -409,31 +407,21 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
             file again above.
           </p>
         )}
-        {/* Sample data (spec 0010): one quiet line under the upload row that
-            opens a picker. Choosing which corpus is a dropdown, not a list of
-            cards, so adding datasets later costs one row rather than a screen;
-            provenance and the dataset mark sit behind the info button, so the
-            step never grows into a page of dataset text. */}
-        {examples.length > 0 && (
-          <div className="samples">
-            <p className="small muted samples-lead">
-              No data of your own?{" "}
-              <button
-                type="button"
-                className="samples-toggle"
-                aria-expanded={showExamples}
-                aria-controls="sample-data-panel"
-                onClick={() => setShowExamples((v) => !v)}
-              >
-                Use sample data
-                <span className="samples-chevron" aria-hidden="true" />
-              </button>
-            </p>
-            {showExamples && pickedExample && (
-              <div className="samples-picker" id="sample-data-panel">
+        {/* Sample data (spec 0010). Presented as the OTHER branch of Step 1
+            rather than a panel bolted under it: an "or" rule separates it from
+            the upload row, and it uses the same label + control shape as the
+            fields above, so it belongs to the form instead of sitting in a grey
+            box inside it. Always visible - collapsed, the corpus was never
+            named on screen and people looking for CAMEL did not find it. */}
+        {examples.length > 0 && pickedExample && (
+          <>
+            <div className="or-rule" aria-hidden="true"><span>or</span></div>
+            <div className="samples">
+              <label className="field samples-field">
+                No data of your own? Start from a sample corpus
                 <div className="samples-row">
                   <select
-                    aria-label="Sample dataset"
+                    aria-label="Sample corpus"
                     value={pickedExampleId}
                     onChange={(e) => setPickedExampleId(e.target.value)}
                     disabled={!!loadingExample}
@@ -456,22 +444,21 @@ export default function Workspace({ project, auth, onAuthRefresh, onProjectChang
                   </button>
                   <button
                     type="button"
-                    className="ghost sample-use"
+                    className="ghost"
                     onClick={() => useExample(pickedExample)}
                     disabled={!!loadingExample || !pickedExample.usable}
                   >
                     {loadingExample ? "Loading…" : "Use"}
                   </button>
                 </div>
-                {pickedExample.detail && (
-                  <p className="small muted samples-detail">{pickedExample.detail}</p>
-                )}
-                {!pickedExample.usable && (
-                  <p className="small muted samples-detail">⚠ {pickedExample.blocked_reason}</p>
-                )}
-              </div>
-            )}
-          </div>
+              </label>
+              <p className="hint samples-detail">
+                {pickedExample.usable
+                  ? pickedExample.detail
+                  : `⚠ ${pickedExample.blocked_reason}`}
+              </p>
+            </div>
+          </>
         )}
         {aboutExample && (
           <div className="modal-backdrop" onMouseDown={() => setAboutExampleId("")}>

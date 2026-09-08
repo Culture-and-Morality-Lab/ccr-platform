@@ -82,10 +82,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   texts, with the machine and date they were measured on.
 
 ### Fixed
-- The sample corpus is visible without hunting for it. The "Use sample data"
-  panel now starts open, so the CAMEL corpus is named in Step 1 on arrival;
-  collapsed, the only words on screen were "Use sample data" and people looking
-  for CAMEL by name did not find it.
+- The sample corpus is visible without hunting for it, and reads as part of the
+  form. Step 1 now presents uploading and starting from a sample corpus as two
+  branches separated by an "or" rule, with the sample picker using the same
+  label and control shape as the fields above it. It was previously a collapsed
+  link opening a grey panel, so the CAMEL corpus was never named on screen and
+  people looking for it by name did not find it.
 - Runs table on phones: Status and View results were off the right edge and
   needed a sideways scroll to reach. Each run is now a stacked card with every
   field labelled, so nothing is cut off and nothing is hidden. Results tables
