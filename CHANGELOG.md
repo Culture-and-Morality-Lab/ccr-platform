@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Changed
+- The sidebar ends in an account chip, the way ChatGPT's does: an avatar with
+  your name and what kind of account you have, opening a menu upward with the
+  guide, the lab-only pages, the admin link and the way in or out. Signed out,
+  the chip says so and offers to fix it. It replaces the loose row of links
+  that the banner's contents had landed in.
 - The dark banner is gone. It sat on every screen carrying the product's full
   name, and it made the app look older than it is (2026-09-15). The dashboard
   now has no top chrome at all: the sidebar is the chrome, as in ChatGPT and

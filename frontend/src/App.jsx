@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api.js";
+import AccountMenu from "./AccountMenu.jsx";
 import AdminPage from "./AdminPage.jsx";
 import CiteDialog from "./CiteDialog.jsx";
 import WelcomePage from "./WelcomePage.jsx";
@@ -503,28 +504,16 @@ export default function App() {
             )}
           </div>
 
+          {/* One chip instead of a row of loose links: the guides, the
+              lab-only pages, the admin link and the way in or out all live in
+              the menu it opens (2026-09-15, ChatGPT's sidebar as the model). */}
           <div className="sidebar-foot">
-            <nav className="sidebar-nav">
-              <button className="side-link" onClick={() => setShowWelcome(true)}>About</button>
-              <a className="side-link" href="/guide">Guide</a>
-              {isLabMember && (
-                <>
-                  <a className="side-link" href="/testing">Testing</a>
-                  <a className="side-link" href="/product">How it works</a>
-                </>
-              )}
-              {auth?.is_admin && <a className="side-link" href="/admin">Admin</a>}
-            </nav>
-            {auth?.signed_in ? (
-              <div className="sidebar-account">
-                <span className="account-name" title={auth.email || ""}>{auth.name}</span>
-                <button className="linkish" onClick={handleLogout}>Sign out</button>
-              </div>
-            ) : (
-              <button className="ghost sidebar-signin" onClick={() => setShowLogin(true)}>
-                Sign in
-              </button>
-            )}
+            <AccountMenu
+              auth={auth}
+              onAbout={() => setShowWelcome(true)}
+              onSignIn={() => setShowLogin(true)}
+              onSignOut={handleLogout}
+            />
           </div>
         </aside>
 
