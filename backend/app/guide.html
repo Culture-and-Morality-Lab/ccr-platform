@@ -27,30 +27,29 @@
   /* Topbar mirrors the app header EXACTLY (gradient, height, logo size,
      tagline, link styles) so navigating app <-> docs doesn't jump. Update
      styles.css .header alongside any change here. */
+  /* Light, quiet bar - the dark banner (and the product's full name inside it)
+     came off every screen on 2026-09-15. Tokens, not fixed colours, so this
+     follows the page into dark mode. */
   .topbar {
-    background: linear-gradient(180deg, #1b1b1c, var(--brand)); color: #fff;
-    padding: 14px 28px;
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    background: var(--bg); color: var(--fg);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
     position: sticky; top: 0; z-index: 30;
-    border-bottom: 1px solid rgba(255,255,255,.07);
+    border-bottom: 1px solid var(--border);
   }
   .topbar .brand { display: inline-flex; align-items: center; text-decoration: none; }
   .brand-logo { height: 28px; width: auto; display: block; }
   .topbar .brand:hover { opacity: .88; }
-  .topbar .lab {
-    flex: 1 1 280px; min-width: 0; font-size: 12.5px; line-height: 1.5;
-    color: #fff; opacity: .85;
-  }
-  .topbar nav { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-  .topbar nav a { color: rgba(255,255,255,.82); text-decoration: none; font-size: 13px; }
-  .topbar nav a:hover { color: #fff; text-decoration: underline; }
-  .topbar nav a.current { color: #fff; font-weight: 600; }
+  .topbar nav { margin-left: auto; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .topbar nav a { color: var(--muted); text-decoration: none; font-size: 13.5px; }
+  .topbar nav a:hover { color: var(--fg); }
+  .topbar nav a.current { color: var(--fg); font-weight: 600; }
   .topbar .topbar-btn {
-    background: rgba(255,255,255,.12); color: #fff;
-    border: 1px solid rgba(255,255,255,.45);
-    padding: 5px 14px; border-radius: 9px; font-size: 13px; text-decoration: none;
+    background: var(--accent); color: var(--bg); border: 0;
+    padding: 8px 15px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    text-decoration: none; line-height: 1;
   }
-  .topbar .topbar-btn:hover { background: rgba(255,255,255,.22); text-decoration: none; }
+  .topbar .topbar-btn:hover { filter: brightness(1.08); text-decoration: none; }
   main { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
   h1 { font-size: 1.7rem; margin: 0 0 .25rem; }
   h2 { font-size: 1.25rem; margin: 2.2rem 0 .6rem; padding-top: .6rem; border-top: 1px solid var(--border); }
@@ -111,7 +110,7 @@
 <body>
 <header class="topbar">
   <a class="brand" href="/"><svg class="brand-logo" viewBox="188 455 880 338" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <g fill="none" stroke="#fff" stroke-width="32">
+    <g fill="none" stroke="currentColor" stroke-width="32">
       <path d="M 458.884 538.509 A 133 133 0 1 0 458.884 709.491"/>
       <path d="M 563.116 538.509 A 133 133 0 0 1 766.884 538.509"/>
       <path d="M 563.116 709.491 A 133 133 0 0 0 766.884 709.491"/>
@@ -121,7 +120,6 @@
     <circle cx="481" cy="624" r="15" fill="#339B98"/>
     <circle cx="538" cy="624" r="15" fill="#339B98"/>
   </svg></a>
-  <span class="lab">Psychological Text Analysis with Contextualized Construct Representation</span>
   <nav>
     <a href="/welcome">About</a>
     <a href="/guide">Guide</a>

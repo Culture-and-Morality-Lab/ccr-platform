@@ -5,6 +5,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
 ## [Unreleased]
 
 ### Changed
+- The dark banner is gone. It sat on every screen carrying the product's full
+  name, and it made the app look older than it is (2026-09-15). The dashboard
+  now has no top chrome at all: the sidebar is the chrome, as in ChatGPT and
+  Claude, and it holds the logo, the guides, the admin link and the account.
+  The two views with no sidebar, the landing page and /admin, get a light,
+  quiet top line instead, and so do the guide and how-it-works pages, whose
+  logo now takes the colour of the page and so works in dark mode. The
+  dashboard also became a proper app shell: it fills the window and the two
+  panes scroll inside it, so the account row and "New project" stay put
+  instead of drifting to the bottom of a long page.
+- "Psychological Text Analysis with Contextualized Construct Representation" no
+  longer appears in the chrome of every page. It is a description of the
+  product, so it belongs on the landing page and in the footer, which still
+  carry it along with the lab's name. Nothing changed in the served HTML that
+  identifies the operator to crawlers and link scanners.
 - The project sidebar closes, the way it does in ChatGPT and Claude (asked for
   2026-09-15). A panel button at the left of the header hides and shows it, and
   the choice is remembered between visits. On a phone the sidebar is now a

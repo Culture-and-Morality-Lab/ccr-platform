@@ -11,6 +11,9 @@
   --muted: #667085;
   --line: #e5e7eb;
   --bg: #f7f7f8;
+  /* the sidebar rail: a shade under the canvas, the way Claude and ChatGPT
+     separate navigation from content without a border doing the work */
+  --rail: #f1f1f3;
   --card: #ffffff;
   --ok: #157f3d;
   --err: #b42318;
@@ -50,37 +53,64 @@ body {
 
 .app { display: flex; flex-direction: column; min-height: 100vh; }
 
+/* The dashboard is an app shell, not a document: it fills the viewport exactly
+   and the two panes scroll inside it, so the sidebar's account row and the
+   "New project" button stay put instead of drifting to the bottom of a long
+   page. Below 820px the sidebar is a drawer and the page scrolls normally, so
+   this must not apply there. */
+@media (min-width: 821px) {
+  .app-dashboard { height: 100vh; overflow: hidden; }
+}
+
 a { color: var(--brand); }
 
-/* ---------- header ---------- */
-.header {
-  background: linear-gradient(180deg, #1b1b1c, var(--brand-ink));  /* logo ink */
-  color: #fff;
-  padding: 14px 28px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+/* ---------- top line (landing page and /admin only) ----------
+   Every screen used to wear a dark banner with the product's full name in it.
+   The dashboard now has no top chrome at all - its sidebar is the chrome, as
+   in Claude and ChatGPT - and the two views with no sidebar get this instead:
+   light, quiet, and no tagline. */
+.topline {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 24px;
+  background: rgba(247, 247, 248, 0.82);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  border-bottom: 1px solid var(--line);
 }
-.header .brand {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 17px;
-  font-weight: 650;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-  color: #fff;
-  text-decoration: none;
+.topline .brand { display: inline-flex; align-items: center; text-decoration: none; }
+.brand-logo { height: 26px; width: auto; display: block; }
+
+.topline-nav {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
 }
-.brand-logo { height: 28px; width: auto; display: block; }  /* sole brand mark - no wordmark */
-.header .brand:hover { opacity: 0.88; }
-.header .sub { flex: 1 1 280px; min-width: 0; font-size: 12.5px; opacity: 0.85; }
+.top-link {
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: 13.5px; color: var(--muted);
+  cursor: pointer; text-decoration: none; transition: color 0.15s ease;
+}
+.top-link:hover { color: var(--ink); }
+.top-name { font-size: 13px; color: var(--muted); }
+.top-btn {
+  background: var(--brand); color: #fff; border: 0;
+  padding: 8px 15px; border-radius: 9px;
+  font: inherit; font-size: 13px; font-weight: 600; line-height: 1;
+  cursor: pointer; text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+.top-btn:hover { background: var(--brand-dark); }
+
+/* A quiet square button for icons: the sidebar's collapse control and the one
+   that brings it back. */
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 0; flex-shrink: 0;
+  border: 0; border-radius: 8px; background: none;
+  color: var(--muted); cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.icon-btn:hover { background: rgba(16, 24, 40, 0.07); color: var(--ink); }
 
 .layout { display: flex; flex: 1; min-width: 0; min-height: 0; }
 
@@ -101,21 +131,52 @@ a { color: var(--brand); }
 }
 .sidebar-toggle:hover { background: rgba(255, 255, 255, 0.22); }
 
-/* The in-drawer close button and the backdrop exist only under 820px. */
-.sidebar-close { display: none; }
+/* The backdrop exists only under 820px, where the sidebar is a drawer. */
 .sidebar-backdrop { display: none; }
 
 /* ---------- sidebar ---------- */
 .sidebar {
   width: 250px;
-  background: var(--card);
+  background: var(--rail);
   border-right: 1px solid var(--line);
-  padding: 18px 14px;
+  padding: 10px 12px 12px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
+.sidebar-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 2px 2px 8px;
+}
+.brand-mini {
+  display: inline-flex; align-items: center;
+  border: 0; background: none; padding: 2px; cursor: pointer; border-radius: 8px;
+}
+.brand-mini img, .brand-mini-img { height: 22px; width: auto; display: block; }
+.brand-mini:hover { background: rgba(16, 24, 40, 0.06); }
+
+/* What the banner used to carry: the guides, the account, and the way out. */
+.sidebar-foot {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.sidebar-nav {
+  display: flex; flex-wrap: wrap; gap: 4px 14px; margin-bottom: 10px;
+}
+.side-link {
+  background: none; border: 0; padding: 0;
+  font: inherit; font-size: 12.5px; color: var(--muted);
+  cursor: pointer; text-decoration: none;
+}
+.side-link:hover { color: var(--ink); text-decoration: underline; }
+.sidebar-account { display: flex; align-items: center; gap: 10px; }
+.account-name {
+  font-size: 13px; font-weight: 600; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sidebar-account .linkish { margin-left: auto; font-size: 12.5px; flex-shrink: 0; }
+.sidebar-signin { width: 100%; background: var(--card); }
 .sidebar h2 {
   font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.7px;
   color: var(--muted); margin: 0 0 10px 4px;
@@ -127,12 +188,13 @@ a { color: var(--brand); }
 }
 .sidebar-filter {
   width: 100%; padding: 7px 10px; margin-bottom: 10px;
+  /* white on the tinted rail, so the field reads as a field */
   border: 1px solid var(--line); border-radius: var(--radius-sm); font: inherit; font-size: 13px;
   background: #fff; color: var(--ink);
 }
 .sidebar-filter:focus { outline: none; border-color: var(--brand); }
 .project-list {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   margin: 0 -4px;
@@ -149,8 +211,8 @@ div:first-child > .group-label { margin-top: 2px; }
   border: 1px solid transparent; border-radius: var(--radius-sm);
   background: none; cursor: pointer; font: inherit; color: var(--ink);
 }
-.project-item:hover { background: var(--bg); }
-.project-item.active { background: var(--accent-soft); border-color: var(--brand); font-weight: 600; }
+.project-item:hover { background: rgba(16, 24, 40, 0.05); }
+.project-item.active { background: var(--card); border-color: var(--brand); font-weight: 600; }
 .project-item .project-name {
   display: block;
   overflow: hidden;
@@ -166,7 +228,15 @@ div:first-child > .group-label { margin-top: 2px; }
 .project-create > button { width: 100%; }
 
 /* ---------- main ---------- */
-.main { flex: 1; padding: 22px 28px; overflow-y: auto; min-width: 0; }
+.main { flex: 1; padding: 12px 28px 28px; overflow-y: auto; min-width: 0; }
+
+/* Always present, so opening or closing the sidebar never shifts the page.
+   Empty while the sidebar is open: that top margin is deliberate breathing
+   room now that no banner supplies it. */
+.main-toolbar {
+  display: flex; align-items: center; gap: 10px;
+  height: 32px; margin-bottom: 6px;
+}
 
 .card {
   background: var(--card); border: 1px solid var(--line);
@@ -396,26 +466,6 @@ table.docs tbody tr:hover td { background: var(--bg); }
 .small { font-size: 12.5px; }
 .mt { margin-top: 12px; }
 
-/* ---------- header nav + auth ---------- */
-.header-nav {
-  margin-left: auto; display: flex; align-items: center; gap: 14px; color: #fff;
-  flex-wrap: wrap;
-}
-.header-link {
-  background: none; border: none; padding: 0;
-  color: rgba(255, 255, 255, 0.82); font: inherit; font-size: 13px;
-  cursor: pointer; text-decoration: none; transition: color 0.15s ease;
-}
-.header-link:hover { color: #fff; text-decoration: underline; }
-.header-link.current { color: #fff; font-weight: 600; }
-.header-btn {
-  background: rgba(255, 255, 255, 0.12); color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  padding: 5px 14px; border-radius: 7px; font: inherit; font-size: 13px; cursor: pointer;
-  text-decoration: none; transition: background-color 0.15s ease;
-}
-.header-btn:hover { background: rgba(255, 255, 255, 0.22); }
-
 /* ---------- project header + actions ---------- */
 .project-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -509,18 +559,13 @@ button.danger-solid:disabled { background: #c9ccd1; }
 @media (max-width: 820px) {
   body { font-size: 14px; }
 
-  .header {
-    padding: 12px 16px;
-    align-items: flex-start;
-    gap: 2px 12px;
+  .topline {
+    padding: 10px 14px;
+    gap: 10px;
   }
-  .header .brand { font-size: 16px; }
-  .header-nav { gap: 10px 14px; }
-  .header .sub {
-    flex: 1 1 210px;
-    font-size: 12px;
-    line-height: 1.35;
-  }
+  .topline-nav { gap: 12px; }
+  .top-link { font-size: 13px; }
+  .top-name { display: none; }  /* the sidebar names the account; this is chrome */
 
   .layout { display: block; }
   /* The sidebar becomes a drawer over the workspace. It used to be a
@@ -530,7 +575,8 @@ button.danger-solid:disabled { background: #c9ccd1; }
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 45;
     width: min(290px, 84vw);
     margin-left: 0;
-    padding: 14px;
+    padding: 10px 12px 14px;
+    background: var(--card);
     border-right: 1px solid var(--line);
     box-shadow: var(--shadow-lg);
     transform: translateX(-100%);
@@ -542,13 +588,6 @@ button.danger-solid:disabled { background: #c9ccd1; }
   .project-list { margin-right: 0; }
   .project-create { border-top: 0; }
 
-  .sidebar-close {
-    display: inline-flex; align-items: center; justify-content: center;
-    margin-left: auto; padding: 0 2px;
-    border: 0; background: none; cursor: pointer;
-    color: var(--muted); font-size: 14px; line-height: 1;
-  }
-  .sidebar-close:hover { color: var(--ink); }
   .sidebar-backdrop {
     display: block; position: fixed; inset: 0; z-index: 44;
     background: rgba(20, 22, 26, 0.4);
@@ -596,6 +635,10 @@ button.danger-solid:disabled { background: #c9ccd1; }
     margin-bottom: 0;
     width: 100%;
   }
+  /* ...except the project's own Archive/Delete pair, which read as a tall
+     ragged column at the top of the page. They stay side by side. */
+  .project-header .row { flex-direction: row; justify-content: flex-end; }
+  .project-header .row > button { width: auto; align-self: auto; }
   .run-button {
     width: 100%;
     min-width: 0;
@@ -614,7 +657,6 @@ button.danger-solid:disabled { background: #c9ccd1; }
 }
 
 @media (max-width: 460px) {
-  .header .sub { flex-basis: 100%; }
   .stat-grid { grid-template-columns: 1fr; }
 }
 

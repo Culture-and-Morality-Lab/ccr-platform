@@ -31,6 +31,22 @@ function initialSidebarOpen() {
   }
 }
 
+// "Panel left", the mark ChatGPT and Claude both use for this, so the gesture
+// is recognisable without a label. Three buttons share it: collapse, expand,
+// and closing the drawer on a phone.
+function PanelIcon() {
+  return (
+    <svg
+      width="17" height="17" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+      strokeLinejoin="round" aria-hidden="true"
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="9" y1="4" x2="9" y2="20" />
+    </svg>
+  );
+}
+
 function relativeTime(iso) {
   if (!iso) return "";
   const then = new Date(iso.endsWith("Z") || iso.includes("+") ? iso : iso + "Z");
@@ -228,6 +244,11 @@ export default function App() {
     if (isNarrow()) setSidebarOpen(false);  // the drawer covers what you picked
   }
 
+  // The dashboard carries no top bar at all: its sidebar IS the chrome. Only
+  // the two views without a sidebar (landing page, /admin) get one.
+  const isDashboard = !IS_ADMIN_PATH && !showWelcome;
+  const isLabMember = ["lab", "maintainer", "pi"].includes(auth?.role);
+
   const selected = projects.find((p) => p.id === selectedId) || null;
   const normalizedFilter = filter.trim().toLowerCase();
   const visibleProjects = projects.filter((p) =>
@@ -235,86 +256,57 @@ export default function App() {
   );
 
   return (
-    <div className="app">
-      <header className="header">
-        {!IS_ADMIN_PATH && !showWelcome && (
-          <button
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen((open) => !open)}
-            aria-expanded={sidebarOpen}
-            aria-controls="project-sidebar"
-            aria-label={sidebarOpen ? "Hide projects" : "Show projects"}
-            title={sidebarOpen ? "Hide projects" : "Show projects"}
+    <div className={"app" + (isDashboard ? " app-dashboard" : "")}>
+      {!isDashboard && (
+        <header className="topline">
+          <a
+            className="brand"
+            href="/"
+            onClick={(e) => {
+              // Inside the SPA the brand is an instant way back to the
+              // dashboard; from /admin it's a normal navigation.
+              if (!IS_ADMIN_PATH) {
+                e.preventDefault();
+                enterDashboard();
+              }
+            }}
           >
-            {/* "Panel left", the same mark ChatGPT and Claude use, so the
-                gesture is recognisable without a label. */}
-            <svg
-              width="17" height="17" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-              strokeLinejoin="round" aria-hidden="true"
-            >
-              <rect x="3" y="4" width="18" height="16" rx="2" />
-              <line x1="9" y1="4" x2="9" y2="20" />
-            </svg>
-          </button>
-        )}
-        <a
-          className="brand"
-          href="/"
-          onClick={(e) => {
-            // Inside the SPA the brand is an instant way back to the
-            // dashboard; from /admin it's a normal navigation.
-            if (!IS_ADMIN_PATH) {
-              e.preventDefault();
-              enterDashboard();
-            }
-          }}
-        >
-          {/* The logo already reads "CCR" - no wordmark next to it, and the
-              tagline says what the tool does instead of re-expanding the acronym. */}
-          <img className="brand-logo" src="/ccr-logo-white.svg" alt="CCR Platform" />
-        </a>
-        <span className="sub">
-          Psychological Text Analysis with Contextualized Construct Representation
-        </span>
-        <nav className="header-nav">
-          {IS_ADMIN_PATH ? (
-            <a className="header-link" href="/welcome">About</a>
-          ) : (
-            <button
-              className={"header-link" + (showWelcome ? " current" : "")}
-              onClick={() => setShowWelcome(true)}
-            >
-              About
-            </button>
-          )}
-          <a className="header-link" href="/guide">Guide</a>
-          {/* /testing (the click-through testing guide) and /product are both
-              lab-internal; the server enforces the gate, the header just
-              doesn't advertise them to everyone else. */}
-          {["lab", "maintainer", "pi"].includes(auth?.role) && (
-            <>
-              <a className="header-link" href="/testing">Testing</a>
-              <a className="header-link" href="/product">How it works</a>
-            </>
-          )}
-          {auth?.signed_in ? (
-            <>
-              <span className="small">Hi, {auth.name}</span>
-              {auth.is_admin && !IS_ADMIN_PATH && (
-                <a className="header-btn" href="/admin">Admin</a>
-              )}
-              <button className="header-btn" onClick={handleLogout}>
-                Sign out
+            <img className="brand-logo" src="/ccr-logo.svg" alt="CCR Platform" />
+          </a>
+          {/* The tagline used to sit here on every screen. It says what the
+              product is, which is a landing-page job, so it now lives in the
+              hero and the footer and nowhere else. */}
+          <nav className="topline-nav">
+            {IS_ADMIN_PATH ? (
+              <a className="top-link" href="/">Dashboard</a>
+            ) : (
+              <button className="top-link" onClick={enterDashboard}>Dashboard</button>
+            )}
+            <a className="top-link" href="/guide">Guide</a>
+            {/* /testing and /product are lab-internal; the server enforces the
+                gate, the nav just doesn't advertise them to everyone else. */}
+            {isLabMember && (
+              <>
+                <a className="top-link" href="/testing">Testing</a>
+                <a className="top-link" href="/product">How it works</a>
+              </>
+            )}
+            {auth?.signed_in ? (
+              <>
+                <span className="top-name">{auth.name}</span>
+                {auth.is_admin && !IS_ADMIN_PATH && (
+                  <a className="top-link" href="/admin">Admin</a>
+                )}
+                <button className="top-btn" onClick={handleLogout}>Sign out</button>
+              </>
+            ) : (
+              <button className="top-btn" onClick={() => setShowLogin(true)}>
+                Sign in
               </button>
-            </>
-          ) : (
-            <button className="header-btn" onClick={() => setShowLogin(true)}>
-              Sign in
-            </button>
-          )}
-        </nav>
-      </header>
+            )}
+          </nav>
+        </header>
+      )}
 
       {showLogin && (
         <div className="modal-backdrop" onClick={() => setShowLogin(false)}>
@@ -431,18 +423,27 @@ export default function App() {
       ) : (
       <div className={"layout" + (sidebarOpen ? "" : " sidebar-closed")}>
         <aside className="sidebar" id="project-sidebar">
+          {/* The sidebar carries the identity now that no banner does. The
+              same button collapses it on a wide screen and closes the drawer
+              on a phone, where it is also the only way out from inside. */}
+          <div className="sidebar-head">
+            <button className="brand-mini" onClick={enterDashboard} title="CCR Platform">
+              <img src="/ccr-logo.svg" alt="CCR Platform" />
+            </button>
+            <button
+              className="icon-btn"
+              onClick={() => setSidebarOpen(false)}
+              aria-expanded={sidebarOpen}
+              aria-controls="project-sidebar"
+              aria-label="Hide projects"
+              title="Hide projects"
+            >
+              <PanelIcon />
+            </button>
+          </div>
           <h2>
             Projects
             {projects.length > 0 && <span className="count">{projects.length}</span>}
-            {/* Only shown while the sidebar is a drawer: there it covers the
-                header's toggle, so it has to carry its own way out. */}
-            <button
-              className="sidebar-close"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Hide projects"
-            >
-              ✕
-            </button>
           </h2>
           <input
             type="text"
@@ -501,6 +502,30 @@ export default function App() {
               </button>
             )}
           </div>
+
+          <div className="sidebar-foot">
+            <nav className="sidebar-nav">
+              <button className="side-link" onClick={() => setShowWelcome(true)}>About</button>
+              <a className="side-link" href="/guide">Guide</a>
+              {isLabMember && (
+                <>
+                  <a className="side-link" href="/testing">Testing</a>
+                  <a className="side-link" href="/product">How it works</a>
+                </>
+              )}
+              {auth?.is_admin && <a className="side-link" href="/admin">Admin</a>}
+            </nav>
+            {auth?.signed_in ? (
+              <div className="sidebar-account">
+                <span className="account-name" title={auth.email || ""}>{auth.name}</span>
+                <button className="linkish" onClick={handleLogout}>Sign out</button>
+              </div>
+            ) : (
+              <button className="ghost sidebar-signin" onClick={() => setShowLogin(true)}>
+                Sign in
+              </button>
+            )}
+          </div>
         </aside>
 
         {/* Tapping beside an open drawer closes it. Hidden above 820px, where
@@ -514,6 +539,26 @@ export default function App() {
         )}
 
         <main className="main">
+          {/* Always in the flow, so opening the sidebar does not shift the
+              page. It holds the way back in when the sidebar is away, which on
+              a phone is every visit. */}
+          <div className="main-toolbar">
+            {!sidebarOpen && (
+              <>
+                <button
+                  className="icon-btn"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-expanded={sidebarOpen}
+                  aria-controls="project-sidebar"
+                  aria-label="Show projects"
+                  title="Show projects"
+                >
+                  <PanelIcon />
+                </button>
+                <img className="brand-mini-img" src="/ccr-logo.svg" alt="CCR Platform" />
+              </>
+            )}
+          </div>
           {error && (
             <div className="error-banner" onClick={() => setError("")}>
               {error}

@@ -258,3 +258,16 @@ currently "Anand, D., & Atari, M." with the lab as publisher - developer first, 
 That is a credit decision, not a code one; Mohammad should confirm it before the button is
 announced. Revisit: a tagged release or a Zenodo DOI would give the citation a version and
 a DOI of its own, which is the usual way to make research software citable.
+
+## 2026-09-15 - No top chrome on the dashboard; the sidebar is the chrome (Deva)
+The dark banner came off every screen. The dashboard is now an app shell (100vh, panes
+scrolling inside) with the identity, navigation and account in the sidebar; the landing
+page, /admin and the three static doc pages get a light sticky top line. The product's
+full name leaves the chrome entirely and stays where it explains something: the landing
+hero and the footer. Rejected: keeping a slim branded bar everywhere (it is the thing
+that reads as dated, and it costs vertical space on a phone on every screen). Safe: the
+operator identity that Safe Browsing cares about lives in index.html's meta tags and
+<noscript> block (da069b3), not in the banner, so removing the banner does not touch it.
+The static pages' inline logo now strokes with currentColor, which is what lets one mark
+serve both their light and dark themes. Revisit: when the React app gets dark mode, the
+same trick replaces ccr-logo-white.svg with a single currentColor mark.
