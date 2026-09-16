@@ -528,26 +528,26 @@ export default function App() {
         )}
 
         <main className="main">
-          {/* Always in the flow, so opening the sidebar does not shift the
-              page. It holds the way back in when the sidebar is away, which on
-              a phone is every visit. */}
-          <div className="main-toolbar">
-            {!sidebarOpen && (
-              <>
-                <button
-                  className="icon-btn"
-                  onClick={() => setSidebarOpen(true)}
-                  aria-expanded={sidebarOpen}
-                  aria-controls="project-sidebar"
-                  aria-label="Show projects"
-                  title="Show projects"
-                >
-                  <PanelIcon />
-                </button>
-                <img className="brand-mini-img" src="/ccr-logo.svg" alt="CCR Platform" />
-              </>
-            )}
-          </div>
+          {/* Only while the sidebar is away, which on a phone is every visit.
+              Reserving the row when the sidebar is open left an empty strip
+              above the project name (spotted 2026-09-15) and pushed the
+              heading out of line with the logo beside it. Toggling now shifts
+              the content by one row, which is the cheaper of the two. */}
+          {!sidebarOpen && (
+            <div className="main-toolbar">
+              <button
+                className="icon-btn"
+                onClick={() => setSidebarOpen(true)}
+                aria-expanded={sidebarOpen}
+                aria-controls="project-sidebar"
+                aria-label="Show projects"
+                title="Show projects"
+              >
+                <PanelIcon />
+              </button>
+              <img className="brand-mini-img" src="/ccr-logo.svg" alt="CCR Platform" />
+            </div>
+          )}
           {error && (
             <div className="error-banner" onClick={() => setError("")}>
               {error}

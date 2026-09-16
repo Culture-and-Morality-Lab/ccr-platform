@@ -269,11 +269,13 @@ div:first-child > .group-label { margin-top: 2px; }
 .project-create > button { width: 100%; }
 
 /* ---------- main ---------- */
-.main { flex: 1; padding: 12px 28px 28px; overflow-y: auto; min-width: 0; }
+/* 7px, not a round number: it puts the project name on the same line as the
+   logo across the divider (measured, 5px out at 12px). */
+.main { flex: 1; padding: 7px 28px 28px; overflow-y: auto; min-width: 0; }
 
-/* Always present, so opening or closing the sidebar never shifts the page.
-   Empty while the sidebar is open: that top margin is deliberate breathing
-   room now that no banner supplies it. */
+/* Rendered only while the sidebar is collapsed: holding the row open the rest
+   of the time left an empty strip above the project name, and set the heading
+   out of line with the logo across the divider. */
 .main-toolbar {
   display: flex; align-items: center; gap: 10px;
   height: 32px; margin-bottom: 6px;
