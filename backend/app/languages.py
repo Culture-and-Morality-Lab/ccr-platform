@@ -46,6 +46,41 @@ NAMES: dict[str, str] = {
 }
 
 
+# Writing system(s) each language is normally written in, for the item-language
+# check (spec 0011). Only languages NOT written in Latin script are listed;
+# every other code is Latin. Script ids are the first word of the Unicode
+# character name, lowercased ("ARABIC LETTER ALEF" -> "arabic"), which is how
+# warnings_engine reads the script of an item.
+SCRIPTS: dict[str, frozenset[str]] = {
+    code: frozenset(s.split()) for code, s in {
+        "am": "ethiopic", "ar": "arabic", "as": "bengali", "be": "cyrillic",
+        "bg": "cyrillic", "bn": "bengali", "el": "greek", "fa": "arabic",
+        "gu": "gujarati", "he": "hebrew", "hi": "devanagari", "hy": "armenian",
+        "ja": "cjk hiragana katakana", "ka": "georgian", "kk": "cyrillic",
+        "km": "khmer", "kn": "kannada", "ko": "hangul cjk", "ku": "latin arabic",
+        "ky": "cyrillic", "lo": "lao", "mk": "cyrillic", "ml": "malayalam",
+        "mn": "cyrillic mongolian", "mr": "devanagari", "my": "myanmar",
+        "ne": "devanagari", "or": "oriya", "pa": "gurmukhi", "ps": "arabic",
+        "ru": "cyrillic", "sa": "devanagari", "sd": "arabic", "si": "sinhala",
+        "sr": "cyrillic latin", "ta": "tamil", "te": "telugu", "th": "thai",
+        "ug": "arabic", "uk": "cyrillic", "ur": "arabic", "uz": "latin cyrillic",
+        "yi": "hebrew", "zh": "cjk",
+    }.items()
+}
+KNOWN_SCRIPTS: frozenset[str] = frozenset({"latin"}).union(*SCRIPTS.values())
+_SCRIPT_LABELS = {"cjk": "Chinese (Han)"}
+
+
+def scripts(code: str) -> frozenset[str]:
+    """Writing systems a language is written in; Latin unless listed above."""
+    key = str(code).strip().lower()
+    return SCRIPTS.get(key) or SCRIPTS.get(key.split("-")[0]) or frozenset({"latin"})
+
+
+def display_script(script: str) -> str:
+    return _SCRIPT_LABELS.get(script, script.title())
+
+
 def display(code: str | None) -> str:
     """Human-readable language name; falls back to the code when unknown."""
     if not code:

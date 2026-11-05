@@ -30,6 +30,7 @@ from . import auth, auth_google, example_corpora, languages as lang_names, reten
 from . import item_generation
 from . import jobs as jobs_module
 from . import registry
+from . import warnings_engine
 from .ccr import FAKE_MODEL_NAME
 from .construct_files import parse_construct_file
 from .construct_lib import sync_library
@@ -1024,7 +1025,10 @@ def create_construct(
         reverse_flags_json=json.dumps([bool(f) for f in flags]),
         is_seed=False,
         verification_status="draft",  # user-defined research tools, not validated scales
-        language=(body.language or "en").lower(),
+        language=(
+            body.language.strip().lower() if body.language and body.language.strip()
+            else warnings_engine.infer_items_language(items)
+        ),
         # AI-generated drafts carry provenance (model, prompt version, date);
         # the label persists even after the researcher edits items.
         generation_json=json.dumps(body.generation.model_dump()) if body.generation else "",

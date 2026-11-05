@@ -99,6 +99,47 @@ models:
       - "Quality varies by language, especially lower-resource languages."
       - "Scores are not comparable across model families."
 
+  # Arabic-only model (added 2026-11-05 at Deva's request). ATM2 is AraBERTv02
+  # fine-tuned with MatryoshkaLoss + MultipleNegativesRankingLoss on Arabic NLI
+  # triplets (GATE paper, Findings of EMNLP 2026, arXiv:2505.24581). MTEB results
+  # repo, Spearman x100: STS17 ar-ar 85.3, STS22.v2 ar 64.0, but STS17 en-ar 25.8,
+  # so it does NOT align English with Arabic: items and texts must both be Arabic
+  # (CONSTRUCT_LANGUAGE_UNSUPPORTED fires otherwise). Pinned revision differs from
+  # the MTEB-evaluated one (ed357f2) only in README.md; weights, tokenizer and
+  # pooling config are byte-identical. ~540 MB download on first use (lazy).
+  - id: arabic-triplet-matryoshka-v2
+    provider_model_id: Omartificial-Intelligence-Space/Arabic-Triplet-Matryoshka-V2
+    display_name: "Arabic Triplet Matryoshka V2 (Arabic only)"
+    revision: 17b87422aa4bfb3b478369299e701070b308314f
+    default: false
+    supported_languages: ["ar"]
+    embedding_dimension: 768
+    max_seq_length: 512
+    quality_tier: specialized
+    speed_tier: medium
+    usage_config:
+      requires_prefix: false
+      symmetric_similarity_prefix: null
+      pooling: mean                            # per 1_Pooling/config.json
+      normalize_embeddings: true
+    operational_config:
+      # Measured 2026-11-05: scripts/bench_models.py --threads 2 --quick on an
+      # Apple M4 Pro, with ARABIC filler text (English filler would split into
+      # extra subword tokens under this vocabulary). MiniLM re-measured in the
+      # same session at 0.8/1.0/3.2, matching its recorded figures. A shared
+      # cloud vCPU runs roughly 2-4x slower. Seconds per 1,000 texts.
+      expected_time_per_1k_texts_cpu:
+        short_15w_s: 0.8
+        medium_60w_s: 3.2
+        long_250w_s: 12.3
+      worker_ram_min_gb: 4
+      lazy_load: true
+      max_resident_models: 1
+    warnings:
+      - "Arabic only: write the construct items in Arabic too. English items cannot be compared with Arabic texts in this model."
+      - "Trained on Modern Standard Arabic (machine-translated NLI data); dialectal Arabic is untested."
+      - "Scores are not comparable across model families."
+
   # PsyEmbedding family (Culture & Morality Lab): sentence-transformers models
   # fine-tuned for psychological text analysis on sentence-similarity pairs.
   # Added on PI request 2026-07-18. All four: mean pooling, no prefix, English,

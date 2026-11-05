@@ -76,7 +76,9 @@ class ConstructCreate(BaseModel):
     reference: str = ""
     items: list[str] = Field(min_length=1)
     reverse_scored: list[bool] | None = None  # parallel to items; defaults to all False
-    language: str = "en"
+    # Omitted (the UI never sends it): detected from the items, "en" if unsure,
+    # so an Arabic construct's run record does not claim English (spec 0011).
+    language: str | None = None
     generation: ConstructGeneration | None = None  # present = AI-generated draft
 
 

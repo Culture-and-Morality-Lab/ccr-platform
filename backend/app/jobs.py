@@ -434,6 +434,18 @@ def run_job(job_id: str) -> None:
             )
             if mlw:
                 warnings.append(mlw)
+            # The model must also cover the ITEMS' language (spec 0011): a
+            # monolingual model cannot align items and texts across languages.
+            checked = list(zip(constructs, items_per_construct))
+            if anchored:
+                checked.append((opposite, opposite_items))
+            for c, c_items in checked:
+                clw = warnings_engine.construct_language_warning(
+                    c.name, c_items, model_cfg.id, model_cfg.supported_languages,
+                    model_cfg.language_set_name,
+                )
+                if clw:
+                    warnings.append(clw)
         for user_warning in (model_cfg.user_warnings if model_cfg else ()):
             warnings.append(W("MODEL_NOTE", "info", user_warning))
         if anchored and anchor_result.degenerate:

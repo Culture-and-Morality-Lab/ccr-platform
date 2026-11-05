@@ -52,9 +52,25 @@ _WORDS = (
     "their sense of belonging within the wider research group over the study period"
 ).split()
 
+# The same sentence in Modern Standard Arabic, for models that do not cover
+# English: English filler would split into far more subword tokens under an
+# Arabic vocabulary and overstate the time real Arabic text takes.
+_WORDS_AR = (
+    "أفاد المشاركون بأن بيئة العمل التعاونية شكلت بصورة ملموسة شعورهم بالانتماء "
+    "داخل مجموعة البحث الأوسع طوال فترة الدراسة"
+).split()
 
-def synth(n_words: int) -> str:
-    return " ".join((_WORDS * 40)[:n_words])
+
+def synth(n_words: int, words: list[str] = _WORDS) -> str:
+    return " ".join((words * 60)[:n_words])
+
+
+def filler_for(cfg) -> tuple[list[str], str]:
+    if cfg.supports_language("en"):
+        return _WORDS, "en"
+    if cfg.supports_language("ar"):
+        return _WORDS_AR, "ar"
+    raise SystemExit(f"{cfg.id}: no filler text for its languages; add one above")
 
 
 SHAPES = [
@@ -64,9 +80,9 @@ SHAPES = [
 ]
 
 
-def bench(model: SentenceTransformer, n_words: int, n: int) -> float:
+def bench(model: SentenceTransformer, n_words: int, n: int, words: list[str]) -> float:
     """Return seconds per 1,000 texts."""
-    texts = [synth(n_words)] * n
+    texts = [synth(n_words, words)] * n
     model.encode(texts[: args.batch], batch_size=args.batch, show_progress_bar=False)  # warm
     start = time.perf_counter()
     model.encode(
@@ -94,12 +110,13 @@ def main() -> None:
             print(f"{cfg.id}: SKIPPED ({type(exc).__name__}: {exc})\n")
             continue
 
-        print(f"{cfg.id}  (max_seq={model.max_seq_length}, load {load:.1f}s)")
+        words, filler_lang = filler_for(cfg)
+        print(f"{cfg.id}  (max_seq={model.max_seq_length}, load {load:.1f}s, {filler_lang} text)")
         for label, n_words in SHAPES:
             # Fast models need enough batches that warm-up noise averages out;
             # at n=100 (< 2 full batches) short-text figures swing ~3x.
             n = 250 if args.quick else (600 if n_words < 250 else 300)
-            per_1k = bench(model, n_words, n)
+            per_1k = bench(model, n_words, n, words)
             est_20k = per_1k * 20  # seconds at the common CCR_MAX_ROWS=20000
             print(
                 f"  {label:32s} {per_1k:8.1f} s/1k   "
