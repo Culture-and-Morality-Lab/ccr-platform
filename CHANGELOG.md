@@ -62,6 +62,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/). User-visible changes on
   (spec 0007)
 
 ### Added
+- An Arabic embedding model: Arabic Triplet Matryoshka V2 (ATM2), from the GATE
+  paper (Findings of EMNLP 2026). It had the highest Arabic STS17 score among
+  the models we compared (MTEB 85.3, against 74.5 for Multilingual E5 Base),
+  though two larger multilingual models edge it on STS22, and it runs at about
+  the same speed as Multilingual E5 Base. It is Arabic only: the construct items
+  must be in Arabic too, which the picker says when you select it.
+- A new warning, CONSTRUCT_LANGUAGE_UNSUPPORTED: a run now checks that each
+  construct's ITEMS are written in a script the model covers, not only the
+  language of the texts. An English construct run on an Arabic-only model (or
+  an Arabic construct on MiniLM) used to return scores with no warning,
+  although the model cannot compare the two and the scores mean nothing. Items
+  are checked one by one, so a construct mixing Arabic and English is caught.
+- Custom constructs written in a non-Latin script record their language (an
+  Arabic construct's run record no longer says English). Latin-script
+  constructs keep "en" as before.
 - "Cite this platform" in the landing-page footer, asked for by Ali Hajian
   (2026-09-09) and modelled on Google Scholar's Cite button: the reference in
   APA, MLA, Chicago, Harvard and Vancouver, click one to copy it, plus BibTeX

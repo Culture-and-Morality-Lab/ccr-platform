@@ -271,3 +271,23 @@ operator identity that Safe Browsing cares about lives in index.html's meta tags
 The static pages' inline logo now strokes with currentColor, which is what lets one mark
 serve both their light and dark themes. Revisit: when the React app gets dark mode, the
 same trick replaces ccr-logo-white.svg with a single currentColor mark.
+
+## 2026-11-05 - Arabic model: ATM2 via the registry, with an item-language guard (Deva)
+Added Omartificial-Intelligence-Space/Arabic-Triplet-Matryoshka-V2 (135M, AraBERTv02 base,
+Apache-2.0) as an optional Arabic-only model, pinned to 17b8742 (identical weights to the
+MTEB-evaluated ed357f2). Evidence, MTEB results repo, Spearman x100, STS17 ar-ar / STS22.v2 ar
+/ STS17 en-ar: ATM2 85.3 / 64.0 / 25.8; Qwen3-Embedding-0.6B 83.2 / 66.5 / 77.1;
+multilingual-e5-large-instruct 82.7 / 62.8 / 81.8; bge-m3 80.7 / 64.7 / 69.4; our Multilingual
+E5 Base 74.5 (card). Speed on the M4 Pro at 2 threads with Arabic text: 0.8 / 3.2 / 12.3 s per
+1k, the same class as Multilingual E5 Base. Because ATM2 cannot align English with Arabic, it
+shipped together with CONSTRUCT_LANGUAGE_UNSUPPORTED (spec 0011), which checks each item's
+writing system against every model's languages. The check compares scripts, not detected
+languages: langdetect read short English keyword lists as Italian, Catalan or Somali at
+probability 1.0, which would have warned on MiniLM runs. Rejected: GATE-AraBert-v1 (same base, lower STS, 82.8);
+Arabic-MiniLM-L12 (lighter but STS22 52.4); Qwen3-Embedding-0.6B or bge-m3 as the Arabic model
+(4x the parameters and slower on CPU for lower Arabic-Arabic STS17; they are the candidates if
+the lab wants cross-lingual CCR, which is a separate validity question). Known gaps: training
+data is machine-translated Modern Standard Arabic NLI, so dialectal social media text is
+untested (a MARBERT-based sibling exists if that matters), and the only benchmark evidence is
+three short-sentence STS tasks. Revisit: an Arabic validation study on lab data, or a request
+for dialect coverage.

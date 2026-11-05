@@ -243,8 +243,9 @@ library whenever one exists.</p>
     <h3>Run, and read the warnings first</h3>
     <p>Press Run. When it finishes, read the amber <b>warnings panel</b> before anything
     else: it flags things like empty or duplicate rows, texts that were too short, texts
-    longer than the model's window (truncated), or a mismatch between your corpus language
-    and the model. Warnings never change your scores - they tell you how to read them.</p>
+    longer than the model's window (truncated), a mismatch between your corpus language
+    and the model, or construct items written in a script the model does not cover.
+    Warnings never change your scores - they tell you how to read them.</p>
   </li>
   <li>
     <h3>Inspect the results</h3>
@@ -348,6 +349,7 @@ after that they stay warm. Scores are comparable only within the same model.</p>
   <tr><td>MiniLM L6 v2 <b>(default)</b></td><td>English, general use</td><td>Fast; the CCR reference model. Start here.</td></tr>
   <tr><td>E5 Large v2</td><td>English, higher quality</td><td>Stronger but noticeably slower.</td></tr>
   <tr><td>Multilingual E5 Base</td><td>50+ languages</td><td>Use for non-English corpora.</td></tr>
+  <tr><td>Arabic Triplet Matryoshka V2</td><td>Arabic text</td><td>Scores higher than Multilingual E5 on Arabic sentence-similarity benchmarks, at similar speed; it has not yet been validated for CCR on Arabic text. <b>Arabic only, items included:</b> the library's scales are in English, so add a validated Arabic translation as your own construct. Trained on Modern Standard Arabic; dialects are untested.</td></tr>
   <tr><td>PsyEmbedding BERT / RoBERTa / GTE / E5 Large</td><td>Psychological text</td><td>Lab fine-tunes for psychology research. English; heavier, so the first run downloads a larger model.</td></tr>
 </table>
 </div>

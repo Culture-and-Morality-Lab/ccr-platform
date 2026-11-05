@@ -10,6 +10,10 @@ order. Detailed specs for the numbered features live in the sections below.
       in the hub collection are in the registry and live on dev - verified
       against huggingface.co/collections/Culture-and-Morality-Lab/psyembedding
       2026-07-31.
+- [x] Arabic embedding model (Deva, 2026-11-05): Arabic Triplet Matryoshka V2
+      is in the registry (spec 0011), with CONSTRUCT_LANGUAGE_UNSUPPORTED so an
+      English construct on it warns instead of scoring silently. Not on prod.
+      Open: an Arabic validation run on lab data; dialect coverage.
 - [x] LLM-generated construct items (PI idea 2026-07-31): BUILT 2026-08-05
       (see ITEM_GENERATION.md). Design note + PI-approved prompt and
       cautionary wording; POST /api/constructs/generate-items (signed-in,
